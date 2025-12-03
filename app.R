@@ -231,6 +231,7 @@ ui <- dashboardPage(
     sidebarMenu(
       id = "tabs",
       menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
+      menuItem("Metadata & Analysis", tabName = "metadata", icon = icon("info-circle")),
       menuItem("GCC Overall", tabName = "gcc_overall", icon = icon("chart-line")),
       menuItem("GCC Timeseries", tabName = "gcc_timeseries", icon = icon("chart-area")),
       menuItem("Country Profiles", tabName = "country_profiles", icon = icon("flag")),
@@ -291,6 +292,181 @@ ui <- dashboardPage(
           valueBoxOutput("latest_overall", width = 4),
           valueBoxOutput("latest_year", width = 4),
           valueBoxOutput("num_countries", width = 4)
+        )
+      ),
+      
+      # Metadata & Analysis Tab
+      tabItem(
+        tabName = "metadata",
+        
+        # Overview Section
+        fluidRow(
+          box(
+            width = 12,
+            title = "About the GCC Economic Integration Index",
+            status = "primary",
+            solidHeader = TRUE,
+            
+            h4("Purpose"),
+            p("The GCC Economic Integration Index (EII) is a composite indicator designed to measure 
+              the depth and progress of economic integration among the six Gulf Cooperation Council 
+              member states: Bahrain, Kuwait, Oman, Qatar, Saudi Arabia, and the United Arab Emirates."),
+            
+            p("The index supports Vision 2030 transformation goals by providing an authoritative, 
+              data-driven assessment of regional integration across multiple economic dimensions. 
+              It enables policymakers to identify strengths, gaps, and opportunities for deeper 
+              cooperation within the GCC common market framework."),
+            
+            h4("Scope"),
+            p("The index covers the period 2015-2023 and aggregates performance across six dimensions, 
+              each capturing a distinct aspect of economic integration. Country-level scores are 
+              aggregated to a GCC-wide index using GDP-weighted averaging to reflect the relative 
+              economic significance of each member state."),
+            
+            h4("Scoring"),
+            p("All dimension and overall scores are presented on a 0-100 scale. The methodology varies by indicator type:"),
+            tags$ul(
+              tags$li(strong("Min-max normalization:"), " Most indicators are scaled using min-max normalization, 
+                      where the best performer scores 100 and the lowest scores 0."),
+              tags$li(strong("Direct measures:"), " Some indicators (e.g., trade intensity, FDI shares) are 
+                      direct percentage measures normalized to the 0-100 scale."),
+              tags$li(strong("Convergence measures:"), " Indicators measuring regional convergence use the 
+                      coefficient of variation (CV) across countries. These produce the ", em("same score for all countries"), 
+                      " in a given year, reflecting GCC-wide convergence rather than individual country performance. 
+                      The score is calculated as: 100 minus the CV (capped at 0-100).")
+            ),
+            p("Integration levels are classified as:"),
+            tags$ul(
+              tags$li(strong("Good (60-100):"), " Strong integration with well-functioning mechanisms"),
+              tags$li(strong("Moderate (40-59):"), " Partial integration with room for improvement"),
+              tags$li(strong("Weak (0-39):"), " Limited integration requiring policy attention")
+            )
+          )
+        ),
+        
+        # Dimension Weights
+        fluidRow(
+          box(
+            width = 12,
+            title = "Dimension Weights",
+            status = "info",
+            solidHeader = TRUE,
+            
+            p("The overall index combines six dimensions with the following weights:"),
+            tableOutput("dimension_weights_table")
+          )
+        ),
+        
+        # Trade Integration Indicators
+        fluidRow(
+          box(
+            width = 12,
+            title = "Dimension 1: Trade Integration (20%)",
+            status = "success",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            
+            p("Measures the intensity and composition of intra-GCC merchandise and services trade, 
+              with emphasis on non-oil diversification and value chain participation."),
+            tableOutput("trade_indicators_table")
+          )
+        ),
+        
+        # Financial Integration Indicators
+        fluidRow(
+          box(
+            width = 12,
+            title = "Dimension 2: Financial & Monetary Integration (15%)",
+            status = "success",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            
+            p("Assesses convergence in monetary conditions, banking sector integration, 
+              and cross-border financial flows within the GCC."),
+            tableOutput("financial_indicators_table")
+          )
+        ),
+        
+        # Labor Integration Indicators
+        fluidRow(
+          box(
+            width = 12,
+            title = "Dimension 3: Labor & Human Capital (20%)",
+            status = "success",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            
+            p("Captures the mobility of labor and people across GCC borders, including 
+              worker movements, tourism, and student exchanges."),
+            tableOutput("labor_indicators_table")
+          )
+        ),
+        
+        # Infrastructure Indicators
+        fluidRow(
+          box(
+            width = 12,
+            title = "Dimension 4: Infrastructure Connectivity (20%)",
+            status = "success",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            
+            p("Tracks physical and digital connectivity infrastructure that enables 
+              cross-border economic activity, including transport, energy, and telecommunications."),
+            tableOutput("infrastructure_indicators_table")
+          )
+        ),
+        
+        # Sustainability Indicators
+        fluidRow(
+          box(
+            width = 12,
+            title = "Dimension 5: Sustainability & Diversification (10%)",
+            status = "success",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            
+            p("Measures progress toward economic diversification away from hydrocarbon 
+              dependence, aligned with national Vision 2030 strategies."),
+            tableOutput("sustainability_indicators_table")
+          )
+        ),
+        
+        # Convergence Indicators
+        fluidRow(
+          box(
+            width = 12,
+            title = "Dimension 6: Macroeconomic Convergence (15%)",
+            status = "success",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            
+            p("Assesses the degree to which GCC economies are converging in key macroeconomic 
+              variables, a prerequisite for deeper monetary integration."),
+            tableOutput("convergence_indicators_table")
+          )
+        ),
+        
+        # Data Sources
+        fluidRow(
+          box(
+            width = 12,
+            title = "Data Sources",
+            status = "warning",
+            solidHeader = TRUE,
+            
+            tags$ul(
+              tags$li(strong("Trade data:"), " UN Comtrade (merchandise), GCC-Stat estimates (services)"),
+              tags$li(strong("National accounts:"), " GCC-Stat national accounts database"),
+              tags$li(strong("Financial data:"), " GCC-Stat monetary database"),
+              tags$li(strong("Labor & mobility:"), " GCC-Stat labor statistics,  tourism and common market databases"),
+              tags$li(strong("Infrastructure:"), " GCC-Stat common market, energy and tourism databases"),
+              tags$li(strong("Price data:"), " GCC-Stat national CPI database, ICP (International Comparison Program) ")
+            ),
+            
+            p(em("Note: Some indicators use proxy measures or estimates where direct data is unavailable. 
+                 Methodology documentation is available upon request."))
+          )
         )
       ),
       
@@ -607,6 +783,108 @@ server <- function(input, output, session) {
       color = "yellow"
     )
   })
+  
+  # Metadata Tab Tables
+  
+  output$dimension_weights_table <- renderTable({
+    data.frame(
+      Dimension = c("Trade Integration", "Financial & Monetary", "Labor & Human Capital",
+                    "Infrastructure Connectivity", "Sustainability & Diversification", 
+                    "Macroeconomic Convergence", "TOTAL"),
+      Weight = c("20%", "15%", "20%", "20%", "10%", "15%", "100%"),
+      stringsAsFactors = FALSE
+    )
+  }, striped = TRUE, hover = TRUE, width = "100%")
+  
+  output$trade_indicators_table <- renderTable({
+    data.frame(
+      Indicator = c("Intra-GCC Trade Intensity", 
+                    "Services Trade Share",
+                    "Non-oil Trade Intensity",
+                    "Services as % of Total Trade",
+                    "Intermediate Goods Share",
+                    "Trade by Product Type"),
+      Description = c("Total intra-GCC trade (exports + imports) as percentage of GDP",
+                      "Intra-GCC services trade as percentage of GDP",
+                      "Intra-GCC non-oil merchandise trade as percentage of GDP",
+                      "Share of services in total intra-GCC trade",
+                      "Share of intermediate goods in intra-GCC trade (value chain indicator)",
+                      "Composition of trade by BEC category (primary, intermediate, final goods)"),
+      stringsAsFactors = FALSE
+    )
+  }, striped = TRUE, hover = TRUE, width = "100%")
+  
+  output$financial_indicators_table <- renderTable({
+    data.frame(
+      Indicator = c("OCA Readiness Score",
+                    "   - Inflation Convergence",
+                    "   - Monetary Convergence", 
+                    "   - Business Cycle Synchronization",
+                    "Banking Sector Integration",
+                    "Stock Market Integration",
+                    "FDI Integration",
+                    "Financial Depth Convergence"),
+      Description = c("Optimum Currency Area readiness composite (weighted average of components below)",
+                      "Convergence in CPI inflation rates across GCC (40% weight)",
+                      "Convergence in M2 money supply growth rates (40% weight)",
+                      "Synchronization of GDP growth cycles across GCC (20% weight)",
+                      "Cross-border banking presence and penetration",
+                      "Stock market cross-listings and foreign ownership openness",
+                      "Intra-GCC foreign direct investment as percentage of GDP",
+                      "Convergence in banking sector depth (assets/GDP) across GCC"),
+      stringsAsFactors = FALSE
+    )
+  }, striped = TRUE, hover = TRUE, width = "100%")
+  
+  output$labor_indicators_table <- renderTable({
+    data.frame(
+      Indicator = c("Intra-GCC Labor Mobility",
+                    "GCC Worker Share",
+                    "Tourism Mobility",
+                    "Labor Market Convergence"),
+      Description = c("Share of GCC nationals in cross-border employment",
+                      "GCC nationals as percentage of foreign workforce in each country",
+                      "Intra-GCC tourist flows relative to total tourism",
+                      "Convergence in unemployment rates and labor force participation"),
+      stringsAsFactors = FALSE
+    )
+  }, striped = TRUE, hover = TRUE, width = "100%")
+  
+  output$infrastructure_indicators_table <- renderTable({
+    data.frame(
+      Indicator = c("Aviation Connectivity",
+                    "Energy Grid Integration",
+                    "Electricity Price Convergence"),
+      Description = c("Intra-GCC flight capacity and passenger volumes per capita",
+                      "GCCIA utilization and cross-border electricity trade",
+                      "Coefficient of variation in electricity prices across GCC"),
+      stringsAsFactors = FALSE
+    )
+  }, striped = TRUE, hover = TRUE, width = "100%")
+  
+  output$sustainability_indicators_table <- renderTable({
+    data.frame(
+      Indicator = c("Non-oil GDP Share",
+                    "Manufacturing Share",
+                    "Economic Diversification Convergence"),
+      Description = c("Non-oil sectors as percentage of total GDP",
+                      "Manufacturing value added as percentage of GDP",
+                      "Convergence in diversification levels across GCC states"),
+      stringsAsFactors = FALSE
+    )
+  }, striped = TRUE, hover = TRUE, width = "100%")
+  
+  output$convergence_indicators_table <- renderTable({
+    data.frame(
+      Indicator = c("Real Income Convergence",
+                    "Price Level Convergence",
+                    "Cross-dimension Convergence"),
+      Description = c("Convergence in GDP per capita (PPP-adjusted) across GCC",
+                      "Convergence in comparative price levels (ICP data)",
+                      "Aggregate measure of convergence across financial, labor, and sustainability dimensions"),
+      stringsAsFactors = FALSE
+    )
+  }, striped = TRUE, hover = TRUE, width = "100%")
   
   # GCC Overall Tab Outputs
   output$gcc_overall_gauge <- renderPlotly({
