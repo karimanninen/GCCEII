@@ -1,0 +1,1297 @@
+# GCC Economic Integration Index Dashboard
+# A comprehensive Shiny dashboard for analyzing GCC economic integration
+
+library(shiny)
+library(shinydashboard)
+library(readr)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(plotly)
+library(tidyr)
+library(DT)
+library(scales)
+library(viridis)
+
+# Load data from master script outputs
+OUTPUT_DIR <- "output"
+
+# Option 1: Load from saved workspace (fastest)
+if (file.exists(file.path(OUTPUT_DIR, "gcc_integration_workspace.RData"))) {
+  message("Loading data from workspace file...")
+  load(file.path(OUTPUT_DIR, "gcc_integration_workspace.RData"))
+  
+  # Extract dimension scores for COUNTRIES ONLY (exclude GCC aggregate)
+  if (exists("time_series_complete")) {
+    dimension_scores <- time_series_complete %>%
+      filter(country != "GCC") %>%
+      select(country, year, overall_index,
+             trade_score, financial_score, labor_score,
+             infrastructure_score, sustainability_score, convergence_score) %>%
+      mutate(integration_level = case_when(
+        overall_index >= 60 ~ "Good",
+        overall_index >= 40 ~ "Moderate",
+        TRUE ~ "Weak"
+      ))
+    
+    # Extract GCC aggregate timeseries (GDP-weighted only for display)
+    gcc_ts <- time_series_complete %>%
+      filter(country == "GCC")
+    
+    # If method column exists, filter to GDP-weighted
+    if ("method" %in% names(gcc_ts)) {
+      gcc_ts <- gcc_ts %>% filter(method == "gdp")
+    }
+    
+    # Rename overall_index to overall for consistency
+    gcc_ts <- gcc_ts %>%
+      mutate(overall = overall_index) %>%
+      select(country, year, overall, trade_score, financial_score, labor_score,
+             infrastructure_score, sustainability_score, convergence_score,
+             integration_level)
+    
+    # Country vs GCC comparison (countries + GCC aggregate)
+    if ("method" %in% names(time_series_complete)) {
+      country_data <- time_series_complete %>%
+        filter(country != "GCC AGGREGATE" | (country == "GCC AGGREGATE" & method == "gdp")) %>%
+        select(year, country, trade_score, financial_score, labor_score,
+               infrastructure_score, sustainability_score, convergence_score)
+    } else {
+      country_data <- time_series_complete %>%
+        filter(country != "GCC AGGREGATE" | country == "GCC AGGREGATE") %>%
+        select(year, country, trade_score, financial_score, labor_score,
+               infrastructure_score, sustainability_score, convergence_score)
+    }
+    
+  } else {
+    # Fallback to country_index_2023 if time_series_complete doesn't exist
+    dimension_scores <- country_index_2023 %>%
+      mutate(year = 2023) %>%
+      select(country, year, overall_index,
+             trade_score, financial_score, labor_score,
+             infrastructure_score, sustainability_score, convergence_score,
+             integration_level)
+    
+    # Create GCC timeseries from 2023 data
+    gcc_ts <- gcc_aggregate_2023 %>%
+      filter(method == "gdp") %>%
+      mutate(overall = overall_index, year = 2023) %>%
+      select(country, year, overall, trade_score, financial_score, labor_score,
+             infrastructure_score, sustainability_score, convergence_score,
+             integration_level)
+    
+    country_data <- dimension_scores %>%
+      select(year, country, trade_score, financial_score, labor_score,
+             infrastructure_score, sustainability_score, convergence_score)
+  }
+  
+  # Calculate year-over-year changes for COUNTRIES ONLY
+  yoy_changes <- dimension_scores %>%
+    arrange(country, year) %>%
+    group_by(country) %>%
+    mutate(
+      overall_change = overall_index - lag(overall_index),
+      trade_change = trade_score - lag(trade_score),
+      financial_change = financial_score - lag(financial_score),
+      labor_change = labor_score - lag(labor_score),
+      infrastructure_change = infrastructure_score - lag(infrastructure_score),
+      sustainability_change = sustainability_score - lag(sustainability_score),
+      convergence_change = convergence_score - lag(convergence_score)
+    ) %>%
+    ungroup() %>%
+    filter(!is.na(overall_change)) %>%
+    select(year, country, ends_with("_change"))
+  
+  message("✓ Data loaded from workspace")
+  message(paste("  - Countries:", n_distinct(dimension_scores$country)))
+  message(paste("  - Years:", paste(range(dimension_scores$year), collapse = "-")))
+  
+} else if (file.exists(file.path(OUTPUT_DIR, "time_series_complete.csv"))) {
+  # Option 2: Load from CSV files
+  message("Loading data from CSV files...")
+  
+  time_series_complete <- read_csv(file.path(OUTPUT_DIR, "time_series_complete.csv"),
+                                   show_col_types = FALSE)
+  
+  # Extract dimension scores for COUNTRIES ONLY
+  dimension_scores <- time_series_complete %>%
+    filter(country != "GCC") %>%
+    select(country, year, overall_index,
+           trade_score, financial_score, labor_score,
+           infrastructure_score, sustainability_score, convergence_score) %>%
+    mutate(integration_level = case_when(
+      overall_index >= 60 ~ "Good",
+      overall_index >= 40 ~ "Moderate",
+      TRUE ~ "Weak"
+    ))
+  
+  # Extract GCC aggregate (GDP-weighted if method exists)
+  gcc_ts <- time_series_complete %>%
+    filter(country == "GCC")
+  
+  if ("method" %in% names(gcc_ts)) {
+    gcc_ts <- gcc_ts %>% filter(method == "gdp")
+  }
+  
+  gcc_ts <- gcc_ts %>%
+    mutate(overall = overall_index) %>%
+    select(country, year, overall, trade_score, financial_score, labor_score,
+           infrastructure_score, sustainability_score, convergence_score,
+           integration_level)
+  
+  # Country vs GCC comparison
+  country_data <- time_series_complete %>%
+    filter((country != "GCC") | 
+           (country == "GCC" & if_else("method" %in% names(.), method == "gdp", TRUE))) %>%
+    select(year, country, trade_score, financial_score, labor_score,
+           infrastructure_score, sustainability_score, convergence_score)
+  
+  # Calculate YoY changes for COUNTRIES ONLY
+  yoy_changes <- dimension_scores %>%
+    arrange(country, year) %>%
+    group_by(country) %>%
+    mutate(
+      overall_change = overall_index - lag(overall_index),
+      trade_change = trade_score - lag(trade_score),
+      financial_change = financial_score - lag(financial_score),
+      labor_change = labor_score - lag(labor_score),
+      infrastructure_change = infrastructure_score - lag(infrastructure_score),
+      sustainability_change = sustainability_score - lag(sustainability_score),
+      convergence_change = convergence_score - lag(convergence_score)
+    ) %>%
+    ungroup() %>%
+    filter(!is.na(overall_change)) %>%
+    select(year, country, ends_with("_change"))
+  
+  message("✓ Data loaded from CSV files")
+  message(paste("  - Countries:", n_distinct(dimension_scores$country)))
+  message(paste("  - Years:", paste(range(dimension_scores$year), collapse = "-")))
+  
+} else {
+  stop("ERROR: Could not find data files. Please ensure either:\n",
+       "  1. gcc_integration_workspace.RData exists in output/ directory, OR\n",
+       "  2. time_series_complete.csv exists in output/ directory\n\n",
+       "Run the GCC_Integration_Master.R script first to generate these files.")
+}
+
+# Define dimension columns
+dimension_cols <- c("trade_score", "financial_score", "labor_score", 
+                    "infrastructure_score", "sustainability_score", "convergence_score")
+dimension_labels <- c("Trade", "Financial", "Labor", 
+                      "Infrastructure", "Sustainability", "Convergence")
+
+# Get unique countries (excluding GCC aggregate)
+countries <- dimension_scores %>% 
+  filter(country != "GCC") %>% 
+  pull(country) %>% 
+  unique() %>% 
+  sort()
+
+# Color palette for countries
+country_colors <- c(
+  "UAE" = "#000000",
+  "Qatar" = "#99154C",
+  "Saudi Arabia" = "#008035",
+  "Bahrain" = "#E20000",
+  "Oman" = "#a3a3a3",
+  "Kuwait" = "#00B1E6"
+)
+
+# UI
+ui <- dashboardPage(
+  skin = "blue",
+  
+  dashboardHeader(
+    title = "GCC Economic Integration Index",
+    titleWidth = 350
+  ),
+  
+  dashboardSidebar(
+    width = 250,
+    sidebarMenu(
+      id = "tabs",
+      menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
+      menuItem("GCC Overall", tabName = "gcc_overall", icon = icon("chart-line")),
+      menuItem("GCC Timeseries", tabName = "gcc_timeseries", icon = icon("chart-area")),
+      menuItem("Country Profiles", tabName = "country_profiles", icon = icon("flag")),
+      menuItem("Country Heatmap", tabName = "country_heatmap", icon = icon("th")),
+      menuItem("GCC Analytics", tabName = "gcc_analytics", icon = icon("chart-bar")),
+      menuItem("Data Explorer", tabName = "data_explorer", icon = icon("table"))
+    )
+  ),
+  
+  dashboardBody(
+    tags$head(
+      tags$style(HTML("
+        .content-wrapper { background-color: #f4f6f9; }
+        .box { box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .small-box { box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+        .info-box { box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+      "))
+    ),
+    
+    tabItems(
+      # Overview Tab
+      tabItem(
+        tabName = "overview",
+        fluidRow(
+          box(
+            width = 12,
+            title = "GCC Economic Integration Index Dashboard",
+            status = "primary",
+            solidHeader = TRUE,
+            h4("Welcome to the GCC Economic Integration Index Dashboard"),
+            p("This dashboard provides comprehensive analysis of economic integration across GCC member states from 2015 to 2023."),
+            hr(),
+            h5(strong("Dashboard Features:")),
+            tags$ul(
+              tags$li(strong("GCC Overall:"), "View aggregate GCC integration metrics and latest performance"),
+              tags$li(strong("GCC Timeseries:"), "Analyze trends across all six dimensions over time"),
+              tags$li(strong("Country Profiles:"), "Deep dive into individual country performance with timeseries"),
+              tags$li(strong("Country Heatmap:"), "Compare countries across dimensions visually"),
+              tags$li(strong("GCC Analytics:"), "Examine year-over-year changes and contributions to total GCC index"),
+              tags$li(strong("Data Explorer:"), "Access and export underlying data")
+            ),
+            hr(),
+            h5(strong("Six Integration Dimensions:")),
+            fluidRow(
+              column(4, tags$div(icon("exchange-alt"), strong(" Trade Integration"))),
+              column(4, tags$div(icon("university"), strong(" Financial Integration"))),
+              column(4, tags$div(icon("users"), strong(" Labor Mobility")))
+            ),
+            br(),
+            fluidRow(
+              column(4, tags$div(icon("road"), strong(" Infrastructure Connectivity"))),
+              column(4, tags$div(icon("leaf"), strong(" Sustainability"))),
+              column(4, tags$div(icon("chart-line"), strong(" Economic Convergence")))
+            )
+          )
+        ),
+        fluidRow(
+          valueBoxOutput("latest_overall", width = 4),
+          valueBoxOutput("latest_year", width = 4),
+          valueBoxOutput("num_countries", width = 4)
+        )
+      ),
+      
+      # GCC Overall Tab
+      tabItem(
+        tabName = "gcc_overall",
+        fluidRow(
+          box(
+            width = 12,
+            title = "GCC Aggregate Integration Performance",
+            status = "primary",
+            solidHeader = TRUE,
+            plotlyOutput("gcc_overall_gauge", height = "300px")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 6, 
+            title = "Current Dimension Scores",
+            status = "info",
+            solidHeader = TRUE,
+            plotlyOutput("gcc_dimension_bars", height = "400px")
+          ),
+          box(
+            width = 6, 
+            title = "Dimension Score Cards",
+            status = "info",
+            solidHeader = TRUE,
+            uiOutput("dimension_boxes")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 12,
+            title = "Overall Integration Trend (2015-2023)",
+            status = "success",
+            solidHeader = TRUE,
+            plotlyOutput("gcc_overall_trend", height = "350px")
+          )
+        )
+      ),
+      
+      # GCC Timeseries Tab
+      tabItem(
+        tabName = "gcc_timeseries",
+        fluidRow(
+          box(
+            width = 12,
+            title = "GCC Integration Dimensions Over Time",
+            status = "primary",
+            solidHeader = TRUE,
+            selectInput("dimension_select", "Select Dimension(s):",
+                        choices = setNames(dimension_cols, dimension_labels),
+                        selected = dimension_cols,
+                        multiple = TRUE),
+            checkboxInput("show_overall", "Show Overall Index", value = TRUE)
+          )
+        ),
+        fluidRow(
+          box(
+            width = 12,
+            title = "Dimension Timeseries",
+            status = "info",
+            solidHeader = TRUE,
+            plotlyOutput("gcc_dimension_timeseries", height = "450px")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 12,
+            title = "Overall Index Timeseries - All Countries",
+            status = "info",
+            solidHeader = TRUE,
+            plotlyOutput("overall_index_timeseries", height = "450px")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 6,
+            title = "Dimension Comparison (Latest Year)",
+            status = "success",
+            solidHeader = TRUE,
+            plotlyOutput("dimension_radar", height = "400px")
+          ),
+          box(
+            width = 6,
+            title = "Dimension Correlation Matrix",
+            status = "warning",
+            solidHeader = TRUE,
+            plotlyOutput("dimension_correlation", height = "400px")
+          )
+        )
+      ),
+      
+      # Country Profiles Tab
+      tabItem(
+        tabName = "country_profiles",
+        fluidRow(
+          box(
+            width = 12,
+            title = "Country Selection",
+            status = "primary",
+            solidHeader = TRUE,
+            selectInput("country_select", "Select Country:",
+                        choices = countries,
+                        selected = countries[1])
+          )
+        ),
+        fluidRow(
+          valueBoxOutput("country_overall", width = 3),
+          valueBoxOutput("country_rank", width = 3),
+          valueBoxOutput("country_level", width = 3),
+          valueBoxOutput("country_change", width = 3)
+        ),
+        fluidRow(
+          box(
+            width = 6,
+            title = "Overall Integration Index Trend",
+            status = "info",
+            solidHeader = TRUE,
+            plotlyOutput("country_overall_trend", height = "350px")
+          ),
+          box(
+            width = 6,
+            title = "Dimension Scores (Latest Year)",
+            status = "info",
+            solidHeader = TRUE,
+            plotlyOutput("country_dimension_current", height = "350px")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 12,
+            title = "All Dimensions Over Time",
+            status = "success",
+            solidHeader = TRUE,
+            plotlyOutput("country_all_dimensions", height = "400px")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 12,
+            title = "Country vs GCC Average",
+            status = "warning",
+            solidHeader = TRUE,
+            plotlyOutput("country_vs_gcc", height = "350px")
+          )
+        )
+      ),
+      
+      # Country Heatmap Tab
+      tabItem(
+        tabName = "country_heatmap",
+        fluidRow(
+          box(
+            width = 12,
+            title = "Heatmap Controls",
+            status = "primary",
+            solidHeader = TRUE,
+            fluidRow(
+              column(6,
+                     selectInput("heatmap_countries", "Select Countries:",
+                                 choices = countries,
+                                 selected = countries,
+                                 multiple = TRUE)
+              ),
+              column(6,
+                     selectInput("heatmap_dimensions", "Select Dimensions:",
+                                 choices = setNames(dimension_cols, dimension_labels),
+                                 selected = dimension_cols,
+                                 multiple = TRUE)
+              )
+            ),
+            sliderInput("heatmap_year_range", "Select Year Range:",
+                        min = 2015, max = 2023, value = c(2015, 2023), step = 1,
+                        sep = "")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 12,
+            title = "Country-Dimension Heatmap",
+            status = "info",
+            solidHeader = TRUE,
+            plotlyOutput("country_dimension_heatmap", height = "500px")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 12,
+            title = "Country Rankings by Dimension",
+            status = "success",
+            solidHeader = TRUE,
+            plotlyOutput("dimension_rankings", height = "400px")
+          )
+        )
+      ),
+      
+      # GCC Analytics Tab
+      tabItem(
+        tabName = "gcc_analytics",
+        fluidRow(
+          box(
+            width = 12,
+            title = "Year Selection",
+            status = "primary",
+            solidHeader = TRUE,
+            sliderInput("analytics_year_range", "Select Year Range for Analysis:",
+                        min = 2015, max = 2023, value = c(2015, 2023), step = 1,
+                        sep = "")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 6,
+            title = "Year-over-Year Changes in Overall Index",
+            status = "info",
+            solidHeader = TRUE,
+            plotlyOutput("yoy_overall_changes", height = "400px")
+          ),
+          box(
+            width = 6,
+            title = "Year-over-Year Changes by Dimension",
+            status = "info",
+            solidHeader = TRUE,
+            plotlyOutput("yoy_dimension_changes", height = "400px")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 12,
+            title = "Contribution to Total GCC Index Change",
+            status = "success",
+            solidHeader = TRUE,
+            plotlyOutput("contribution_analysis", height = "400px")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 6,
+            title = "Annual Change Trends (All Years)",
+            status = "warning",
+            solidHeader = TRUE,
+            plotlyOutput("annual_change_trends", height = "400px")
+          ),
+          box(
+            width = 6,
+            title = "Dimension Change Heatmap",
+            status = "warning",
+            solidHeader = TRUE,
+            plotlyOutput("change_heatmap", height = "400px")
+          )
+        )
+      ),
+      
+      # Data Explorer Tab
+      tabItem(
+        tabName = "data_explorer",
+        fluidRow(
+          box(
+            width = 12,
+            title = "Data Explorer",
+            status = "primary",
+            solidHeader = TRUE,
+            selectInput("data_table_select", "Select Dataset:",
+                        choices = c("Dimension Scores" = "dimension",
+                                    "GCC Aggregate" = "gcc",
+                                    "Year-over-Year Changes" = "yoy"),
+                        selected = "dimension")
+          )
+        ),
+        fluidRow(
+          box(
+            width = 12,
+            title = "Data Table",
+            status = "info",
+            solidHeader = TRUE,
+            DTOutput("data_table")
+          )
+        )
+      )
+    )
+  )
+)
+
+# Server
+server <- function(input, output, session) {
+  
+  # Overview Tab Outputs
+  output$latest_overall <- renderValueBox({
+    latest_gcc <- gcc_ts %>% filter(year == max(year))
+    valueBox(
+      value = round(latest_gcc$overall, 1),
+      subtitle = "Latest GCC Overall Index",
+      icon = icon("chart-line"),
+      color = "blue"
+    )
+  })
+  
+  output$latest_year <- renderValueBox({
+    valueBox(
+      value = max(gcc_ts$year),
+      subtitle = "Latest Year",
+      icon = icon("calendar"),
+      color = "green"
+    )
+  })
+  
+  output$num_countries <- renderValueBox({
+    valueBox(
+      value = length(countries),
+      subtitle = "GCC Member States",
+      icon = icon("flag"),
+      color = "yellow"
+    )
+  })
+  
+  # GCC Overall Tab Outputs
+  output$gcc_overall_gauge <- renderPlotly({
+    latest_gcc <- gcc_ts %>% filter(year == max(year))
+    
+    plot_ly(
+      type = "indicator",
+      mode = "gauge+number+delta",
+      value = latest_gcc$overall,
+      title = list(text = paste("GCC Overall Integration Index", max(gcc_ts$year))),
+      delta = list(reference = gcc_ts %>% filter(year == max(year) - 1) %>% pull(overall)),
+      gauge = list(
+        axis = list(range = list(0, 100)),
+        bar = list(color = "darkblue"),
+        steps = list(
+          list(range = c(0, 40), color = "lightgray"),
+          list(range = c(40, 60), color = "lightyellow"),
+          list(range = c(60, 100), color = "lightgreen")
+        ),
+        threshold = list(
+          line = list(color = "red", width = 4),
+          thickness = 0.75,
+          value = 70
+        )
+      )
+    ) %>%
+      layout(margin = list(l = 20, r = 20, t = 50, b = 20))
+  })
+  
+  output$gcc_dimension_bars <- renderPlotly({
+    latest_gcc <- gcc_ts %>% filter(year == max(year))
+    
+    if (nrow(latest_gcc) == 0) {
+      return(plot_ly() %>% layout(title = "No data available"))
+    }
+    
+    dim_data <- data.frame(
+      Dimension = dimension_labels,
+      Score = c(
+        as.numeric(latest_gcc$trade_score[1]),
+        as.numeric(latest_gcc$financial_score[1]),
+        as.numeric(latest_gcc$labor_score[1]),
+        as.numeric(latest_gcc$infrastructure_score[1]),
+        as.numeric(latest_gcc$sustainability_score[1]),
+        as.numeric(latest_gcc$convergence_score[1])
+      )
+    ) %>%
+      arrange(desc(Score))
+    
+    plot_ly(dim_data, x = ~Score, y = ~reorder(Dimension, Score), 
+            type = 'bar', orientation = 'h',
+            marker = list(color = viridis(6))) %>%
+      layout(
+        xaxis = list(title = "Score", range = c(10, 80)), # 0, 100
+        yaxis = list(title = ""),
+        margin = list(l = 120)
+      )
+  })
+  
+  output$dimension_boxes <- renderUI({
+    latest_gcc <- gcc_ts %>% filter(year == max(year))
+    
+    if (nrow(latest_gcc) == 0) {
+      return(tags$p("No data available"))
+    }
+    
+    scores <- c(
+      as.numeric(latest_gcc$trade_score[1]),
+      as.numeric(latest_gcc$financial_score[1]),
+      as.numeric(latest_gcc$labor_score[1]),
+      as.numeric(latest_gcc$infrastructure_score[1]),
+      as.numeric(latest_gcc$sustainability_score[1]),
+      as.numeric(latest_gcc$convergence_score[1])
+    )
+    
+    box_list <- lapply(1:6, function(i) {
+      color <- if(scores[i] >= 60) "green" else if(scores[i] >= 40) "yellow" else "red"
+      infoBox(
+        dimension_labels[i],
+        round(scores[i], 1),
+        icon = icon("chart-bar"),
+        color = color,
+        fill = FALSE,
+        width = 6
+      )
+    })
+    
+    tagList(
+      fluidRow(box_list[[1]], box_list[[2]]),
+      fluidRow(box_list[[3]], box_list[[4]]),
+      fluidRow(box_list[[5]], box_list[[6]])
+    )
+  })
+  
+  output$gcc_overall_trend <- renderPlotly({
+    plot_ly(gcc_ts, x = ~year, y = ~overall, type = 'scatter', mode = 'lines+markers',
+            line = list(color = 'rgb(22, 96, 167)', width = 3),
+            marker = list(size = 10, color = 'rgb(22, 96, 167)')) %>%
+      add_ribbons(
+        ymin = gcc_ts$overall - 2,
+        ymax = gcc_ts$overall + 2,
+        line = list(color = 'rgba(22, 96, 167, 0.2)'),
+        fillcolor = 'rgba(22, 96, 167, 0.2)',
+        name = "Confidence Band"
+      ) %>%
+      layout(
+        xaxis = list(title = "Year"),
+        yaxis = list(title = "Overall Integration Index", range = c(10, 80)),
+        hovermode = 'x unified',
+        showlegend = TRUE
+      )
+  })
+  
+  # GCC Timeseries Tab Outputs
+  output$gcc_dimension_timeseries <- renderPlotly({
+    req(input$dimension_select)
+    
+    plot_data <- gcc_ts %>%
+      select(year, all_of(input$dimension_select))
+    
+    p <- plot_ly()
+    
+    # Add selected dimensions
+    for (i in seq_along(input$dimension_select)) {
+      dim_col <- input$dimension_select[i]
+      dim_label <- dimension_labels[which(dimension_cols == dim_col)]
+      
+      p <- p %>%
+        add_trace(
+          data = plot_data,
+          x = ~year,
+          y = plot_data[[dim_col]],
+          type = 'scatter',
+          mode = 'lines+markers',
+          name = dim_label,
+          line = list(width = 2),
+          marker = list(size = 8)
+        )
+    }
+    
+    # Add overall if selected
+    if (input$show_overall) {
+      p <- p %>%
+        add_trace(
+          data = gcc_ts,
+          x = ~year,
+          y = ~overall,
+          type = 'scatter',
+          mode = 'lines+markers',
+          name = 'Overall Index',
+          line = list(width = 3, dash = 'dash', color = 'black'),
+          marker = list(size = 10, color = 'black')
+        )
+    }
+    
+    p %>%
+      layout(
+        xaxis = list(title = "Year"),
+        yaxis = list(title = "Score", range = c(10, 80)),
+        hovermode = 'x unified',
+        legend = list(orientation = 'h', y = -0.15)
+      )
+  })
+  # New chart for Country timeseries
+  output$overall_index_timeseries <- renderPlotly({
+    # Combine country data with GCC aggregate
+    country_overall <- dimension_scores %>%
+      select(country, year, overall_index)
+    
+    gcc_overall <- gcc_ts %>%
+      select(country, year, overall) %>%
+      rename(overall_index = overall)
+    
+    all_data <- bind_rows(country_overall, gcc_overall)
+    
+    # Extended colors including GCC
+    all_colors <- c(country_colors, "GCC" = "#DAA520")
+    
+    plot_ly(all_data, x = ~year, y = ~overall_index, color = ~country,
+            colors = all_colors,
+            type = 'scatter', mode = 'lines+markers',
+            marker = list(size = 8),
+            line = list(width = 2)) %>%
+      layout(
+        xaxis = list(title = "Year", dtick = 1),
+        yaxis = list(title = "Overall Index", range = c(20, 80)),
+        hovermode = 'x unified',
+        legend = list(orientation = 'h', y = -0.15)
+      )
+  })
+  output$dimension_radar <- renderPlotly({
+    latest_gcc <- gcc_ts %>% filter(year == max(year))
+    
+    if (nrow(latest_gcc) == 0) {
+      return(plot_ly() %>% layout(title = "No GCC data available"))
+    }
+    
+    radar_values <- c(
+      as.numeric(latest_gcc$trade_score),
+      as.numeric(latest_gcc$financial_score),
+      as.numeric(latest_gcc$labor_score),
+      as.numeric(latest_gcc$infrastructure_score),
+      as.numeric(latest_gcc$sustainability_score),
+      as.numeric(latest_gcc$convergence_score)
+    )
+    
+    # Close the polygon by repeating first value
+    radar_data <- data.frame(
+      r = c(radar_values, radar_values[1]),
+      theta = c(dimension_labels, dimension_labels[1])
+    )
+    
+    plot_ly(
+      type = 'scatterpolar',
+      r = radar_data$r,
+      theta = radar_data$theta,
+      fill = 'toself',
+      fillcolor = 'rgba(22, 96, 167, 0.3)',
+      line = list(color = 'rgb(22, 96, 167)', width = 2)
+    ) %>%
+      layout(
+        polar = list(
+          radialaxis = list(
+            visible = TRUE,
+            range = c(10, 80)
+          )
+        ),
+        showlegend = FALSE
+      )
+  })
+  
+  output$dimension_correlation <- renderPlotly({
+    cor_data <- gcc_ts %>%
+      select(all_of(dimension_cols)) %>%
+      as.matrix()
+    
+    if (nrow(cor_data) < 2) {
+      return(plot_ly() %>% layout(title = "Insufficient data for correlation"))
+    }
+    
+    cor_matrix <- cor(cor_data, use = "pairwise.complete.obs")
+    
+    plot_ly(
+      x = dimension_labels,
+      y = dimension_labels,
+      z = cor_matrix,
+      type = "heatmap",
+      colorscale = "RdBu",
+      zmid = 0,
+      text = round(cor_matrix, 2),
+      hovertemplate = '%{y} vs %{x}: %{z:.2f}<extra></extra>'
+    ) %>%
+      layout(
+        xaxis = list(title = ""),
+        yaxis = list(title = "")
+      )
+  })
+  
+  # Country Profiles Tab Outputs
+  country_data_reactive <- reactive({
+    req(input$country_select)
+    dimension_scores %>% filter(country == input$country_select)
+  })
+  
+  output$country_overall <- renderValueBox({
+    data <- country_data_reactive()
+    latest <- data %>% filter(year == max(year))
+    valueBox(
+      value = round(latest$overall_index, 1),
+      subtitle = "Overall Index (Latest)",
+      icon = icon("chart-line"),
+      color = "blue"
+    )
+  })
+  
+  output$country_rank <- renderValueBox({
+    latest_year <- max(dimension_scores$year)
+    rank_data <- dimension_scores %>%
+      filter(year == latest_year) %>%
+      arrange(desc(overall_index)) %>%
+      mutate(rank = row_number())
+    
+    country_rank <- rank_data %>%
+      filter(country == input$country_select) %>%
+      pull(rank)
+    
+    total_countries <- nrow(rank_data)
+    
+    valueBox(
+      value = paste("#", country_rank, "of", total_countries),
+      subtitle = "Country Rank",
+      icon = icon("trophy"),
+      color = if(country_rank <= 2) "green" else if(country_rank <= 4) "yellow" else "orange"
+    )
+  })
+  
+  output$country_level <- renderValueBox({
+    data <- country_data_reactive()
+    latest <- data %>% filter(year == max(year))
+    valueBox(
+      value = latest$integration_level,
+      subtitle = "Integration Level",
+      icon = icon("signal"),
+      color = if(latest$integration_level == "Good") "green" else "orange"
+    )
+  })
+  
+  output$country_change <- renderValueBox({
+    data <- country_data_reactive()
+    if(nrow(data) >= 2) {
+      latest <- data %>% filter(year == max(year)) %>% pull(overall_index)
+      previous <- data %>% filter(year == max(year) - 1) %>% pull(overall_index)
+      change <- latest - previous
+      
+      valueBox(
+        value = paste(ifelse(change > 0, "+", ""), round(change, 1)),
+        subtitle = "YoY Change",
+        icon = icon(ifelse(change > 0, "arrow-up", "arrow-down")),
+        color = ifelse(change > 0, "green", "red")
+      )
+    } else {
+      valueBox(
+        value = "N/A",
+        subtitle = "YoY Change",
+        icon = icon("minus"),
+        color = "gray"
+      )
+    }
+  })
+  
+  output$country_overall_trend <- renderPlotly({
+    data <- country_data_reactive()
+    
+    plot_ly(data, x = ~year, y = ~overall_index, type = 'scatter', 
+            mode = 'lines+markers',
+            line = list(color = country_colors[input$country_select], width = 3),
+            marker = list(size = 10, color = country_colors[input$country_select])) %>%
+      layout(
+        xaxis = list(title = "Year"),
+        yaxis = list(title = "Overall Integration Index", range = c(10, 90)),
+        hovermode = 'x unified'
+      )
+  })
+  
+  output$country_dimension_current <- renderPlotly({
+    data <- country_data_reactive()
+    latest <- data %>% filter(year == max(year))
+    
+    dim_data <- data.frame(
+      Dimension = dimension_labels,
+      Score = c(latest$trade_score, latest$financial_score, 
+                latest$labor_score, latest$infrastructure_score,
+                latest$sustainability_score, latest$convergence_score)
+    ) %>%
+      arrange(Score)
+    
+    plot_ly(dim_data, x = ~Score, y = ~reorder(Dimension, Score), 
+            type = 'bar', orientation = 'h',
+            marker = list(color = country_colors[input$country_select])) %>%
+      layout(
+        xaxis = list(title = "Score", range = c(10, 90)),
+        yaxis = list(title = ""),
+        margin = list(l = 120)
+      )
+  })
+  
+  output$country_all_dimensions <- renderPlotly({
+    data <- country_data_reactive()
+    
+    plot_data <- data %>%
+      select(year, all_of(dimension_cols)) %>%
+      pivot_longer(cols = all_of(dimension_cols), 
+                   names_to = "dimension", 
+                   values_to = "score") %>%
+      mutate(dimension_label = factor(dimension, 
+                                      levels = dimension_cols, 
+                                      labels = dimension_labels))
+    
+    plot_ly(plot_data, x = ~year, y = ~score, color = ~dimension_label,
+            type = 'scatter', mode = 'lines+markers',
+            line = list(width = 2),
+            marker = list(size = 8)) %>%
+      layout(
+        xaxis = list(title = "Year"),
+        yaxis = list(title = "Score", range = c(10, 90)),
+        hovermode = 'x unified',
+        legend = list(orientation = 'h', y = -0.15)
+      )
+  })
+  
+  output$country_vs_gcc <- renderPlotly({
+    country_ts <- dimension_scores %>%
+      filter(country == input$country_select) %>%
+      select(year, overall_index) %>%
+      rename(Country = overall_index)
+    
+    gcc_overall <- gcc_ts %>%
+      select(year, overall) %>%
+      rename(GCC_Aggregate = overall)
+    
+    comparison <- left_join(country_ts, gcc_overall, by = "year")
+    
+    plot_ly(comparison) %>%
+      add_trace(x = ~year, y = ~Country, type = 'scatter', mode = 'lines+markers',
+                name = input$country_select,
+                line = list(color = country_colors[input$country_select], width = 3),
+                marker = list(size = 10)) %>%
+      add_trace(x = ~year, y = ~GCC_Aggregate, type = 'scatter', mode = 'lines+markers',
+                name = 'GCC Aggregate',
+                line = list(color = 'black', width = 3, dash = 'dash'),
+                marker = list(size = 10, symbol = 'square')) %>%
+      layout(
+        xaxis = list(title = "Year"),
+        yaxis = list(title = "Overall Integration Index", range = c(10, 90)),
+        hovermode = 'x unified',
+        legend = list(orientation = 'h', y = -0.15)
+      )
+  })
+  
+  # Country Heatmap Tab Outputs
+  output$country_dimension_heatmap <- renderPlotly({
+    req(input$heatmap_countries, input$heatmap_dimensions)
+    heatmap_data <- dimension_scores %>%
+      filter(year >= input$heatmap_year_range[1] & year <= input$heatmap_year_range[2],
+             country %in% input$heatmap_countries) %>%
+      group_by(country) %>%
+      summarise(across(all_of(input$heatmap_dimensions), ~mean(.x, na.rm = TRUE))) %>%
+      select(country, all_of(input$heatmap_dimensions)) %>%
+      distinct(country, .keep_all = TRUE)  # Remove duplicates BEFORE pivot
+    
+    # Don't pivot_longer - work directly with wide format
+    heat_matrix <- heatmap_data %>%
+      column_to_rownames("country") %>%
+      as.matrix()
+    
+    # Map column names to dimension labels
+    dim_name_to_label <- setNames(dimension_labels, dimension_cols)
+    colnames(heat_matrix) <- dim_name_to_label[colnames(heat_matrix)]
+    
+    plot_ly(
+      x = colnames(heat_matrix),
+      y = rownames(heat_matrix),
+      z = heat_matrix,
+      type = "heatmap",
+#      colorscale = "Viridis",  Let's change this
+      colorscale = list(
+        c(0, '#d73027'),
+        c(0.25, '#fc8d59'),
+        c(0.5, '#fee08b'),
+        c(0.75, '#d9ef8b'),
+        c(1, '#1a9850')
+      ),
+      zmin = 0,
+      zmax = 100,
+      text = round(heat_matrix, 1),
+      hovertemplate = '%{y}<br>%{x}: %{z:.1f}<extra></extra>'
+    ) %>%
+      layout(
+        xaxis = list(title = "Dimension"),
+        yaxis = list(title = "Country"),
+        margin = list(l = 100)
+      )
+  })
+  
+  output$dimension_rankings <- renderPlotly({
+    req(input$heatmap_dimensions)
+    
+    ranking_data <- dimension_scores %>%
+      filter(year >= input$heatmap_year_range[1] & year <= input$heatmap_year_range[2]) %>%
+      group_by(country) %>%
+      summarise(across(all_of(input$heatmap_dimensions), ~mean(.x, na.rm = TRUE))) %>%
+      
+      select(country, all_of(input$heatmap_dimensions)) %>%
+      pivot_longer(cols = all_of(input$heatmap_dimensions),
+                   names_to = "dimension",
+                   values_to = "score") %>%
+      mutate(dimension_label = factor(dimension,
+                                      levels = dimension_cols,
+                                      labels = dimension_labels)) %>%
+      group_by(dimension_label) %>%
+      arrange(desc(score)) %>%
+      mutate(rank = row_number()) %>%
+      ungroup()
+    
+    plot_ly(ranking_data, x = ~dimension_label, y = ~rank, 
+            color = ~country, colors = country_colors,
+            type = 'scatter', mode = 'markers', # Let's try without the lines  +lines
+            marker = list(size = 15))  %>%  # ,line = list(width = 2)) 
+      layout(
+        xaxis = list(title = "Dimension"),
+        yaxis = list(title = "Rank", autorange = "reversed"),
+        hovermode = 'closest',
+        legend = list(orientation = 'h', y = -0.2)
+      )
+  })
+  
+  # GCC Analytics Tab Outputs
+  output$yoy_overall_changes <- renderPlotly({
+    changes <- yoy_changes %>%
+      filter(year >= input$analytics_year_range[1] & year <= input$analytics_year_range[2]) %>%
+      arrange(desc(overall_change))
+    
+    plot_ly(changes, x = ~overall_change, y = ~reorder(country, overall_change),
+            type = 'bar', orientation = 'h',
+            marker = list(color = ~overall_change,
+                          colorscale = list(c(0, 'red'), c(0.5, 'white'), c(1, 'green')),
+                          cmin = -max(abs(changes$overall_change)),
+                          cmax = max(abs(changes$overall_change)),
+                          colorbar = list(title = "Change"))) %>%
+      layout(
+        xaxis = list(title = "Change in Overall Index"),
+        yaxis = list(title = ""),
+        margin = list(l = 100)
+      )
+  })
+  
+  output$yoy_dimension_changes <- renderPlotly({
+    # Get changes for selected year range (excluding overall_change)
+    changes <- yoy_changes %>%
+      filter(year >= input$analytics_year_range[1] & year <= input$analytics_year_range[2]) %>%
+      select(country, trade_change, financial_change, labor_change,
+             infrastructure_change, sustainability_change, convergence_change) %>%
+      group_by(country) %>%
+      summarise(across(everything(), ~mean(.x, na.rm = TRUE))) %>%
+      pivot_longer(cols = -country,
+                   names_to = "dimension",
+                   values_to = "change")
+    
+    # Create proper dimension labels
+    # Change names are like "trade_change" -> need to map to "Trade"
+    dim_change_to_label <- c(
+      "trade_change" = "Trade",
+      "financial_change" = "Financial",
+      "labor_change" = "Labor",
+      "infrastructure_change" = "Infrastructure",
+      "sustainability_change" = "Sustainability",
+      "convergence_change" = "Convergence"
+    )
+    
+    changes$dimension_label <- dim_change_to_label[changes$dimension]
+    changes$dimension_label <- factor(changes$dimension_label, levels = dimension_labels)
+    
+    plot_ly(changes, x = ~dimension_label, y = ~change, color = ~country,
+            colors = country_colors,
+            type = 'scatter', mode = 'markers',
+            marker = list(size = 14)) %>%
+      layout(
+        xaxis = list(title = "Dimension", categoryorder = "array", categoryarray = dimension_labels),
+        yaxis = list(title = "Year-over-Year Change"),
+        hovermode = 'closest',
+        legend = list(orientation = 'h', y = -0.2),
+        shapes = list(
+          list(type = "line", x0 = -0.5, x1 = 5.5, y0 = 0, y1 = 0,
+               line = list(color = "black", dash = "dash"))
+        )
+      )
+  })
+  
+  output$contribution_analysis <- renderPlotly({
+    selected_year <- input$analytics_year_range[2]  # End year
+    prev_year <- input$analytics_year_range[1]       # Start year
+    
+    # GDP weights (approximate shares based on GCC GDP composition)
+    gdp_weights <- data.frame(
+      country = c("Bahrain", "Kuwait", "Oman", "Qatar", "Saudi Arabia", "UAE"),
+      weight = c(0.02, 0.07, 0.04, 0.10, 0.42, 0.35)
+    )
+    
+    # Get scores for both years
+    current_scores <- dimension_scores %>%
+      filter(year == selected_year) %>%
+      select(country, trade_score, financial_score, labor_score,
+             infrastructure_score, sustainability_score, convergence_score)
+    
+    prev_scores <- dimension_scores %>%
+      filter(year == prev_year) %>%
+      select(country, trade_score, financial_score, labor_score,
+             infrastructure_score, sustainability_score, convergence_score)
+    
+    if (nrow(prev_scores) == 0 || nrow(current_scores) == 0) {
+      return(plot_ly() %>% layout(title = "No data for selected year range"))
+    }
+    
+    # Calculate changes per dimension per country
+    changes <- current_scores %>%
+      left_join(prev_scores, by = "country", suffix = c("_end", "_start")) %>%
+      left_join(gdp_weights, by = "country")
+    
+    # Calculate weighted contribution for each dimension
+    contribution_data <- data.frame(
+      country = rep(changes$country, 6),
+      dimension = rep(dimension_labels, each = nrow(changes)),
+      contribution = c(
+        (changes$trade_score_end - changes$trade_score_start) * changes$weight,
+        (changes$financial_score_end - changes$financial_score_start) * changes$weight,
+        (changes$labor_score_end - changes$labor_score_start) * changes$weight,
+        (changes$infrastructure_score_end - changes$infrastructure_score_start) * changes$weight,
+        (changes$sustainability_score_end - changes$sustainability_score_start) * changes$weight,
+        (changes$convergence_score_end - changes$convergence_score_start) * changes$weight
+      )
+    )
+    
+    # Make dimension a factor with correct order
+    contribution_data$dimension <- factor(contribution_data$dimension, levels = dimension_labels)
+    
+    plot_ly(contribution_data, x = ~dimension, y = ~contribution, color = ~country,
+            colors = country_colors,
+            type = 'bar') %>%
+      layout(
+        xaxis = list(title = "Dimension", categoryorder = "array", categoryarray = dimension_labels),
+        yaxis = list(title = "Contribution to GCC Index (weighted)"),
+        barmode = 'stack',
+        legend = list(orientation = 'h', y = -0.2)
+      )
+  })
+  
+  output$annual_change_trends <- renderPlotly({
+    all_changes <- yoy_changes %>%
+      group_by(year) %>%
+      summarise(
+        mean_change = mean(overall_change, na.rm = TRUE),
+        max_change = max(overall_change, na.rm = TRUE),
+        min_change = min(overall_change, na.rm = TRUE)
+      )
+    
+    plot_ly(all_changes) %>%
+      add_trace(x = ~year, y = ~mean_change, type = 'scatter', mode = 'lines+markers',
+                name = 'Average Change',
+                line = list(color = 'blue', width = 3),
+                marker = list(size = 10)) %>%
+      add_trace(x = ~year, y = ~max_change, type = 'scatter', mode = 'lines',
+                name = 'Max Change',
+                line = list(color = 'green', width = 2, dash = 'dash')) %>%
+      add_trace(x = ~year, y = ~min_change, type = 'scatter', mode = 'lines',
+                name = 'Min Change',
+                line = list(color = 'red', width = 2, dash = 'dash')) %>%
+      add_segments(x = min(all_changes$year), xend = max(all_changes$year),
+                   y = 0, yend = 0,
+                   line = list(color = 'black', dash = 'dot'),
+                   showlegend = FALSE) %>%
+      layout(
+        xaxis = list(title = "Year"),
+        yaxis = list(title = "Change in Overall Index"),
+        hovermode = 'x unified',
+        legend = list(orientation = 'h', y = -0.15)
+      )
+  })
+  
+  output$change_heatmap <- renderPlotly({
+    # Average change per dimension across all countries for selected year range
+    dim_changes <- yoy_changes %>%
+      filter(year >= input$analytics_year_range[1] & year <= input$analytics_year_range[2]) %>%
+      select(country, trade_change, financial_change, labor_change,
+             infrastructure_change, sustainability_change, convergence_change) %>%
+      group_by(country) %>%
+      summarise(across(everything(), ~mean(.x, na.rm = TRUE)))
+    
+    # Rename columns to dimension labels
+    colnames(dim_changes) <- c("country", dimension_labels)
+    
+    change_matrix <- dim_changes %>%
+      column_to_rownames("country") %>%
+      as.matrix()
+    
+    plot_ly(
+      x = colnames(change_matrix),
+      y = rownames(change_matrix),
+      z = change_matrix,
+      type = "heatmap",
+      colorscale = list(c(0, 'red'), c(0.5, 'white'), c(1, 'green')),
+      zmid = 0,
+      text = round(change_matrix, 1),
+      hovertemplate = '%{y}<br>%{x}: %{z:.1f}<extra></extra>'
+    ) %>%
+      layout(
+        title = "Average Dimension Change by Country",
+        xaxis = list(title = "Dimension"),
+        yaxis = list(title = "Country"),
+        margin = list(l = 100)
+      )
+  })
+  
+  # Data Explorer Tab Outputs
+  output$data_table <- renderDT({
+    data_to_show <- switch(input$data_table_select,
+                           "dimension" = dimension_scores,
+                           "gcc" = gcc_ts,
+                           "yoy" = yoy_changes)
+    
+    datatable(
+      data_to_show,
+      options = list(
+        pageLength = 25,
+        scrollX = TRUE,
+        searchHighlight = TRUE,
+        dom = 'Bfrtip',
+        buttons = c('copy', 'csv', 'excel')
+      ),
+      extensions = 'Buttons',
+      filter = 'top',
+      rownames = FALSE
+    ) %>%
+      formatRound(columns = which(sapply(data_to_show, is.numeric)), digits = 2)
+  })
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
