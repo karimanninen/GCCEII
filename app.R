@@ -290,10 +290,10 @@ ui <- fluidPage(
       }
 
       /* Background images - using local files from www/ folder */
-      .hero-bg-1 { background-image: url('images/bg1.jpeg'); }
-      .hero-bg-2 { background-image: url('images/bg2.jpeg'); }
-      .hero-bg-3 { background-image: url('images/bg3.jpeg'); }
-      .hero-bg-4 { background-image: url('images/bg4.jpeg'); }
+      .hero-bg-1 { background-image: url('images/1.jpeg'); }
+      .hero-bg-2 { background-image: url('images/2.jpeg'); }
+      .hero-bg-3 { background-image: url('images/3.jpeg'); }
+      .hero-bg-4 { background-image: url('images/4.jpeg'); }
 
       .landing-logo {
         height: 90px;
