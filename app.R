@@ -960,7 +960,7 @@ server <- function(input, output, session) {
                 fluidRow(
                   box(
                     width = 12,
-                    title = "Dimension 2: Financial & Monetary Integration (15%)",
+                    title = "Dimension 2: Financial & Monetary Integration (20%)",
                     status = "success",
                     solidHeader = TRUE,
                     collapsible = TRUE,
@@ -1020,7 +1020,7 @@ server <- function(input, output, session) {
                 fluidRow(
                   box(
                     width = 12,
-                    title = "Dimension 6: Macroeconomic Convergence (15%)",
+                    title = "Dimension 6: Macroeconomic Convergence (10%)",
                     status = "success",
                     solidHeader = TRUE,
                     collapsible = TRUE,
