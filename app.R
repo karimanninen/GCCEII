@@ -1330,13 +1330,14 @@ server <- function(input, output, session) {
       Dimension = c("Trade Integration", "Financial & Monetary", "Labor & Human Capital",
                     "Infrastructure Connectivity", "Sustainability & Diversification", 
                     "Macroeconomic Convergence", "TOTAL"),
-      Weight = c("20%", "15%", "20%", "20%", "10%", "15%", "100%"),
+      Weight = c("20%", "20%", "20%", "20%", "10%", "10%", "100%"),
       `Key Focus` = c("Intra-GCC trade intensity, non-oil exports",
                       "Interest rate convergence, cross-border finance",
                       "Worker mobility, tourism, education exchange",
                       "Transport, energy, digital connectivity",
                       "Economic diversification, renewables",
-                      "GDP growth, inflation, fiscal alignment")
+                      "Macroeconomic alignment across member states",
+                      "Composite integration measure")
     )
   }, striped = TRUE, hover = TRUE, width = "100%")
   
