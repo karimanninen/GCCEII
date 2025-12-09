@@ -670,8 +670,18 @@ server <- function(input, output, session) {
           # Hero Section
           div(class = "landing-hero",
               
+              # ===== BACKGROUNDS MUST BE FIRST =====
+              div(class = "hero-bg hero-bg-1 active"),
+              div(class = "hero-bg hero-bg-2"),
+              div(class = "hero-bg hero-bg-3"),
+              div(class = "hero-bg hero-bg-4"),
+              
+              # Dark overlay (ALSO REQUIRED)
+              div(class = "hero-overlay"),
+              # ======================================
+              
               # GCC-Stat Logo (placeholder - replace with actual logo path)
-              # img(src = "gccstat_logo.png", class = "landing-logo"),
+              img(src = "images/GCC-MAIN-01-WHITE.png", class = "landing-logo"),
               tags$div(
                 style = "font-size: 1rem; letter-spacing: 3px; margin-bottom: 15px; opacity: 0.9;",
                 "GCC-STAT"
@@ -706,12 +716,17 @@ server <- function(input, output, session) {
           div(class = "landing-about",
               h2("About the GCC Economic Integration Index"),
               p(class = "landing-about-text",
-                "The GCC Economic Integration Index provides comprehensive measurement of regional 
-                 integration across the six Gulf Cooperation Council member states: Bahrain, Kuwait, 
-                 Oman, Qatar, Saudi Arabia, and the United Arab Emirates. This platform enables 
-                 policymakers, researchers, and stakeholders to analyze integration progress across 
-                 multiple dimensions, supporting evidence-based decision making aligned with 
-                 Vision 2030 transformation goals."
+                "TAs the GCC region continues to pursue deeper economic, social, and institutional integration, 
+                the need for robust measurement tools becomes increasingly essential. Inspired by global models 
+                such as the Asia-Pacific Regional Cooperation and Integration Index (ARCII) and the Global 
+                Integration Index (GII), the GCC Regional Cooperation and Integration Index (GCC-RCII) offers 
+                a comprehensive, multidimensional framework to assess the progress of regional integration across
+                GCC economies.
+                
+                The GCC-RCII tracks integration across key areas including trade, finance, value-chain linkages, 
+                infrastructure connectivity, movement of people, institutional alignment, digital integration, 
+                and environmental cooperation. It provides policymakers, researchers, and practitioners with 
+                evidence-based insights to identify strengths, monitor gaps, and guide regional policy coordination."
               ),
               
               # Key statistics
