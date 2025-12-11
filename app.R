@@ -1909,8 +1909,11 @@ server <- function(input, output, session) {
       filter = 'top',
       rownames = FALSE
     ) %>%
-      formatRound(columns = which(sapply(data_to_show, is.numeric)), digits = 2)
-  })
+      formatRound(
+        columns = names(data_to_show)[sapply(data_to_show, is.numeric) & names(data_to_show) != "year"], 
+        digits = 2
+      )
+    })
 }
 
 # Run the application
