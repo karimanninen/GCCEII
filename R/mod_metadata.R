@@ -31,14 +31,18 @@ get_dimension_weights_table <- function() {
 get_trade_indicators_table <- function() {
   data.frame(
     Indicator = c("Intra-GCC Trade Intensity",
-                  "Non-Oil Trade Share",
-                  "Trade Complementarity Index",
-                  "Services Trade Intensity"),
-    Description = c("Intra-GCC exports as % of total exports",
-                    "Non-hydrocarbon exports as share of intra-GCC trade",
-                    "Alignment of export/import structures across countries",
-                    "Cross-border services trade relative to GDP"),
-    Weight = c("30%", "25%", "25%", "20%"),
+                  "Services Trade Share",
+                  "Non-oil Trade Intensity",
+                  "Services as % of Total Trade",
+                  "Intermediate Goods Share",
+                  "Trade by Product Type"),
+    Description = c("Total intra-GCC trade (exports + imports) as percentage of GDP",
+                    "Intra-GCC services trade as percentage of GDP",
+                    "Intra-GCC non-oil merchandise trade as percentage of GDP",
+                    "Share of services in total intra-GCC trade",
+                    "Share of intermediate goods in intra-GCC trade (value chain indicator)",
+                    "Composition of trade by BEC category (primary, intermediate, final goods)"),
+    Weight = c("16.7%", "16.7%", "16.7%", "16.7%", "16.7%", "16.7%"),
     stringsAsFactors = FALSE
   )
 }
@@ -48,15 +52,17 @@ get_trade_indicators_table <- function() {
 #' @return Data frame with financial indicators
 get_financial_indicators_table <- function() {
   data.frame(
-    Indicator = c("Interest Rate Convergence",
-                  "Inflation Convergence",
+    Indicator = c("OCA Readiness",
                   "Intra-GCC FDI Share",
-                  "Banking Sector Integration"),
-    Description = c("Coefficient of variation in policy/lending rates",
-                    "Similarity in inflation rates across countries",
-                    "Share of FDI originating from other GCC states",
-                    "Cross-border banking assets and liabilities"),
-    Weight = c("30%", "25%", "25%", "20%"),
+                  "Banking Sector Penetration",
+                  "Stock Market Integration",
+                  "Financial Depth Convergence"),
+    Description = c("Optimal Currency Area composite: inflation convergence, monetary (M2) convergence, and GDP growth synchronization",
+                    "Foreign direct investment originating from other GCC states as share of GDP",
+                    "Number of GCC banks operating in other member states",
+                    "Cross-listing of companies and market openness across GCC exchanges",
+                    "Convergence in banking sector assets relative to GDP across member states"),
+    Weight = c("20%", "20%", "20%", "20%", "20%"),
     stringsAsFactors = FALSE
   )
 }
@@ -67,14 +73,16 @@ get_financial_indicators_table <- function() {
 get_labor_indicators_table <- function() {
   data.frame(
     Indicator = c("GCC National Worker Mobility",
-                  "Intra-GCC Tourism Share",
-                  "Student Exchange Intensity",
-                  "Professional Qualification Recognition"),
+                  "Intra-GCC Tourism Intensity",
+                  "Student Exchange Mobility",
+                  "Labor Force Participation Convergence",
+                  "Unemployment Rate Convergence"),
     Description = c("GCC nationals employed in other member states",
-                    "Inbound tourists from other GCC states as share of total",
-                    "Students studying in other GCC countries",
-                    "Mutual recognition of professional credentials"),
-    Weight = c("35%", "30%", "20%", "15%"),
+                    "Inbound tourists from other GCC states as share of total tourism",
+                    "GCC students enrolled in universities in other member states",
+                    "Convergence in labor force participation rates across GCC",
+                    "Convergence in unemployment rates across member states"),
+    Weight = c("30%", "30%", "20%", "10%", "10"),
     stringsAsFactors = FALSE
   )
 }
@@ -84,15 +92,11 @@ get_labor_indicators_table <- function() {
 #' @return Data frame with infrastructure indicators
 get_infrastructure_indicators_table <- function() {
   data.frame(
-    Indicator = c("Transport Connectivity Index",
-                  "Energy Grid Integration",
-                  "Digital Infrastructure Score",
-                  "Logistics Performance"),
-    Description = c("Road/rail/air connections between member states",
-                    "GCC Interconnection Grid participation and flows",
-                    "Broadband, mobile coverage, and e-government readiness",
-                    "Cross-border logistics efficiency"),
-    Weight = c("30%", "25%", "25%", "20%"),
+    Indicator = c("Aviation Connectivity",
+                  "Electricity Production Convergence"),
+    Description = c("Intra-GCC air passenger arrivals relative to population",
+                    "Convergence in per capita electricity production across member states"),
+    Weight = c("50%", "50%"),
     stringsAsFactors = FALSE
   )
 }
@@ -102,13 +106,13 @@ get_infrastructure_indicators_table <- function() {
 #' @return Data frame with sustainability indicators
 get_sustainability_indicators_table <- function() {
   data.frame(
-    Indicator = c("Economic Diversification Index",
-                  "Renewable Energy Share",
-                  "Green Finance Development"),
-    Description = c("Non-oil GDP share and sectoral diversification",
-                    "Renewable energy as % of total energy production",
-                    "Green bonds, sustainable finance instruments"),
-    Weight = c("45%", "35%", "20%"),
+    Indicator = c("Non-oil GDP Share",
+                  "Non-oil GDP Convergence",
+                  "Manufacturing Share Convergence"),
+    Description = c("Direct measure of non-oil sector as percentage of total GDP",
+                    "Convergence in non-oil GDP shares across member states",
+                    "Convergence in manufacturing sector shares across member states"),
+    Weight = c("30%", "40%", "30%"),
     stringsAsFactors = FALSE
   )
 }
@@ -118,15 +122,23 @@ get_sustainability_indicators_table <- function() {
 #' @return Data frame with convergence indicators
 get_convergence_indicators_table <- function() {
   data.frame(
-    Indicator = c("GDP Growth Convergence",
-                  "Inflation Rate Convergence",
-                  "Fiscal Balance Convergence",
-                  "GDP per Capita Convergence"),
-    Description = c("Similarity in real GDP growth rates",
-                    "Alignment of consumer price inflation",
-                    "Convergence in government budget balances (% GDP)",
-                    "Reduction in income disparities across member states"),
-    Weight = c("25%", "25%", "25%", "25%"),
+    Indicator = c("Real Income Convergence",
+                  "Price Level Convergence",
+                  "Financial Depth Convergence",
+                  "LFPR Convergence",
+                  "Unemployment Convergence",
+                  "Non-oil GDP Convergence",
+                  "Manufacturing Convergence",
+                  "Oil Dependency Convergence"),
+    Description = c("Convergence in PPP-adjusted GDP per capita",
+                    "Convergence in price level indices (World=100)",
+                    "Convergence in banking assets/GDP ratios",
+                    "Convergence in labor force participation rates",
+                    "Convergence in unemployment rates",
+                    "Convergence in non-oil GDP shares",
+                    "Convergence in manufacturing sector shares",
+                    "Convergence in oil sector dependency"),
+    Weight = c("12,5%", "12,5%", "12,5%", "12,5%", "12,5%", "12,5%", "12,5%", "12,5%"),
     stringsAsFactors = FALSE
   )
 }
