@@ -1,0 +1,376 @@
+/* ==============================================================================
+   GCC ECONOMIC INTEGRATION INDEX DASHBOARD - STYLES
+   ============================================================================== */
+
+/* ===== LANDING PAGE STYLES ===== */
+
+/* Hide body scrollbar when on landing page */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.landing-container {
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+/* Hero Section with rotating backgrounds */
+.landing-hero {
+  height: 75vh;
+  min-height: 500px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  padding: 40px 20px;
+  overflow: hidden;
+  /* FALLBACK background if images don't load */
+  background: linear-gradient(135deg, #003366 0%, #005082 50%, #003366 100%);
+}
+
+/* Background image layers */
+.hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 1.5s ease-in-out;
+  opacity: 0;
+  z-index: 0;
+}
+
+.hero-bg.active {
+  opacity: 1;
+}
+
+/* Dark overlay for text readability */
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0,51,102,0.85) 0%, rgba(0,80,130,0.80) 50%, rgba(0,51,102,0.85) 100%);
+  z-index: 1;
+}
+
+/* Content sits above background */
+.landing-hero > *:not(.hero-bg):not(.hero-overlay) {
+  position: relative;
+  z-index: 2;
+}
+
+/* Background images - using local files from www/ folder */
+.hero-bg-1 { background-image: url('images/1.jpg'); }
+.hero-bg-2 { background-image: url('images/2.jpg'); }
+.hero-bg-3 { background-image: url('images/3.jpg'); }
+.hero-bg-4 { background-image: url('images/4.jpg'); }
+
+.landing-logo {
+  height: 90px;
+  margin-bottom: 25px;
+}
+
+.landing-title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  letter-spacing: 1px;
+}
+
+.landing-subtitle {
+  font-size: 1.3rem;
+  font-weight: 300;
+  margin-bottom: 30px;
+  opacity: 0.9;
+}
+
+/* Quote Carousel */
+.quote-carousel {
+  max-width: 850px;
+  padding: 35px 50px;
+  font-size: 1.35rem;
+  font-style: italic;
+  line-height: 1.7;
+  min-height: 100px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  margin: 20px 0;
+}
+
+.carousel-dots {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+  justify-content: center;
+}
+
+.carousel-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  padding: 0;
+}
+
+.carousel-dot:hover {
+  background: rgba(255,255,255,0.7);
+  transform: scale(1.2);
+}
+
+.carousel-dot.active {
+  background: white;
+  transform: scale(1.2);
+}
+
+/* Enter Button */
+.enter-btn {
+  margin-top: 35px;
+  padding: 18px 60px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #008035 0%, #006028 100%);
+  border: none;
+  color: white;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,128,53,0.4);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.enter-btn:hover {
+  background: linear-gradient(135deg, #009940 0%, #007030 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(0,128,53,0.5);
+}
+
+.enter-btn:active {
+  transform: translateY(-1px);
+}
+
+/* About Section */
+.landing-about {
+  padding: 70px 10%;
+  background: white;
+  text-align: center;
+}
+
+.landing-about h2 {
+  color: #003366;
+  font-size: 2.2rem;
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+.landing-about-text {
+  max-width: 950px;
+  margin: 0 auto;
+  font-size: 1.15rem;
+  line-height: 1.9;
+  color: #444;
+}
+
+/* Stats Row */
+.stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 35px;
+  margin-top: 50px;
+  flex-wrap: wrap;
+  padding: 0 20px;
+}
+
+.stat-box {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  padding: 30px 45px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+  min-width: 140px;
+}
+
+.stat-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.stat-box .number {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #003366;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-box .label {
+  color: #666;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Dimensions Preview */
+.dimensions-section {
+  padding: 60px 10%;
+  background: #f8f9fa;
+}
+
+.dimensions-section h3 {
+  text-align: center;
+  color: #003366;
+  font-size: 1.8rem;
+  margin-bottom: 40px;
+  font-weight: 600;
+}
+
+.dimension-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dimension-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  transition: all 0.3s ease;
+  border-left: 4px solid #003366;
+}
+
+.dimension-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.dimension-card i {
+  font-size: 2rem;
+  color: #003366;
+  width: 50px;
+  text-align: center;
+}
+
+.dimension-card .dim-text {
+  flex: 1;
+}
+
+.dimension-card .dim-title {
+  font-weight: 600;
+  color: #003366;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.dimension-card .dim-desc {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Footer */
+.landing-footer {
+  padding: 30px;
+  background: #003366;
+  color: rgba(255,255,255,0.8);
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.landing-footer a {
+  color: white;
+  text-decoration: none;
+}
+
+/* Back to Welcome link in dashboard */
+.back-to-welcome {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #003366;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.back-to-welcome:hover {
+  background: #004488;
+  transform: translateY(-2px);
+}
+
+/* ===== DASHBOARD STYLES ===== */
+.content-wrapper {
+  background-color: #f4f6f9;
+}
+
+.box {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.small-box {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.info-box {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+  .landing-title {
+    font-size: 2rem;
+  }
+
+  .landing-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .quote-carousel {
+    font-size: 1.1rem;
+    padding: 25px 30px;
+    margin: 15px;
+  }
+
+  .stats-row {
+    gap: 20px;
+  }
+
+  .stat-box {
+    padding: 20px 30px;
+  }
+
+  .stat-box .number {
+    font-size: 2.2rem;
+  }
+
+  .enter-btn {
+    padding: 15px 40px;
+  }
+}
