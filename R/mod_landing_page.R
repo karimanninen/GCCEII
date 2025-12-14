@@ -109,37 +109,229 @@ landing_about_section <- function() {
 #'
 #' @return Shiny UI element
 landing_dimensions_section <- function() {
-  dimensions <- list(
-    list(icon = "exchange-alt", title = "Trade Integration",
-         desc = "Intra-GCC merchandise and services trade intensity"),
-    list(icon = "university", title = "Financial Integration",
-         desc = "Cross-border financial flows and monetary convergence"),
-    list(icon = "users", title = "Labor Mobility",
-         desc = "Movement of workers, tourists, and students"),
-    list(icon = "road", title = "Infrastructure Connectivity",
-         desc = "Transport, energy, and digital infrastructure"),
-    list(icon = "leaf", title = "Sustainability",
-         desc = "Economic diversification and green transition"),
-    list(icon = "chart-line", title = "Economic Convergence",
-         desc = "Macroeconomic alignment across member states")
-  )
-
   div(class = "dimensions-section",
       h3("Six Integration Dimensions"),
-      div(class = "dimension-grid",
-          lapply(dimensions, function(d) {
-            div(class = "dimension-card",
-                icon(d$icon),
-                div(class = "dim-text",
-                    div(class = "dim-title", d$title),
-                    div(class = "dim-desc", d$desc)
-                )
-            )
-          })
-      )
+      p(style = "text-align: center; color: #666; margin-bottom: 30px;",
+        "Click on each dimension to learn more"),
+      
+      # Circular buttons
+      div(class = "dimension-circles",
+          
+          # Trade Integration
+          div(class = "dim-circle dim-circle-trade",
+              onclick = "openDimModal('trade')",
+              div(class = "dim-circle-icon", icon("exchange-alt")),
+              div(class = "dim-circle-label", "Trade Integration")
+          ),
+          
+          # Financial Integration
+          div(class = "dim-circle dim-circle-financial",
+              onclick = "openDimModal('financial')",
+              div(class = "dim-circle-icon", icon("university")),
+              div(class = "dim-circle-label", "Financial Integration")
+          ),
+          
+          # Labor Mobility
+          div(class = "dim-circle dim-circle-labor",
+              onclick = "openDimModal('labor')",
+              div(class = "dim-circle-icon", icon("users")),
+              div(class = "dim-circle-label", "Labor & Human Capital")
+          ),
+          
+          # Infrastructure
+          div(class = "dim-circle dim-circle-infrastructure",
+              onclick = "openDimModal('infrastructure')",
+              div(class = "dim-circle-icon", icon("road")),
+              div(class = "dim-circle-label", "Infrastructure Connectivity")
+          ),
+          
+          # Sustainability
+          div(class = "dim-circle dim-circle-sustainability",
+              onclick = "openDimModal('sustainability')",
+              div(class = "dim-circle-icon", icon("leaf")),
+              div(class = "dim-circle-label", "Sustainability")
+          ),
+          
+          # Convergence
+          div(class = "dim-circle dim-circle-convergence",
+              onclick = "openDimModal('convergence')",
+              div(class = "dim-circle-icon", icon("chart-line")),
+              div(class = "dim-circle-label", "Economic Convergence")
+          )
+      ),
+      
+      # ===== MODALS =====
+      dimension_modals()
   )
 }
 
+#' Dimension Modals
+#'
+#' @return Shiny UI element with all dimension modals
+dimension_modals <- function() {
+  tagList(
+    # Trade Modal
+    div(class = "dim-modal-overlay", id = "modal-trade",
+        onclick = "closeDimModal(event, 'trade')",
+        div(class = "dim-modal dim-modal-trade",
+            onclick = "event.stopPropagation()",
+            div(class = "dim-modal-header",
+                icon("exchange-alt"),
+                h4("Trade Integration"),
+                tags$button(class = "dim-modal-close", 
+                            onclick = "closeDimModal(event, 'trade')", 
+                            HTML("&times;"))
+            ),
+            div(class = "dim-modal-body",
+                p("Measures the intensity and composition of intra-GCC merchandise and services trade, 
+                  with emphasis on non-oil diversification and regional value chain participation. 
+                  Higher trade integration reflects stronger economic interdependence among member states."),
+                h5(icon("search"), "Indicators"),
+                tags$ul(
+                  tags$li("Intra-GCC Trade Intensity"),
+                  tags$li("Non-Oil Trade Share"),
+                  tags$li("Trade Complementarity Index"),
+                  tags$li("Services Trade Intensity")
+                )
+            )
+        )
+    ),
+    
+    # Financial Modal
+    div(class = "dim-modal-overlay", id = "modal-financial",
+        onclick = "closeDimModal(event, 'financial')",
+        div(class = "dim-modal dim-modal-financial",
+            onclick = "event.stopPropagation()",
+            div(class = "dim-modal-header",
+                icon("university"),
+                h4("Financial & Monetary Integration"),
+                tags$button(class = "dim-modal-close", 
+                            onclick = "closeDimModal(event, 'financial')", 
+                            HTML("&times;"))
+            ),
+            div(class = "dim-modal-body",
+                p("Assesses convergence in monetary conditions, banking sector integration, 
+                  and cross-border financial flows within the GCC. Strong financial integration 
+                  facilitates investment flows and supports the long-term goal of monetary union."),
+                h5(icon("search"), "Indicators"),
+                tags$ul(
+                  tags$li("Interest Rate Convergence"),
+                  tags$li("Inflation Convergence"),
+                  tags$li("Intra-GCC FDI Share"),
+                  tags$li("Banking Sector Integration")
+                )
+            )
+        )
+    ),
+    
+    # Labor Modal
+    div(class = "dim-modal-overlay", id = "modal-labor",
+        onclick = "closeDimModal(event, 'labor')",
+        div(class = "dim-modal dim-modal-labor",
+            onclick = "event.stopPropagation()",
+            div(class = "dim-modal-header",
+                icon("users"),
+                h4("Labor & Human Capital"),
+                tags$button(class = "dim-modal-close", 
+                            onclick = "closeDimModal(event, 'labor')", 
+                            HTML("&times;"))
+            ),
+            div(class = "dim-modal-body",
+                p("Captures the mobility of labor and people across GCC borders, including 
+                  worker movements, tourism, and student exchanges. The GCC common market aims to 
+                  enable free movement of GCC nationals for work and residence across member states."),
+                h5(icon("search"), "Indicators"),
+                tags$ul(
+                  tags$li("GCC National Worker Mobility"),
+                  tags$li("Intra-GCC Tourism Share"),
+                  tags$li("Student Exchange Intensity"),
+                  tags$li("Professional Qualification Recognition")
+                )
+            )
+        )
+    ),
+    
+    # Infrastructure Modal
+    div(class = "dim-modal-overlay", id = "modal-infrastructure",
+        onclick = "closeDimModal(event, 'infrastructure')",
+        div(class = "dim-modal dim-modal-infrastructure",
+            onclick = "event.stopPropagation()",
+            div(class = "dim-modal-header",
+                icon("road"),
+                h4("Infrastructure Connectivity"),
+                tags$button(class = "dim-modal-close", 
+                            onclick = "closeDimModal(event, 'infrastructure')", 
+                            HTML("&times;"))
+            ),
+            div(class = "dim-modal-body",
+                p("Tracks physical and digital connectivity infrastructure that enables 
+                  cross-border economic activity. This includes transport networks, energy 
+                  interconnection through the GCC Grid, and telecommunications infrastructure."),
+                h5(icon("search"), "Indicators"),
+                tags$ul(
+                  tags$li("Transport Connectivity Index"),
+                  tags$li("Energy Grid Integration"),
+                  tags$li("Digital Infrastructure Score"),
+                  tags$li("Logistics Performance")
+                )
+            )
+        )
+    ),
+    
+    # Sustainability Modal
+    div(class = "dim-modal-overlay", id = "modal-sustainability",
+        onclick = "closeDimModal(event, 'sustainability')",
+        div(class = "dim-modal dim-modal-sustainability",
+            onclick = "event.stopPropagation()",
+            div(class = "dim-modal-header",
+                icon("leaf"),
+                h4("Sustainability & Diversification"),
+                tags$button(class = "dim-modal-close", 
+                            onclick = "closeDimModal(event, 'sustainability')", 
+                            HTML("&times;"))
+            ),
+            div(class = "dim-modal-body",
+                p("Measures progress toward economic diversification away from hydrocarbon 
+                  dependence, aligned with national Vision 2030 strategies. Includes tracking 
+                  of renewable energy adoption and sustainable finance development."),
+                h5(icon("search"), "Indicators"),
+                tags$ul(
+                  tags$li("Economic Diversification Index"),
+                  tags$li("Renewable Energy Share"),
+                  tags$li("Green Finance Development")
+                )
+            )
+        )
+    ),
+    
+    # Convergence Modal
+    div(class = "dim-modal-overlay", id = "modal-convergence",
+        onclick = "closeDimModal(event, 'convergence')",
+        div(class = "dim-modal dim-modal-convergence",
+            onclick = "event.stopPropagation()",
+            div(class = "dim-modal-header",
+                icon("chart-line"),
+                h4("Macroeconomic Convergence"),
+                tags$button(class = "dim-modal-close", 
+                            onclick = "closeDimModal(event, 'convergence')", 
+                            HTML("&times;"))
+            ),
+            div(class = "dim-modal-body",
+                p("Assesses the degree to which GCC economies are converging in key macroeconomic 
+                  variables. Convergence in growth rates, inflation, and fiscal positions is a 
+                  prerequisite for deeper monetary integration and potential currency union."),
+                h5(icon("search"), "Indicators"),
+                tags$ul(
+                  tags$li("GDP Growth Convergence"),
+                  tags$li("Inflation Rate Convergence"),
+                  tags$li("Fiscal Balance Convergence"),
+                  tags$li("GDP per Capita Convergence")
+                )
+            )
+        )
+    )
+  )
+}
 #' Landing Page Footer Section
 #'
 #' @return Shiny UI element
@@ -218,6 +410,28 @@ carousel_js <- function() {
             startCarousel();
           }
         }, 100);
+      }
+    });
+        // ===== DIMENSION MODALS =====
+    function openDimModal(dimension) {
+      document.getElementById('modal-' + dimension).classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDimModal(event, dimension) {
+      if (event.target === event.currentTarget || event.target.classList.contains('dim-modal-close')) {
+        document.getElementById('modal-' + dimension).classList.remove('active');
+        document.body.style.overflow = 'auto';
+      }
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        document.querySelectorAll('.dim-modal-overlay.active').forEach(function(modal) {
+          modal.classList.remove('active');
+        });
+        document.body.style.overflow = 'auto';
       }
     });
   "))

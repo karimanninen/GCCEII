@@ -240,54 +240,199 @@ body {
   font-weight: 600;
 }
 
-.dimension-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 25px;
-  max-width: 1200px;
+/* ===== DIMENSION CIRCLES ===== */
+
+/* Circular buttons container */
+.dimension-circles {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 30px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
-.dimension-card {
-  background: white;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+/* Individual circle button */
+.dim-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.dim-circle:hover {
+  transform: translateY(-5px);
+}
+
+.dim-circle-icon {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 18px;
+  justify-content: center;
+  margin-bottom: 15px;
   transition: all 0.3s ease;
-  border-left: 4px solid #003366;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
-.dimension-card:hover {
-  transform: translateX(5px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+.dim-circle:hover .dim-circle-icon {
+  box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+  transform: scale(1.05);
 }
 
-.dimension-card i {
-  font-size: 2rem;
-  color: #003366;
-  width: 50px;
-  text-align: center;
+.dim-circle-icon i {
+  font-size: 3rem;
+  color: white;
 }
 
-.dimension-card .dim-text {
-  flex: 1;
-}
-
-.dimension-card .dim-title {
+.dim-circle-label {
+  font-size: 1rem;
   font-weight: 600;
+  color: #333;
+  text-align: center;
+  max-width: 120px;
+  line-height: 1.3;
+}
+
+/* Circle colors - matching GCC theme */
+.dim-circle-trade .dim-circle-icon { background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%); }
+.dim-circle-financial .dim-circle-icon { background: linear-gradient(135deg, #f9a825 0%, #f57f17 100%); }
+.dim-circle-labor .dim-circle-icon { background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%); }
+.dim-circle-infrastructure .dim-circle-icon { background: linear-gradient(135deg, #e53935 0%, #c62828 100%); }
+.dim-circle-sustainability .dim-circle-icon { background: linear-gradient(135deg, #8e24aa 0%, #6a1b9a 100%); }
+.dim-circle-convergence .dim-circle-icon { background: linear-gradient(135deg, #00acc1 0%, #00838f 100%); }
+
+/* ===== DIMENSION MODALS ===== */
+
+.dim-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.dim-modal-overlay.active {
+  display: flex;
+}
+
+.dim-modal {
+  background: white;
+  border-radius: 15px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dim-modal-header {
+  padding: 25px 30px;
+  color: white;
+  border-radius: 15px 15px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.dim-modal-header i {
+  font-size: 2.5rem;
+}
+
+.dim-modal-header h4 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.dim-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.dim-modal-close:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+.dim-modal-body {
+  padding: 30px;
+}
+
+.dim-modal-body p {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: #444;
+  margin-bottom: 25px;
+}
+
+.dim-modal-body h5 {
   color: #003366;
   font-size: 1.1rem;
-  margin-bottom: 5px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.dimension-card .dim-desc {
-  font-size: 0.9rem;
-  color: #666;
-  line-height: 1.5;
+.dim-modal-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
+
+.dim-modal-body ul li {
+  padding: 10px 15px;
+  background: #f8f9fa;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border-left: 4px solid #003366;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* Modal header colors per dimension */
+.dim-modal-trade .dim-modal-header { background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%); }
+.dim-modal-financial .dim-modal-header { background: linear-gradient(135deg, #f9a825 0%, #f57f17 100%); }
+.dim-modal-labor .dim-modal-header { background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%); }
+.dim-modal-infrastructure .dim-modal-header { background: linear-gradient(135deg, #e53935 0%, #c62828 100%); }
+.dim-modal-sustainability .dim-modal-header { background: linear-gradient(135deg, #8e24aa 0%, #6a1b9a 100%); }
+.dim-modal-convergence .dim-modal-header { background: linear-gradient(135deg, #00acc1 0%, #00838f 100%); }
+
+
 
 /* Footer */
 .landing-footer {
