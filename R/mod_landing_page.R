@@ -189,9 +189,12 @@ dimension_modals <- function() {
                 h5(icon("search"), "Indicators"),
                 tags$ul(
                   tags$li("Intra-GCC Trade Intensity"),
+                  tags$li("Services Trade Share"),
                   tags$li("Non-Oil Trade Share"),
-                  tags$li("Trade Complementarity Index"),
-                  tags$li("Services Trade Intensity")
+                  tags$li("Services as % of Total Trade"),
+                  tags$li("Intermediate Goods Share"),
+                  tags$li("Trade by Product Type")
+                  
                 )
             )
         )
@@ -215,10 +218,11 @@ dimension_modals <- function() {
                   facilitates investment flows and supports the long-term goal of monetary union."),
                 h5(icon("search"), "Indicators"),
                 tags$ul(
-                  tags$li("Interest Rate Convergence"),
-                  tags$li("Inflation Convergence"),
+                  tags$li("OCA Readiness"),
                   tags$li("Intra-GCC FDI Share"),
-                  tags$li("Banking Sector Integration")
+                  tags$li("Banking Sector Penetration"),
+                  tags$li("Stock Market Integration"),
+                  tags$li("Financial Depth Convergence")
                 )
             )
         )
@@ -243,9 +247,10 @@ dimension_modals <- function() {
                 h5(icon("search"), "Indicators"),
                 tags$ul(
                   tags$li("GCC National Worker Mobility"),
-                  tags$li("Intra-GCC Tourism Share"),
-                  tags$li("Student Exchange Intensity"),
-                  tags$li("Professional Qualification Recognition")
+                  tags$li("Intra-GCC Tourism Intensity"),
+                  tags$li("Student Exchange Mobility"),
+                  tags$li("Labor Force Participation Convergence"),
+                  tags$li("Unemployment Rate Convergence")
                 )
             )
         )
@@ -269,10 +274,8 @@ dimension_modals <- function() {
                   interconnection through the GCC Grid, and telecommunications infrastructure."),
                 h5(icon("search"), "Indicators"),
                 tags$ul(
-                  tags$li("Transport Connectivity Index"),
-                  tags$li("Energy Grid Integration"),
-                  tags$li("Digital Infrastructure Score"),
-                  tags$li("Logistics Performance")
+                  tags$li("Aviation Connectivity"),
+                  tags$li("Electricity Production Convergence")
                 )
             )
         )
@@ -296,9 +299,9 @@ dimension_modals <- function() {
                   of renewable energy adoption and sustainable finance development."),
                 h5(icon("search"), "Indicators"),
                 tags$ul(
-                  tags$li("Economic Diversification Index"),
-                  tags$li("Renewable Energy Share"),
-                  tags$li("Green Finance Development")
+                  tags$li("Non-oil GDP Share"),
+                  tags$li("Non-oil GDP Convergence"),
+                  tags$li("Manufacturing Share Convergence")
                 )
             )
         )
@@ -322,10 +325,14 @@ dimension_modals <- function() {
                   prerequisite for deeper monetary integration and potential currency union."),
                 h5(icon("search"), "Indicators"),
                 tags$ul(
-                  tags$li("GDP Growth Convergence"),
-                  tags$li("Inflation Rate Convergence"),
-                  tags$li("Fiscal Balance Convergence"),
-                  tags$li("GDP per Capita Convergence")
+                  tags$li("Real Income Convergence"),
+                  tags$li("Price Level Convergence"),
+                  tags$li("Financial Depth Convergence"),
+                  tags$li("LFPR Convergence"),
+                  tags$li("Unemployment Convergence"),
+                  tags$li("Non-oil GDP Convergence"),
+                  tags$li("Manufacturing Convergence"),
+                  tags$li("Oil Dependency Convergence")
                 )
             )
         )
