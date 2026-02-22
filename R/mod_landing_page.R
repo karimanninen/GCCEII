@@ -94,11 +94,11 @@ landing_about_section <- function() {
               div(class = "label", "Dimensions")
           ),
           div(class = "stat-box",
-              div(class = "number", "40+"),
+              div(class = "number", "32"),
               div(class = "label", "Indicators")
           ),
           div(class = "stat-box",
-              div(class = "number", "2015-2023"),
+              div(class = "number", "2015-2024"),
               div(class = "label", "Time Series")
           )
       )
@@ -188,13 +188,12 @@ dimension_modals <- function() {
                   Higher trade integration reflects stronger economic interdependence among member states."),
                 h5(icon("search"), "Indicators"),
                 tags$ul(
-                  tags$li("Intra-GCC Trade Intensity"),
-                  tags$li("Services Trade Share"),
-                  tags$li("Non-Oil Trade Share"),
+                  tags$li("Intra-GCC Trade Intensity (% of GDP)"),
+                  tags$li("Services Trade Share (% of GDP)"),
+                  tags$li("Non-oil Trade Intensity (% of GDP)"),
                   tags$li("Services as % of Total Trade"),
-                  tags$li("Intermediate Goods Share"),
-                  tags$li("Trade by Product Type")
-                  
+                  tags$li("Intermediate Goods Share (%)"),
+                  tags$li("Trade Diversification (100 - HHI)")
                 )
             )
         )
@@ -218,11 +217,14 @@ dimension_modals <- function() {
                   facilitates investment flows and supports the long-term goal of monetary union."),
                 h5(icon("search"), "Indicators"),
                 tags$ul(
-                  tags$li("OCA Readiness"),
+                  tags$li("Annual Inflation Rate (OCA)"),
+                  tags$li("M2 Money Supply Growth (OCA)"),
+                  tags$li("Real GDP Growth Rate (OCA)"),
                   tags$li("Intra-GCC FDI Share"),
-                  tags$li("Banking Sector Penetration"),
-                  tags$li("Stock Market Integration"),
-                  tags$li("Financial Depth Convergence")
+                  tags$li("GCC Banking Penetration"),
+                  tags$li("Stock Market Openness"),
+                  tags$li("Banking Sector Depth"),
+                  tags$li("Fiscal Balance Ratio")
                 )
             )
         )
@@ -247,10 +249,10 @@ dimension_modals <- function() {
                 h5(icon("search"), "Indicators"),
                 tags$ul(
                   tags$li("GCC National Worker Mobility"),
-                  tags$li("Intra-GCC Tourism Intensity"),
                   tags$li("Student Exchange Mobility"),
-                  tags$li("Labor Force Participation Convergence"),
-                  tags$li("Unemployment Rate Convergence")
+                  tags$li("Intra-GCC Tourism Intensity"),
+                  tags$li("Labor Force Participation Rate"),
+                  tags$li("Unemployment Rate")
                 )
             )
         )
@@ -300,8 +302,9 @@ dimension_modals <- function() {
                 h5(icon("search"), "Indicators"),
                 tags$ul(
                   tags$li("Non-oil GDP Share"),
-                  tags$li("Non-oil GDP Convergence"),
-                  tags$li("Manufacturing Share Convergence")
+                  tags$li("Oil Dependency"),
+                  tags$li("Manufacturing Share"),
+                  tags$li("Non-oil Revenue Share")
                 )
             )
         )
@@ -327,12 +330,11 @@ dimension_modals <- function() {
                 tags$ul(
                   tags$li("Real Income Convergence"),
                   tags$li("Price Level Convergence"),
-                  tags$li("Financial Depth Convergence"),
-                  tags$li("LFPR Convergence"),
-                  tags$li("Unemployment Convergence"),
                   tags$li("Non-oil GDP Convergence"),
                   tags$li("Manufacturing Convergence"),
-                  tags$li("Oil Dependency Convergence")
+                  tags$li("Oil Dependency Convergence"),
+                  tags$li("Fiscal Balance Convergence"),
+                  tags$li("Interest Rate Convergence")
                 )
             )
         )
@@ -345,7 +347,7 @@ dimension_modals <- function() {
 landing_footer_section <- function() {
   div(class = "landing-footer",
       p(
-        "\uA9 2025 GCC Statistical Center (GCC-Stat) | ",
+        "\uA9 2026 GCC Statistical Center (GCC-Stat) | ",
         tags$a(href = "https://gccstat.org", target = "_blank", "www.gccstat.org")
       )
   )

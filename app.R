@@ -1,7 +1,7 @@
 # ==============================================================================
 # GCC ECONOMIC INTEGRATION INDEX DASHBOARD
-# Version: 3.0 - Modular Architecture
-# Date: December 2025
+# Version: 4.0 - COINr Pipeline Integration
+# Date: February 2026
 # ==============================================================================
 #
 # A comprehensive Shiny dashboard for analyzing GCC economic integration
@@ -10,11 +10,11 @@
 # Features:
 # - ARIIP-style landing page with rotating quotes carousel
 # - 7 interactive tabs with 25+ visualizations
-# - Time series analysis (2015-2023)
+# - Time series analysis (2015-2024)
+# - 32 indicators across 6 dimensions (COINr framework)
 # - Country comparisons and rankings
 # - Year-over-year change analytics
-# - Six integration dimensions: Trade, Financial, Labor, Infrastructure,
-#   Sustainability, and Economic Convergence
+# - Dual data source: gcceii_scores.csv (primary) or Fusion Registry
 #
 # ==============================================================================
 
@@ -47,6 +47,7 @@ dimension_scores <- gcc_data$dimension_scores
 gcc_ts <- gcc_data$gcc_ts
 yoy_changes <- gcc_data$yoy_changes
 country_data <- gcc_data$country_data
+indicator_detail <- gcc_data$indicator_detail  # NULL for legacy data sources
 
 # Get unique countries
 countries <- get_countries(dimension_scores)
@@ -589,7 +590,8 @@ overview_tab_ui <- function() {
         status = "primary",
         solidHeader = TRUE,
         h4("Welcome to the GCC Economic Integration Index Dashboard"),
-        p("This dashboard provides comprehensive analysis of economic integration across GCC member states from 2015 to 2023."),
+        p("This dashboard provides comprehensive analysis of economic integration across GCC member states from 2015 to 2024,
+          based on 32 indicators across 6 dimensions constructed using the COINr framework."),
         hr(),
         h5(strong("Dashboard Features:")),
         tags$ul(
