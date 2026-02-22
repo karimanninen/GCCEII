@@ -442,37 +442,196 @@ server <- function(input, output, session) {
     create_radar_chart(scores)
   })
 
-  output$country_dimension_bars <- renderPlotly({
-    latest <- dimension_scores %>%
-      filter(country == input$selected_country, year == max(year))
-    dim_data <- create_dimension_df(latest)
-    create_dimension_bar_chart(dim_data, COUNTRY_COLORS[input$selected_country])
-  })
-
-  output$country_trend <- renderPlotly({
-    ctry_data <- dimension_scores %>% filter(country == input$selected_country)
-    create_line_chart(ctry_data, "year", "overall_index",
-                      line_color = COUNTRY_COLORS[input$selected_country])
-  })
-
-  output$country_vs_gcc <- renderPlotly({
-    ctry_data <- dimension_scores %>% filter(country == input$selected_country)
+  # -- Combined Country vs GCC trend (replaces two separate charts) --
+  output$country_vs_gcc_combined <- renderPlotly({
+    ctry <- input$selected_country
+    ctry_data <- dimension_scores %>% filter(country == ctry)
 
     plot_ly() %>%
       add_trace(data = ctry_data, x = ~year, y = ~overall_index,
-                name = input$selected_country, type = 'scatter', mode = 'lines+markers',
-                line = list(color = COUNTRY_COLORS[input$selected_country], width = 3),
+                name = ctry, type = 'scatter', mode = 'lines+markers',
+                line = list(color = COUNTRY_COLORS[ctry], width = 3),
                 marker = list(size = 10)) %>%
       add_trace(data = gcc_ts, x = ~year, y = ~overall,
                 name = "GCC Average", type = 'scatter', mode = 'lines+markers',
-                line = list(color = '#003366', width = 3, dash = 'dash'),
-                marker = list(size = 10)) %>%
+                line = list(color = COUNTRY_COLORS_WITH_GCC["GCC"], width = 3, dash = 'dash'),
+                marker = list(size = 8, symbol = "diamond")) %>%
       layout(
-        xaxis = list(title = "Year"),
+        xaxis = list(title = "Year", dtick = 1),
         yaxis = list(title = "Overall Index", range = c(0, 100)),
         hovermode = 'x unified',
         legend = list(orientation = 'h', y = -0.15)
       )
+  })
+
+  # -- Lollipop chart: country vs GCC indicator comparison --
+  output$cp_indicator_lollipop <- renderPlotly({
+    ctry <- input$selected_country
+    dim <- input$cp_dimension_select
+
+    if (is.null(indicator_detail) || nrow(indicator_detail) == 0) {
+      return(plot_ly() %>% layout(title = "Indicator data not available"))
+    }
+
+    latest_year <- max(indicator_detail$year)
+
+    # Get country and GCC scores for each indicator in the dimension
+    ctry_ind <- indicator_detail %>%
+      dplyr::filter(country == ctry, dimension == dim, year == latest_year) %>%
+      dplyr::select(indicator_code, indicator_label, ctry_score = normalized_value)
+
+    gcc_ind <- indicator_detail %>%
+      dplyr::filter(country == "GCC", dimension == dim, year == latest_year) %>%
+      dplyr::select(indicator_code, gcc_score = normalized_value)
+
+    combined <- ctry_ind %>%
+      dplyr::left_join(gcc_ind, by = "indicator_code") %>%
+      dplyr::arrange(ctry_score)
+
+    if (nrow(combined) == 0) {
+      return(plot_ly() %>% layout(title = paste("No indicators for", dim)))
+    }
+
+    # Ordered factor for y-axis
+    combined$indicator_label <- factor(combined$indicator_label,
+                                       levels = combined$indicator_label)
+
+    ctry_color <- COUNTRY_COLORS[ctry]
+
+    p <- plot_ly()
+
+    # Connecting lines (gap segments)
+    for (i in seq_len(nrow(combined))) {
+      p <- p %>% add_trace(
+        x = c(combined$ctry_score[i], combined$gcc_score[i]),
+        y = c(combined$indicator_label[i], combined$indicator_label[i]),
+        type = 'scatter', mode = 'lines',
+        line = list(color = '#cccccc', width = 2),
+        showlegend = FALSE, hoverinfo = 'skip'
+      )
+    }
+
+    # Country dots
+    p <- p %>% add_trace(
+      data = combined, x = ~ctry_score, y = ~indicator_label,
+      type = 'scatter', mode = 'markers',
+      marker = list(size = 14, color = ctry_color,
+                    line = list(color = 'white', width = 1.5)),
+      name = ctry,
+      hovertemplate = paste0("<b>%{y}</b><br>", ctry, ": %{x:.1f}<extra></extra>")
+    )
+
+    # GCC dots
+    p <- p %>% add_trace(
+      data = combined, x = ~gcc_score, y = ~indicator_label,
+      type = 'scatter', mode = 'markers',
+      marker = list(size = 14, color = COUNTRY_COLORS_WITH_GCC["GCC"],
+                    symbol = "diamond",
+                    line = list(color = 'white', width = 1.5)),
+      name = "GCC Average",
+      hovertemplate = "<b>%{y}</b><br>GCC: %{x:.1f}<extra></extra>"
+    )
+
+    p %>% layout(
+      xaxis = list(title = paste("Score (", latest_year, ")"),
+                   range = c(0, 105)),
+      yaxis = list(title = "", automargin = TRUE),
+      legend = list(orientation = 'h', y = -0.15),
+      margin = list(l = 160)
+    )
+  })
+
+  # -- Small multiples: indicator trends for selected country + GCC overlay --
+  output$cp_indicator_trends <- renderPlotly({
+    ctry <- input$selected_country
+    dim <- input$cp_dimension_select
+
+    if (is.null(indicator_detail) || nrow(indicator_detail) == 0) {
+      return(plot_ly() %>% layout(title = "Indicator data not available"))
+    }
+
+    # Filter indicator data for this dimension (country + GCC)
+    ind_data <- indicator_detail %>%
+      dplyr::filter(dimension == dim,
+                    country %in% c(ctry, "GCC")) %>%
+      dplyr::arrange(indicator_code, year)
+
+    ind_info <- ind_data %>%
+      dplyr::distinct(indicator_code, indicator_label) %>%
+      dplyr::arrange(indicator_code)
+
+    n_ind <- nrow(ind_info)
+    if (n_ind == 0) {
+      return(plot_ly() %>% layout(title = paste("No indicators for", dim)))
+    }
+
+    ctry_color <- COUNTRY_COLORS[ctry]
+    gcc_color <- COUNTRY_COLORS_WITH_GCC["GCC"]
+
+    plots <- lapply(seq_len(n_ind), function(i) {
+      ind_code <- ind_info$indicator_code[i]
+      ind_label <- ind_info$indicator_label[i]
+
+      ctry_series <- ind_data %>%
+        dplyr::filter(indicator_code == ind_code, country == ctry)
+      gcc_series <- ind_data %>%
+        dplyr::filter(indicator_code == ind_code, country == "GCC")
+
+      plot_ly() %>%
+        add_trace(data = ctry_series, x = ~year, y = ~normalized_value,
+                  type = 'scatter', mode = 'lines+markers',
+                  line = list(color = ctry_color, width = 2),
+                  marker = list(size = 4, color = ctry_color),
+                  name = ctry, showlegend = (i == 1),
+                  legendgroup = "ctry",
+                  hovertemplate = paste0(
+                    "<b>", ind_label, "</b><br>",
+                    ctry, ": %{y:.1f}<extra></extra>")) %>%
+        add_trace(data = gcc_series, x = ~year, y = ~normalized_value,
+                  type = 'scatter', mode = 'lines+markers',
+                  line = list(color = gcc_color, width = 2, dash = "dash"),
+                  marker = list(size = 4, color = gcc_color, symbol = "diamond"),
+                  name = "GCC", showlegend = (i == 1),
+                  legendgroup = "gcc",
+                  hovertemplate = paste0(
+                    "<b>", ind_label, "</b><br>",
+                    "GCC: %{y:.1f}<extra></extra>")) %>%
+        layout(
+          annotations = list(
+            list(text = ind_label, x = 0.5, y = 1.08,
+                 xref = "paper", yref = "paper",
+                 showarrow = FALSE,
+                 font = list(size = 11, color = "#333"))
+          ),
+          xaxis = list(dtick = 2),
+          yaxis = list(range = c(0, 100))
+        )
+    })
+
+    n_cols <- min(3, n_ind)
+    n_rows <- ceiling(n_ind / n_cols)
+    chart_height <- n_rows * 250
+
+    subplot(plots, nrows = n_rows, shareX = TRUE, shareY = TRUE,
+            titleX = FALSE, titleY = FALSE, margin = 0.06) %>%
+      layout(
+        yaxis = list(title = "Score (0\u2013100)", range = c(0, 100)),
+        margin = list(t = 30, b = 40),
+        height = chart_height,
+        legend = list(orientation = 'h', y = -0.08)
+      )
+  })
+
+  # -- Dynamic titles for indicator detail section --
+  output$cp_lollipop_title <- renderUI({
+    dim <- input$cp_dimension_select
+    ctry <- input$selected_country
+    tags$span(paste0(ctry, " vs GCC \u2014 ", dim, " Indicators"))
+  })
+
+  output$cp_trends_title <- renderUI({
+    dim <- input$cp_dimension_select
+    tags$span(paste(dim, "Indicator Trends"))
   })
 
   # ---------------------------------------------------------------------------
@@ -850,6 +1009,8 @@ gcc_timeseries_tab_ui <- function() {
 country_profiles_tab_ui <- function() {
   tabItem(
     tabName = "country_profiles",
+
+    # --- Row 1: Country selector + value boxes ---
     fluidRow(
       box(width = 4, title = "Select Country",
           status = "primary", solidHeader = TRUE,
@@ -858,23 +1019,47 @@ country_profiles_tab_ui <- function() {
       valueBoxOutput("country_overall", width = 4),
       valueBoxOutput("country_rank", width = 4)
     ),
+
+    # --- Row 2: Radar chart + combined Country vs GCC trend ---
     fluidRow(
-      box(width = 6, title = "Dimension Profile",
+      box(width = 5, title = "Dimension Profile (Latest Year)",
           status = "info", solidHeader = TRUE,
-          plotlyOutput("country_radar", height = "400px")),
-      box(width = 6, title = "Dimension Scores",
+          plotlyOutput("country_radar", height = "380px")),
+      box(width = 7, title = "Overall Index: Country vs GCC Average",
           status = "info", solidHeader = TRUE,
-          plotlyOutput("country_dimension_bars", height = "400px"))
+          plotlyOutput("country_vs_gcc_combined", height = "380px"))
     ),
+
+    # --- Row 3: Dimension selector for indicator drill-down ---
     fluidRow(
-      box(width = 12, title = "Country Trend Over Time",
+      box(width = 12, title = "Indicator Detail",
+          status = "primary", solidHeader = TRUE,
+          fluidRow(
+            column(4,
+              selectInput("cp_dimension_select", "Select dimension to explore:",
+                          choices = DIMENSION_LABELS, selected = "Trade")
+            ),
+            column(8,
+              div(style = "padding-top: 25px; color: #666; font-size: 0.9rem;",
+                icon("info-circle"),
+                "Compare the selected country\u2019s indicator scores against the GCC average,",
+                "and track individual indicator trends over time."
+              )
+            )
+          )
+      )
+    ),
+
+    # --- Row 4: Lollipop comparison + small multiples side by side ---
+    fluidRow(
+      box(width = 5,
+          title = uiOutput("cp_lollipop_title"),
           status = "success", solidHeader = TRUE,
-          plotlyOutput("country_trend", height = "350px"))
-    ),
-    fluidRow(
-      box(width = 12, title = "Country vs GCC Average",
-          status = "warning", solidHeader = TRUE,
-          plotlyOutput("country_vs_gcc", height = "350px"))
+          plotlyOutput("cp_indicator_lollipop", height = "450px")),
+      box(width = 7,
+          title = uiOutput("cp_trends_title"),
+          status = "success", solidHeader = TRUE,
+          plotlyOutput("cp_indicator_trends", height = "450px"))
     )
   )
 }
