@@ -225,50 +225,183 @@ server <- function(input, output, session) {
   # GCC Timeseries Tab Outputs
   # ---------------------------------------------------------------------------
 
+  # -- Reactive: selected dimension (default: Trade) --
+  selected_dimension <- reactiveVal("Trade")
+
+  observeEvent(input$dim_btn_Trade, { selected_dimension("Trade") })
+  observeEvent(input$dim_btn_Financial, { selected_dimension("Financial") })
+  observeEvent(input$dim_btn_Labor, { selected_dimension("Labor") })
+  observeEvent(input$dim_btn_Infrastructure, { selected_dimension("Infrastructure") })
+  observeEvent(input$dim_btn_Sustainability, { selected_dimension("Sustainability") })
+  observeEvent(input$dim_btn_Convergence, { selected_dimension("Convergence") })
+
+  # -- Summary header bar --
+  output$ts_summary_bar <- renderUI({
+    latest <- gcc_ts %>% filter(year == max(year))
+    prev <- gcc_ts %>% filter(year == max(year) - 1)
+    change <- round(latest$overall - prev$overall, 1)
+    change_class <- if (change >= 0) "positive" else "negative"
+    change_arrow <- if (change >= 0) "\u25b2" else "\u25bc"
+    level <- latest$integration_level
+    level_class <- tolower(level)
+
+    div(class = "ts-summary-bar",
+      div(class = "ts-summary-item",
+        div(class = "ts-summary-value", round(latest$overall, 1)),
+        div(class = "ts-summary-label", paste("GCC Index", max(gcc_ts$year)))
+      ),
+      div(class = "ts-summary-item",
+        div(class = paste("ts-summary-change", change_class),
+          paste(change_arrow, abs(change), "pts from", max(gcc_ts$year) - 1)),
+        div(class = "ts-summary-label", "Year-over-Year")
+      ),
+      div(class = "ts-summary-item",
+        span(class = paste("ts-level-badge", level_class), level),
+        div(class = "ts-summary-label", "Integration Level")
+      ),
+      div(class = "ts-summary-item",
+        div(class = "ts-summary-value", paste0(min(gcc_ts$year), "\u2013", max(gcc_ts$year))),
+        div(class = "ts-summary-label", "Time Coverage")
+      )
+    )
+  })
+
+  # -- Overall trend (compact) --
   output$gcc_overall_trend <- renderPlotly({
     create_line_chart(gcc_ts, "year", "overall")
   })
 
-  output$gcc_dimension_trends <- renderPlotly({
-    p <- plot_ly(gcc_ts, x = ~year)
+  # -- Dynamic titles --
+  output$ts_dimension_title <- renderUI({
+    dim <- selected_dimension()
+    tags$span(paste(dim, "Integration \u2014 Country Comparison"))
+  })
 
-    for (i in seq_along(DIMENSION_COLS)) {
+  output$ts_indicators_title <- renderUI({
+    dim <- selected_dimension()
+    tags$span(paste(dim, "Indicators \u2014 GCC Aggregate Time Series"))
+  })
+
+  # -- Dimension country comparison chart --
+  output$ts_dimension_countries <- renderPlotly({
+    dim <- selected_dimension()
+    col_name <- DIMENSION_CODE_MAP[dim]
+
+    p <- plot_ly()
+
+    # Country lines (thin, colored)
+    for (ctry in countries) {
+      ctry_data <- dimension_scores %>% dplyr::filter(country == ctry)
       p <- p %>% add_trace(
-        y = as.formula(paste0("~", DIMENSION_COLS[i])),
-        name = DIMENSION_LABELS[i],
-        type = 'scatter', mode = 'lines+markers',
-        line = list(color = DIMENSION_COLORS[i], width = 2),
-        marker = list(size = 8)
+        data = ctry_data, x = ~year,
+        y = as.formula(paste0("~", col_name)),
+        name = ctry, type = 'scatter', mode = 'lines+markers',
+        line = list(color = COUNTRY_COLORS[ctry], width = 1.5),
+        marker = list(size = 5),
+        legendgroup = ctry
       )
     }
 
+    # GCC aggregate (thick, gold, dashed)
+    p <- p %>% add_trace(
+      data = gcc_ts, x = ~year,
+      y = as.formula(paste0("~", col_name)),
+      name = "GCC", type = 'scatter', mode = 'lines+markers',
+      line = list(color = COUNTRY_COLORS_WITH_GCC["GCC"], width = 3.5, dash = "dash"),
+      marker = list(size = 9, symbol = "diamond",
+                    color = COUNTRY_COLORS_WITH_GCC["GCC"]),
+      legendgroup = "GCC"
+    )
+
     p %>% layout(
-      xaxis = list(title = "Year"),
-      yaxis = list(title = "Score", range = c(0, 100)),
+      xaxis = list(title = "Year", dtick = 1),
+      yaxis = list(title = paste(dim, "Score"), range = c(0, 100)),
       hovermode = 'x unified',
       legend = list(orientation = 'h', y = -0.15)
     )
   })
 
-  output$all_countries_trend <- renderPlotly({
-    p <- plot_ly()
+  # -- Indicator small multiples (GCC aggregate, subplot grid) --
+  output$ts_indicator_multiples <- renderPlotly({
+    dim <- selected_dimension()
 
-    for (ctry in countries) {
-      ctry_data <- dimension_scores %>% filter(country == ctry)
-      p <- p %>% add_trace(
-        data = ctry_data, x = ~year, y = ~overall_index,
-        name = ctry, type = 'scatter', mode = 'lines+markers',
-        line = list(color = COUNTRY_COLORS[ctry], width = 2),
-        marker = list(size = 8)
+    if (is.null(indicator_detail) || nrow(indicator_detail) == 0) {
+      return(
+        plot_ly() %>%
+          layout(title = "Indicator detail data not available",
+                 xaxis = list(visible = FALSE), yaxis = list(visible = FALSE))
       )
     }
 
-    p %>% layout(
-      xaxis = list(title = "Year"),
-      yaxis = list(title = "Overall Index", range = c(0, 100)),
-      hovermode = 'x unified',
-      legend = list(orientation = 'h', y = -0.15)
+    # Filter to GCC aggregate for the selected dimension
+    gcc_ind <- indicator_detail %>%
+      dplyr::filter(dimension == dim, country == "GCC") %>%
+      dplyr::arrange(indicator_code, year)
+
+    # Get unique indicators and their labels
+    ind_info <- gcc_ind %>%
+      dplyr::distinct(indicator_code, indicator_label) %>%
+      dplyr::arrange(indicator_code)
+
+    n_ind <- nrow(ind_info)
+    if (n_ind == 0) {
+      return(
+        plot_ly() %>%
+          layout(title = paste("No indicators found for", dim),
+                 xaxis = list(visible = FALSE), yaxis = list(visible = FALSE))
+      )
+    }
+
+    # Dimension-specific accent color for the small multiples
+    dim_colors <- c(
+      "Trade" = "#1565c0", "Financial" = "#f57f17",
+      "Labor" = "#2e7d32", "Infrastructure" = "#c62828",
+      "Sustainability" = "#6a1b9a", "Convergence" = "#00838f"
     )
+    accent <- dim_colors[dim]
+
+    # Build one subplot per indicator
+    plots <- lapply(seq_len(n_ind), function(i) {
+      ind_code <- ind_info$indicator_code[i]
+      ind_label <- ind_info$indicator_label[i]
+      ind_data <- gcc_ind %>% dplyr::filter(indicator_code == ind_code)
+
+      plot_ly(ind_data, x = ~year, y = ~normalized_value,
+              type = 'scatter', mode = 'lines+markers',
+              line = list(color = accent, width = 2),
+              marker = list(size = 5, color = accent),
+              hovertemplate = paste0(
+                "<b>", ind_label, "</b><br>",
+                "Year: %{x}<br>",
+                "Score: %{y:.1f}<br>",
+                "<extra></extra>"
+              ),
+              showlegend = FALSE) %>%
+        layout(
+          annotations = list(
+            list(text = ind_label, x = 0.5, y = 1.08,
+                 xref = "paper", yref = "paper",
+                 showarrow = FALSE,
+                 font = list(size = 11, color = "#333"))
+          ),
+          xaxis = list(dtick = 2),
+          yaxis = list(range = c(0, 100))
+        )
+    })
+
+    n_cols <- min(3, n_ind)
+    n_rows <- ceiling(n_ind / n_cols)
+
+    # Calculate dynamic height: 250px per row
+    chart_height <- n_rows * 250
+
+    subplot(plots, nrows = n_rows, shareX = TRUE, shareY = TRUE,
+            titleX = FALSE, titleY = FALSE, margin = 0.06) %>%
+      layout(
+        yaxis = list(title = "Score (0\u2013100)", range = c(0, 100)),
+        margin = list(t = 30, b = 40),
+        height = chart_height
+      )
   })
 
   # ---------------------------------------------------------------------------
@@ -652,20 +785,64 @@ gcc_overall_tab_ui <- function() {
 gcc_timeseries_tab_ui <- function() {
   tabItem(
     tabName = "gcc_timeseries",
+
+    # --- Tier 1: Summary header + compact overall trend ---
     fluidRow(
-      box(width = 12, title = "GCC Overall Index Trend",
+      column(12, uiOutput("ts_summary_bar"))
+    ),
+    fluidRow(
+      box(width = 12, title = "GCC Overall Index Trend (2015\u20132024)",
           status = "primary", solidHeader = TRUE,
-          plotlyOutput("gcc_overall_trend", height = "350px"))
+          plotlyOutput("gcc_overall_trend", height = "250px"))
     ),
+
+    # --- Tier 2: Dimension selector pills ---
     fluidRow(
-      box(width = 12, title = "GCC Dimension Trends",
+      column(12,
+        div(class = "dimension-selector",
+          tags$label("Explore by dimension:", class = "dim-selector-label"),
+          div(class = "dim-pills",
+            actionButton("dim_btn_Trade", tagList(icon("exchange-alt"), " Trade"),
+                         class = "dim-pill dim-pill-trade"),
+            actionButton("dim_btn_Financial", tagList(icon("university"), " Financial"),
+                         class = "dim-pill dim-pill-financial"),
+            actionButton("dim_btn_Labor", tagList(icon("users"), " Labor"),
+                         class = "dim-pill dim-pill-labor"),
+            actionButton("dim_btn_Infrastructure", tagList(icon("road"), " Infrastructure"),
+                         class = "dim-pill dim-pill-infrastructure"),
+            actionButton("dim_btn_Sustainability", tagList(icon("leaf"), " Sustainability"),
+                         class = "dim-pill dim-pill-sustainability"),
+            actionButton("dim_btn_Convergence", tagList(icon("chart-line"), " Convergence"),
+                         class = "dim-pill dim-pill-convergence")
+          )
+        ),
+        # JS to toggle active class on pill buttons
+        tags$script(HTML("
+          $(document).on('click', '.dim-pill', function() {
+            $('.dim-pill').removeClass('active');
+            $(this).addClass('active');
+          });
+          $(document).on('shiny:sessioninitialized', function() {
+            $('#dim_btn_Trade').addClass('active');
+          });
+        "))
+      )
+    ),
+
+    # --- Tier 3: Selected dimension — country comparison ---
+    fluidRow(
+      box(width = 12,
+          title = uiOutput("ts_dimension_title"),
           status = "info", solidHeader = TRUE,
-          plotlyOutput("gcc_dimension_trends", height = "400px"))
+          plotlyOutput("ts_dimension_countries", height = "350px"))
     ),
+
+    # --- Tier 4: Indicator small multiples (GCC aggregate) ---
     fluidRow(
-      box(width = 12, title = "All Countries: Overall Index Trend",
+      box(width = 12,
+          title = uiOutput("ts_indicators_title"),
           status = "success", solidHeader = TRUE,
-          plotlyOutput("all_countries_trend", height = "400px"))
+          plotlyOutput("ts_indicator_multiples", height = "500px"))
     )
   )
 }
