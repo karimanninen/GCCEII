@@ -675,102 +675,381 @@ server <- function(input, output, session) {
   # GCC Analytics Tab Outputs
   # ---------------------------------------------------------------------------
 
-  output$yoy_dimension_changes <- renderPlotly({
-    changes <- yoy_changes %>%
-      filter(year >= input$analytics_year_range[1] & year <= input$analytics_year_range[2]) %>%
-      select(country, trade_change, financial_change, labor_change,
-             infrastructure_change, sustainability_change, convergence_change) %>%
-      group_by(country) %>%
-      summarise(across(everything(), ~mean(.x, na.rm = TRUE))) %>%
-      pivot_longer(cols = -country, names_to = "dimension", values_to = "change")
-
-    changes$dimension_label <- DIMENSION_CHANGE_TO_LABEL[changes$dimension]
-    changes$dimension_label <- factor(changes$dimension_label, levels = DIMENSION_LABELS)
-
-    create_yoy_scatter(changes)
+  # -- Dynamic titles --
+  output$analytics_waterfall_title <- renderUI({
+    tags$span(paste0("GCC Index Decomposition by Dimension (",
+                     input$analytics_from_year, " \u2192 ", input$analytics_to_year, ")"))
+  })
+  output$analytics_country_contrib_title <- renderUI({
+    tags$span(paste0("Country Contribution to GCC Change (",
+                     input$analytics_from_year, " \u2192 ", input$analytics_to_year, ")"))
+  })
+  output$analytics_spread_title <- renderUI({
+    tags$span(paste("Cross-Country Spread by Dimension \u2014", max(dimension_scores$year)))
+  })
+  output$analytics_movers_title <- renderUI({
+    ly <- max(dimension_scores$year)
+    tags$span(paste0("Biggest Movers (", ly - 1, " \u2192 ", ly, ")"))
   })
 
-  output$contribution_analysis <- renderPlotly({
-    selected_year <- input$analytics_year_range[2]
-    prev_year <- input$analytics_year_range[1]
+  # ===== Section 1: What Changed? =====
 
-    current_scores <- dimension_scores %>%
-      filter(year == selected_year) %>%
-      select(country, trade_score, financial_score, labor_score,
-             infrastructure_score, sustainability_score, convergence_score)
+  # -- Waterfall chart: dimension-level decomposition --
+  output$analytics_waterfall <- renderPlotly({
+    yr_from <- as.integer(input$analytics_from_year)
+    yr_to <- as.integer(input$analytics_to_year)
 
-    prev_scores <- dimension_scores %>%
-      filter(year == prev_year) %>%
-      select(country, trade_score, financial_score, labor_score,
-             infrastructure_score, sustainability_score, convergence_score)
+    gcc_from <- gcc_ts %>% dplyr::filter(year == yr_from)
+    gcc_to <- gcc_ts %>% dplyr::filter(year == yr_to)
 
-    if (nrow(prev_scores) == 0 || nrow(current_scores) == 0) {
-      return(plot_ly() %>% layout(title = "No data for selected year range"))
+    if (nrow(gcc_from) == 0 || nrow(gcc_to) == 0) {
+      return(plot_ly() %>% layout(title = "No data for selected years"))
     }
 
-    changes <- current_scores %>%
-      left_join(prev_scores, by = "country", suffix = c("_end", "_start")) %>%
-      left_join(GDP_WEIGHTS, by = "country")
+    # Weighted dimension changes
+    dim_changes <- data.frame(
+      dimension = DIMENSION_LABELS,
+      change = sapply(DIMENSION_COLS, function(col) {
+        (gcc_to[[col]] - gcc_from[[col]])
+      }) * DIMENSION_WEIGHTS,
+      stringsAsFactors = FALSE
+    )
+    # Sort by absolute change descending for visual clarity
+    dim_changes <- dim_changes[order(-abs(dim_changes$change)), ]
 
-    contribution_data <- data.frame(
-      country = rep(changes$country, 6),
-      dimension = rep(DIMENSION_LABELS, each = nrow(changes)),
-      contribution = c(
-        (changes$trade_score_end - changes$trade_score_start) * changes$weight,
-        (changes$financial_score_end - changes$financial_score_start) * changes$weight,
-        (changes$labor_score_end - changes$labor_score_start) * changes$weight,
-        (changes$infrastructure_score_end - changes$infrastructure_score_start) * changes$weight,
-        (changes$sustainability_score_end - changes$sustainability_score_start) * changes$weight,
-        (changes$convergence_score_end - changes$convergence_score_start) * changes$weight
+    # Build waterfall data
+    from_val <- gcc_from$overall
+    to_val <- gcc_to$overall
+
+    # Construct the bar positions
+    labels <- c(as.character(yr_from), dim_changes$dimension, as.character(yr_to))
+    n <- length(labels)
+
+    base_vals <- numeric(n)
+    bar_vals <- numeric(n)
+    bar_colors <- character(n)
+
+    # First bar: starting index
+    base_vals[1] <- 0
+    bar_vals[1] <- from_val
+    bar_colors[1] <- "#003366"
+
+    # Middle bars: dimension changes
+    running <- from_val
+    for (i in seq_len(nrow(dim_changes))) {
+      ch <- dim_changes$change[i]
+      if (ch >= 0) {
+        base_vals[i + 1] <- running
+        bar_vals[i + 1] <- ch
+        bar_colors[i + 1] <- "#4caf50"
+      } else {
+        base_vals[i + 1] <- running + ch
+        bar_vals[i + 1] <- abs(ch)
+        bar_colors[i + 1] <- "#f44336"
+      }
+      running <- running + ch
+    }
+
+    # Last bar: ending index
+    base_vals[n] <- 0
+    bar_vals[n] <- to_val
+    bar_colors[n] <- "#003366"
+
+    labels_factor <- factor(labels, levels = labels)
+
+    # Invisible base bars
+    plot_ly() %>%
+      add_trace(x = labels_factor, y = base_vals,
+                type = 'bar', marker = list(color = 'rgba(0,0,0,0)'),
+                showlegend = FALSE, hoverinfo = 'skip') %>%
+      # Visible bars
+      add_trace(x = labels_factor, y = bar_vals,
+                type = 'bar', marker = list(color = bar_colors),
+                showlegend = FALSE,
+                text = round(bar_vals, 1),
+                textposition = 'outside',
+                hovertemplate = "<b>%{x}</b><br>Value: %{y:.1f}<extra></extra>") %>%
+      layout(
+        barmode = 'stack',
+        xaxis = list(title = ""),
+        yaxis = list(title = "Score", range = c(0, max(from_val, to_val) + 15)),
+        margin = list(b = 80)
+      )
+  })
+
+  # -- Country contribution: GDP-weighted bars --
+  output$analytics_country_contribution <- renderPlotly({
+    yr_from <- as.integer(input$analytics_from_year)
+    yr_to <- as.integer(input$analytics_to_year)
+
+    scores_from <- dimension_scores %>% dplyr::filter(year == yr_from)
+    scores_to <- dimension_scores %>% dplyr::filter(year == yr_to)
+
+    if (nrow(scores_from) == 0 || nrow(scores_to) == 0) {
+      return(plot_ly() %>% layout(title = "No data for selected years"))
+    }
+
+    # Join and calculate weighted overall contribution
+    contrib <- scores_to %>%
+      dplyr::select(country, overall_to = overall_index) %>%
+      dplyr::left_join(
+        scores_from %>% dplyr::select(country, overall_from = overall_index),
+        by = "country"
+      ) %>%
+      dplyr::left_join(GDP_WEIGHTS, by = "country") %>%
+      dplyr::mutate(
+        raw_change = overall_to - overall_from,
+        weighted_contrib = raw_change * weight
+      ) %>%
+      dplyr::arrange(weighted_contrib)
+
+    contrib$country <- factor(contrib$country, levels = contrib$country)
+    bar_colors <- ifelse(contrib$weighted_contrib >= 0, "#4caf50", "#f44336")
+
+    plot_ly(contrib, y = ~country, x = ~weighted_contrib,
+            type = 'bar', orientation = 'h',
+            marker = list(color = bar_colors),
+            text = ~paste0(country, ": ", sprintf("%+.2f", weighted_contrib),
+                          " (", sprintf("%+.1f", raw_change), " raw)"),
+            hovertemplate = "%{text}<extra></extra>") %>%
+      layout(
+        xaxis = list(title = "GDP-Weighted Contribution to GCC Change",
+                     zeroline = TRUE),
+        yaxis = list(title = "", automargin = TRUE),
+        shapes = list(
+          list(type = "line", x0 = 0, x1 = 0,
+               y0 = -0.5, y1 = nrow(contrib) - 0.5,
+               line = list(color = "black", width = 1, dash = "dot"))
+        ),
+        margin = list(l = 100)
+      )
+  })
+
+  # ===== Section 2: Annual Dynamics =====
+
+  # -- Stacked area: GCC index composition by dimension --
+  output$analytics_stacked_area <- renderPlotly({
+    # Build weighted dimension scores for GCC aggregate
+    area_data <- gcc_ts %>%
+      dplyr::select(year, all_of(DIMENSION_COLS)) %>%
+      tidyr::pivot_longer(cols = -year, names_to = "dim_col", values_to = "score") %>%
+      dplyr::mutate(
+        dimension = DIMENSION_COL_TO_LABEL[dim_col],
+        weighted = score * DIMENSION_WEIGHTS[dimension]
+      )
+
+    area_data$dimension <- factor(area_data$dimension, levels = rev(DIMENSION_LABELS))
+
+    p <- plot_ly()
+    for (i in rev(seq_along(DIMENSION_LABELS))) {
+      dim_name <- DIMENSION_LABELS[i]
+      d <- area_data %>% dplyr::filter(dimension == dim_name)
+      p <- p %>% add_trace(
+        data = d, x = ~year, y = ~weighted,
+        type = 'scatter', mode = 'lines',
+        fill = 'tonexty', fillcolor = paste0(DIMENSION_COLORS[i], "88"),
+        line = list(color = DIMENSION_COLORS[i], width = 1),
+        name = dim_name,
+        stackgroup = 'one',
+        hovertemplate = paste0("<b>", dim_name, "</b><br>",
+                              "Weighted: %{y:.1f}<extra></extra>")
+      )
+    }
+
+    p %>% layout(
+      xaxis = list(title = "Year", dtick = 1),
+      yaxis = list(title = "Weighted Dimension Score"),
+      hovermode = 'x unified',
+      legend = list(orientation = 'h', y = -0.15)
+    )
+  })
+
+  # -- Annual dimension change bars: what drove each year's change --
+  output$analytics_annual_dim_bars <- renderPlotly({
+    # GCC aggregate dimension changes year-over-year
+    gcc_dim_long <- gcc_ts %>%
+      dplyr::arrange(year) %>%
+      dplyr::mutate(across(all_of(DIMENSION_COLS), ~(.x - dplyr::lag(.x)))) %>%
+      dplyr::filter(!is.na(trade_score)) %>%
+      tidyr::pivot_longer(cols = all_of(DIMENSION_COLS),
+                          names_to = "dim_col", values_to = "change") %>%
+      dplyr::mutate(
+        dimension = DIMENSION_COL_TO_LABEL[dim_col],
+        weighted_change = change * DIMENSION_WEIGHTS[dimension]
+      )
+
+    gcc_dim_long$dimension <- factor(gcc_dim_long$dimension, levels = DIMENSION_LABELS)
+
+    p <- plot_ly()
+    for (i in seq_along(DIMENSION_LABELS)) {
+      d <- gcc_dim_long %>% dplyr::filter(dimension == DIMENSION_LABELS[i])
+      p <- p %>% add_trace(
+        data = d, x = ~year, y = ~weighted_change,
+        type = 'bar', name = DIMENSION_LABELS[i],
+        marker = list(color = DIMENSION_COLORS[i]),
+        hovertemplate = paste0("<b>", DIMENSION_LABELS[i], "</b><br>",
+                              "Change: %{y:+.2f}<extra></extra>")
+      )
+    }
+
+    p %>% layout(
+      barmode = 'relative',
+      xaxis = list(title = "Year", dtick = 1),
+      yaxis = list(title = "Weighted Change in GCC Index"),
+      hovermode = 'x unified',
+      legend = list(orientation = 'h', y = -0.15),
+      shapes = list(
+        list(type = "line",
+             x0 = min(gcc_dim_long$year) - 0.5,
+             x1 = max(gcc_dim_long$year) + 0.5,
+             y0 = 0, y1 = 0,
+             line = list(color = "black", width = 1, dash = "dot"))
       )
     )
-
-    create_contribution_chart(contribution_data)
   })
 
-  output$annual_change_trends <- renderPlotly({
-    all_changes <- yoy_changes %>%
-      group_by(year) %>%
-      summarise(
-        mean_change = mean(overall_change, na.rm = TRUE),
-        max_change = max(overall_change, na.rm = TRUE),
-        min_change = min(overall_change, na.rm = TRUE)
-      )
+  # ===== Section 3: Cross-Country Spread =====
 
-    plot_ly(all_changes) %>%
-      add_trace(x = ~year, y = ~mean_change, type = 'scatter', mode = 'lines+markers',
-                name = 'Average Change', line = list(color = 'blue', width = 3),
-                marker = list(size = 10)) %>%
-      add_trace(x = ~year, y = ~max_change, type = 'scatter', mode = 'lines',
-                name = 'Max Change', line = list(color = 'green', width = 2, dash = 'dash')) %>%
-      add_trace(x = ~year, y = ~min_change, type = 'scatter', mode = 'lines',
-                name = 'Min Change', line = list(color = 'red', width = 2, dash = 'dash')) %>%
-      add_segments(x = min(all_changes$year), xend = max(all_changes$year),
-                   y = 0, yend = 0, line = list(color = 'black', dash = 'dot'),
-                   showlegend = FALSE) %>%
+  output$analytics_spread_chart <- renderPlotly({
+    latest_year <- max(dimension_scores$year)
+    latest <- dimension_scores %>% dplyr::filter(year == latest_year)
+
+    # Also get GCC aggregate
+    gcc_latest <- gcc_ts %>% dplyr::filter(year == latest_year)
+
+    spread_data <- lapply(seq_along(DIMENSION_COLS), function(i) {
+      col <- DIMENSION_COLS[i]
+      dim_label <- DIMENSION_LABELS[i]
+      vals <- latest[[col]]
+
+      data.frame(
+        dimension = dim_label,
+        country = latest$country,
+        score = vals,
+        gcc_avg = gcc_latest[[col]],
+        dim_min = min(vals, na.rm = TRUE),
+        dim_max = max(vals, na.rm = TRUE),
+        stringsAsFactors = FALSE
+      )
+    }) %>% dplyr::bind_rows()
+
+    spread_data$dimension <- factor(spread_data$dimension, levels = rev(DIMENSION_LABELS))
+
+    p <- plot_ly()
+
+    # Range lines (min to max)
+    range_summary <- spread_data %>%
+      dplyr::distinct(dimension, dim_min, dim_max, gcc_avg)
+
+    for (j in seq_len(nrow(range_summary))) {
+      p <- p %>% add_trace(
+        x = c(range_summary$dim_min[j], range_summary$dim_max[j]),
+        y = c(range_summary$dimension[j], range_summary$dimension[j]),
+        type = 'scatter', mode = 'lines',
+        line = list(color = '#cccccc', width = 6),
+        showlegend = FALSE, hoverinfo = 'skip'
+      )
+    }
+
+    # Individual country dots
+    for (ctry in countries) {
+      ctry_data <- spread_data %>% dplyr::filter(country == ctry)
+      p <- p %>% add_trace(
+        data = ctry_data, x = ~score, y = ~dimension,
+        type = 'scatter', mode = 'markers',
+        marker = list(size = 12, color = COUNTRY_COLORS[ctry],
+                      line = list(color = 'white', width = 1)),
+        name = ctry, legendgroup = ctry,
+        hovertemplate = paste0("<b>", ctry, "</b><br>",
+                              "%{y}: %{x:.1f}<extra></extra>")
+      )
+    }
+
+    # GCC average diamonds
+    p <- p %>% add_trace(
+      data = range_summary, x = ~gcc_avg, y = ~dimension,
+      type = 'scatter', mode = 'markers',
+      marker = list(size = 14, color = COUNTRY_COLORS_WITH_GCC["GCC"],
+                    symbol = "diamond",
+                    line = list(color = 'white', width = 1.5)),
+      name = "GCC Average", legendgroup = "gcc",
+      hovertemplate = "<b>GCC Average</b><br>%{y}: %{x:.1f}<extra></extra>"
+    )
+
+    p %>% layout(
+      xaxis = list(title = "Score", range = c(0, 105)),
+      yaxis = list(title = "", automargin = TRUE),
+      legend = list(orientation = 'h', y = -0.1),
+      margin = list(l = 120)
+    )
+  })
+
+  # ===== Section 4: Biggest Movers =====
+
+  output$analytics_biggest_movers <- renderPlotly({
+    latest_year <- max(dimension_scores$year)
+    prev_year <- latest_year - 1
+
+    curr <- dimension_scores %>% dplyr::filter(year == latest_year)
+    prev <- dimension_scores %>% dplyr::filter(year == prev_year)
+
+    if (nrow(curr) == 0 || nrow(prev) == 0) {
+      return(plot_ly() %>% layout(title = "Insufficient data for movers analysis"))
+    }
+
+    # Calculate dimension-level changes for each country
+    movers <- curr %>%
+      dplyr::select(country, all_of(DIMENSION_COLS)) %>%
+      tidyr::pivot_longer(cols = -country, names_to = "dim_col", values_to = "score_to") %>%
+      dplyr::left_join(
+        prev %>%
+          dplyr::select(country, all_of(DIMENSION_COLS)) %>%
+          tidyr::pivot_longer(cols = -country, names_to = "dim_col",
+                              values_to = "score_from"),
+        by = c("country", "dim_col")
+      ) %>%
+      dplyr::mutate(
+        dimension = DIMENSION_COL_TO_LABEL[dim_col],
+        change = score_to - score_from,
+        label = paste(country, "\u2014", dimension)
+      ) %>%
+      dplyr::arrange(change)
+
+    # Take top 8 gains and top 8 declines (or fewer if not available)
+    top_gains <- movers %>% dplyr::filter(change > 0) %>%
+      dplyr::arrange(desc(change)) %>% utils::head(8)
+    top_declines <- movers %>% dplyr::filter(change < 0) %>%
+      dplyr::arrange(change) %>% utils::head(8)
+    top_movers <- dplyr::bind_rows(top_declines, top_gains)
+
+    if (nrow(top_movers) == 0) {
+      return(plot_ly() %>% layout(title = "No changes detected"))
+    }
+
+    top_movers$label <- factor(top_movers$label, levels = top_movers$label)
+    bar_colors <- ifelse(top_movers$change >= 0, "#4caf50", "#f44336")
+
+    plot_ly(top_movers, y = ~label, x = ~change,
+            type = 'bar', orientation = 'h',
+            marker = list(color = bar_colors),
+            text = ~sprintf("%+.1f", change),
+            textposition = 'outside',
+            hovertemplate = paste0(
+              "<b>%{y}</b><br>",
+              "Change: %{x:+.1f}<br>",
+              "<extra></extra>")) %>%
       layout(
-        xaxis = list(title = "Year"),
-        yaxis = list(title = "Change in Overall Index"),
-        hovermode = 'x unified',
-        legend = list(orientation = 'h', y = -0.15)
+        xaxis = list(title = "Score Change", zeroline = TRUE),
+        yaxis = list(title = "", automargin = TRUE,
+                     categoryorder = "array",
+                     categoryarray = levels(top_movers$label)),
+        shapes = list(
+          list(type = "line", x0 = 0, x1 = 0,
+               y0 = -0.5, y1 = nrow(top_movers) - 0.5,
+               line = list(color = "black", width = 1, dash = "dot"))
+        ),
+        margin = list(l = 180)
       )
-  })
-
-  output$change_heatmap <- renderPlotly({
-    dim_changes <- yoy_changes %>%
-      filter(year >= input$analytics_year_range[1] & year <= input$analytics_year_range[2]) %>%
-      select(country, trade_change, financial_change, labor_change,
-             infrastructure_change, sustainability_change, convergence_change) %>%
-      group_by(country) %>%
-      summarise(across(everything(), ~mean(.x, na.rm = TRUE)))
-
-    colnames(dim_changes) <- c("country", DIMENSION_LABELS)
-
-    change_matrix <- dim_changes %>%
-      column_to_rownames("country") %>%
-      as.matrix()
-
-    create_heatmap(change_matrix, CHANGE_COLORSCALE, zmin = -10, zmax = 10, zmid = 0)
   })
 
   # ---------------------------------------------------------------------------
@@ -1090,30 +1369,84 @@ country_heatmap_tab_ui <- function() {
 gcc_analytics_tab_ui <- function() {
   tabItem(
     tabName = "gcc_analytics",
+
+    # ===== Section 1: What Changed? (Period Decomposition) =====
     fluidRow(
-      box(width = 12, title = "Analysis Period",
+      box(width = 12, title = "Section 1: What Changed?",
           status = "primary", solidHeader = TRUE,
-          sliderInput("analytics_year_range", "Year Range:",
-                      min = min(dimension_scores$year),
-                      max = max(dimension_scores$year),
-                      value = c(min(dimension_scores$year), max(dimension_scores$year)),
-                      step = 1, sep = ""))
+          fluidRow(
+            column(3,
+              selectInput("analytics_from_year", "From:",
+                          choices = sort(unique(dimension_scores$year)),
+                          selected = max(dimension_scores$year) - 1)
+            ),
+            column(3,
+              selectInput("analytics_to_year", "To:",
+                          choices = sort(unique(dimension_scores$year)),
+                          selected = max(dimension_scores$year))
+            ),
+            column(6,
+              div(style = "padding-top: 25px; color: #666; font-size: 0.9rem;",
+                icon("info-circle"),
+                "Decompose the GCC index change between two years",
+                "by dimension contribution and country contribution."
+              )
+            )
+          )
+      )
     ),
     fluidRow(
-      box(width = 6, title = "Year-over-Year Changes by Dimension",
+      box(width = 7, title = uiOutput("analytics_waterfall_title"),
           status = "info", solidHeader = TRUE,
-          plotlyOutput("yoy_dimension_changes", height = "400px")),
-      box(width = 6, title = "Contribution to GCC Index Change",
+          plotlyOutput("analytics_waterfall", height = "420px")),
+      box(width = 5, title = uiOutput("analytics_country_contrib_title"),
           status = "info", solidHeader = TRUE,
-          plotlyOutput("contribution_analysis", height = "400px"))
+          plotlyOutput("analytics_country_contribution", height = "420px"))
+    ),
+
+    # ===== Section 2: Annual Dynamics (All Years) =====
+    fluidRow(
+      box(width = 12,
+          title = "Section 2: Annual Dynamics (2015\u20132024)",
+          status = "primary", solidHeader = TRUE,
+          p(style = "color: #666; font-size: 0.9rem; margin-bottom: 0;",
+            icon("info-circle"),
+            "How has the GCC index composition evolved over time, and",
+            "what drove the year-over-year changes in each period?")
+      )
     ),
     fluidRow(
-      box(width = 6, title = "Annual Change Trends",
+      box(width = 6, title = "GCC Index Composition by Dimension",
           status = "success", solidHeader = TRUE,
-          plotlyOutput("annual_change_trends", height = "350px")),
-      box(width = 6, title = "Dimension Change Heatmap",
+          plotlyOutput("analytics_stacked_area", height = "400px")),
+      box(width = 6, title = "Dimension Contributions to Annual Change",
           status = "success", solidHeader = TRUE,
-          plotlyOutput("change_heatmap", height = "350px"))
+          plotlyOutput("analytics_annual_dim_bars", height = "400px"))
+    ),
+
+    # ===== Section 3: Cross-Country Spread =====
+    fluidRow(
+      box(width = 12,
+          title = uiOutput("analytics_spread_title"),
+          status = "primary", solidHeader = TRUE,
+          p(style = "color: #666; font-size: 0.9rem; margin-bottom: 5px;",
+            icon("info-circle"),
+            "Where do GCC countries converge and where do they diverge?",
+            "Narrow spreads indicate harmonization; wide spreads highlight",
+            "dimensions needing coordinated action."),
+          plotlyOutput("analytics_spread_chart", height = "380px"))
+    ),
+
+    # ===== Section 4: Biggest Movers =====
+    fluidRow(
+      box(width = 12,
+          title = uiOutput("analytics_movers_title"),
+          status = "primary", solidHeader = TRUE,
+          p(style = "color: #666; font-size: 0.9rem; margin-bottom: 5px;",
+            icon("info-circle"),
+            "Largest dimension-level score changes across all countries",
+            "in the most recent year. Shows what improved and what declined the most."),
+          plotlyOutput("analytics_biggest_movers", height = "450px"))
     )
   )
 }
