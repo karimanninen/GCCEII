@@ -470,6 +470,129 @@ body {
   transform: translateY(-2px);
 }
 
+/* ===== DIMENSION SELECTOR PILLS (GCC Timeseries Tab) ===== */
+
+.dimension-selector {
+  text-align: center;
+  padding: 5px 0 15px 0;
+}
+
+.dim-selector-label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  display: block;
+  font-size: 1.05rem;
+}
+
+.dim-pills {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dim-pill {
+  border: none;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 25px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  opacity: 0.5;
+  letter-spacing: 0.5px;
+}
+
+.dim-pill:hover {
+  opacity: 0.8;
+  transform: translateY(-2px);
+  color: white;
+}
+
+.dim-pill:focus {
+  outline: none;
+  color: white;
+}
+
+.dim-pill.active {
+  opacity: 1;
+  transform: scale(1.08);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  color: white;
+}
+
+.dim-pill-trade { background: linear-gradient(135deg, #1e88e5, #1565c0); }
+.dim-pill-financial { background: linear-gradient(135deg, #f9a825, #f57f17); }
+.dim-pill-labor { background: linear-gradient(135deg, #43a047, #2e7d32); }
+.dim-pill-infrastructure { background: linear-gradient(135deg, #e53935, #c62828); }
+.dim-pill-sustainability { background: linear-gradient(135deg, #8e24aa, #6a1b9a); }
+.dim-pill-convergence { background: linear-gradient(135deg, #00acc1, #00838f); }
+
+/* Summary header bar for timeseries tab */
+.ts-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #003366 0%, #005082 100%);
+  color: white;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.ts-summary-item {
+  text-align: center;
+}
+
+.ts-summary-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ts-summary-label {
+  font-size: 0.85rem;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ts-summary-change {
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+
+.ts-summary-change.positive { color: #81c784; }
+.ts-summary-change.negative { color: #ef9a9a; }
+
+.ts-level-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.ts-level-badge.good { background: #4caf50; color: white; }
+.ts-level-badge.moderate { background: #ffc107; color: #333; }
+.ts-level-badge.weak { background: #f44336; color: white; }
+
+@media (max-width: 768px) {
+  .dim-pills {
+    gap: 6px;
+  }
+  .dim-pill {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+  }
+  .ts-summary-bar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
 /* ===== DASHBOARD STYLES ===== */
 .content-wrapper {
   background-color: #f4f6f9;
