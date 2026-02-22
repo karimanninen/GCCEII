@@ -314,7 +314,7 @@ metadata_tab_ui <- function() {
         status = "info",
         solidHeader = TRUE,
         p("The overall index combines six dimensions with the following weights.
-          The index covers ", strong("32 indicators"), " (28 operational + 4 infrastructure placeholders):"),
+          The index covers ", strong("32 operational indicators"), " across six dimensions:"),
         tableOutput("dimension_weights_table")
       )
     ),
@@ -346,7 +346,7 @@ metadata_tab_ui <- function() {
           tableOutput("labor_indicators_table"))
     ),
     fluidRow(
-      box(width = 12, title = "Dimension 4: Infrastructure Connectivity (20%) - 2 Operational + 4 Placeholders",
+      box(width = 12, title = "Dimension 4: Infrastructure Connectivity (20%) - 2 Indicators",
           status = "success", solidHeader = TRUE, collapsible = TRUE,
           p("Tracks physical connectivity infrastructure that enables cross-border economic activity.
             Currently driven by two operational indicators (aviation and energy). Four additional
