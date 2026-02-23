@@ -110,21 +110,23 @@
   stat_indicators = list(en = "Indicators",      ar = "المؤشرات"),
 
   # Carousel / pull-quotes (4 quotes)
+  # Arabic versions are written in idiomatic Gulf/official-register Arabic,
+  # not literal translations — suitable for GCC Secretariat / Vision documents.
   quote_1 = list(
     en = "\"Regional integration is the cornerstone of sustainable development across the Gulf.\"",
-    ar = "\"التكامل الإقليمي ركيزة التنمية المستدامة في منطقة الخليج.\""
+    ar = "\"التكامل الإقليمي دعامة لا غنى عنها لمسيرة التنمية المستدامة في دول الخليج العربي.\""
   ),
   quote_2 = list(
     en = "\"Evidence-based policy requires robust, comparable, and timely statistics.\"",
-    ar = "\"السياسات المبنية على الأدلة تستلزم إحصاءات متينة وقابلة للمقارنة وحديثة.\""
+    ar = "\"لا ترسيخ لسياسات رشيدة من غير إحصاءات دقيقة وموثوقة وقابلة للمقارنة.\""
   ),
   quote_3 = list(
     en = "\"The GCC vision of economic unity demands rigorous measurement of progress.\"",
-    ar = "\"تستوجب رؤية مجلس التعاون للوحدة الاقتصادية قياساً دقيقاً للتقدم المحرز.\""
+    ar = "\"تحقيق الوحدة الاقتصادية الخليجية رهينٌ بقياس دقيق وصارم لمسارات التقدم.\""
   ),
   quote_4 = list(
     en = "\"Deeper integration unlocks the full potential of the Gulf economy.\"",
-    ar = "\"يُطلق التكامل الأعمق الطاقة الكاملة لاقتصاد الخليج.\""
+    ar = "\"كلما ترسّخ التكامل وتعمّق، اتّسعت آفاق الاقتصاد الخليجي وتضاعفت إمكاناته.\""
   ),
 
   # Dimension modal labels
