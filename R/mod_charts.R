@@ -193,7 +193,7 @@ create_ranking_chart <- function(ranking_data, colors = COUNTRY_COLORS, title = 
   ) %>%
     plotly::layout(
       xaxis = list(title = ""),
-      yaxis = list(title = "Overall Index", range = c(0, 100)),
+      yaxis = list(title = "Overall Score", range = c(0, 100)),
       title = title
     )
 }
@@ -216,7 +216,7 @@ create_contribution_chart <- function(data, colors = COUNTRY_COLORS) {
   ) %>%
     plotly::layout(
       xaxis = list(title = "Dimension", categoryorder = "array", categoryarray = DIMENSION_LABELS),
-      yaxis = list(title = "Contribution to GCC Index (weighted)"),
+      yaxis = list(title = "Contribution to GCC Score (weighted)"),
       barmode = 'stack',
       legend = list(orientation = 'h', y = -0.2)
     )
