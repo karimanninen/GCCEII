@@ -26,11 +26,11 @@ landing_page_ui <- function() {
           img(src = "images/GCC-MAIN-01-WHITE.png", class = "landing-logo"),
 
           # Title
-          h1(class = "landing-title", "GCC Economic Integration Index"),
+          h1(class = "landing-title", "GCC Economic Integration Dashboard"),
 
           # Subtitle
           p(class = "landing-subtitle",
-            "Measuring Regional Integration Across the Gulf Cooperation Council"),
+            "Integration Pathway | GCC Economic Observatory"),
 
           # Rotating Quote Carousel
           div(class = "quote-carousel", id = "quote-display",
@@ -67,20 +67,20 @@ landing_page_ui <- function() {
 #' @return Shiny UI element
 landing_about_section <- function() {
   div(class = "landing-about",
-      h2("About the GCC Economic Integration Index"),
+      h2("About the GCC Economic Observatory"),
       p(class = "landing-about-text",
-        "As the GCC region continues to pursue deeper economic, social, and institutional integration,
-        the need for robust measurement tools becomes increasingly essential. Inspired by global models
-        such as the Asia-Pacific Regional Cooperation and Integration Index (ARCII) and the Global
-        Integration Index (GII), the GCC Regional Cooperation and Integration Index (GCC-RCII) offers
-        a comprehensive, multidimensional framework to assess the progress of regional integration across
-        GCC economies."
+        "The GCC Economic Observatory is a GCC-Stat initiative to compile data and visualize different
+        aspects of the GCC economy through a set of analytical Pathways. Each Pathway provides a
+        focused, evidence-based lens on a key dimension of regional economic performance."
       ),
       p(class = "landing-about-text",
-        "The GCC-RCII tracks integration across key areas including trade, finance, value-chain linkages,
-        infrastructure connectivity, movement of people, institutional alignment, digital integration,
-        and environmental cooperation. It provides policymakers, researchers, and practitioners with
-        evidence-based insights to identify strengths, monitor gaps, and guide regional policy coordination."
+        "The ", strong("Integration Pathway"), " is a composite indicator that measures the depth and progress
+        of economic integration across GCC member states. Inspired by global models such as the
+        Asia-Pacific Regional Cooperation and Integration Index (ARCII), it offers a comprehensive,
+        multidimensional framework tracking trade, finance, value-chain linkages, infrastructure
+        connectivity, movement of people, and macroeconomic convergence. It provides policymakers,
+        researchers, and practitioners with evidence-based insights to identify strengths, monitor
+        gaps, and guide regional policy coordination."
       ),
 
       # Key statistics
@@ -362,7 +362,7 @@ carousel_js <- function() {
       'Economic integration is a strategic priority for the GCC. All member states have a role in building a unified, diversified regional economy.',
       'The GCC common market represents one of the most ambitious regional integration projects, supporting Vision 2030 transformation goals across member states.',
       'Measuring integration helps identify progress and opportunities for deeper economic cooperation, guiding evidence-based policymaking.',
-      'From trade and investment to labor mobility and infrastructure connectivity, the Index captures the full picture of regional integration.'
+      'From trade and investment to labor mobility and infrastructure connectivity, the Integration Pathway captures the full picture of regional integration.'
     ];
 
     var currentQuote = 0;

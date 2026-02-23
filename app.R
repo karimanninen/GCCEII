@@ -1,5 +1,6 @@
 # ==============================================================================
-# GCC ECONOMIC INTEGRATION INDEX DASHBOARD
+# GCC ECONOMIC INTEGRATION DASHBOARD
+# Integration Pathway | GCC Economic Observatory
 # Version: 4.0 - COINr Pipeline Integration
 # Date: February 2026
 # ==============================================================================
@@ -105,7 +106,7 @@ server <- function(input, output, session) {
     latest <- gcc_ts %>% filter(year == max(year))
     valueBox(
       value = round(latest$overall, 1),
-      subtitle = "Overall GCC Index",
+      subtitle = "Overall GCC Score",
       icon = icon("chart-line"),
       color = "blue"
     )
@@ -168,7 +169,7 @@ server <- function(input, output, session) {
   output$gcc_overall_gauge <- renderPlotly({
     latest <- gcc_ts %>% filter(year == max(year))
     prev <- gcc_ts %>% filter(year == max(year) - 1) %>% pull(overall)
-    create_gauge_chart(latest$overall, prev, paste("GCC Integration Index", max(gcc_ts$year)))
+    create_gauge_chart(latest$overall, prev, paste("GCC Integration Score", max(gcc_ts$year)))
   })
 
   output$gcc_dimension_bars <- renderPlotly({
@@ -248,7 +249,7 @@ server <- function(input, output, session) {
     div(class = "ts-summary-bar",
       div(class = "ts-summary-item",
         div(class = "ts-summary-value", round(latest$overall, 1)),
-        div(class = "ts-summary-label", paste("GCC Index", max(gcc_ts$year)))
+        div(class = "ts-summary-label", paste("GCC Score", max(gcc_ts$year)))
       ),
       div(class = "ts-summary-item",
         div(class = paste("ts-summary-change", change_class),
@@ -413,7 +414,7 @@ server <- function(input, output, session) {
       filter(country == input$selected_country, year == max(year))
     valueBox(
       value = round(latest$overall_index, 1),
-      subtitle = paste(input$selected_country, "Overall Index"),
+      subtitle = paste(input$selected_country, "Overall Score"),
       icon = icon("chart-line"),
       color = "blue"
     )
@@ -458,7 +459,7 @@ server <- function(input, output, session) {
                 marker = list(size = 8, symbol = "diamond")) %>%
       layout(
         xaxis = list(title = "Year", dtick = 1),
-        yaxis = list(title = "Overall Index", range = c(0, 100)),
+        yaxis = list(title = "Overall Score", range = c(0, 100)),
         hovermode = 'x unified',
         legend = list(orientation = 'h', y = -0.15)
       )
@@ -661,7 +662,7 @@ server <- function(input, output, session) {
             marker = list(color = ~INTEGRATION_LEVEL_COLORS[integration_level])) %>%
       layout(
         xaxis = list(title = ""),
-        yaxis = list(title = "Overall Index", range = c(0, 100)),
+        yaxis = list(title = "Overall Score", range = c(0, 100)),
         shapes = list(
           list(type = "line", x0 = -0.5, x1 = 5.5, y0 = 40, y1 = 40,
                line = list(color = "orange", dash = "dash")),
@@ -677,7 +678,7 @@ server <- function(input, output, session) {
 
   # -- Dynamic titles --
   output$analytics_waterfall_title <- renderUI({
-    tags$span(paste0("GCC Index Decomposition by Dimension (",
+    tags$span(paste0("GCC Score Decomposition by Dimension (",
                      input$analytics_from_year, " \u2192 ", input$analytics_to_year, ")"))
   })
   output$analytics_country_contrib_title <- renderUI({
@@ -827,7 +828,7 @@ server <- function(input, output, session) {
 
   # ===== Section 2: Annual Dynamics =====
 
-  # -- Stacked area: GCC index composition by dimension --
+  # -- Stacked area: GCC score composition by dimension --
   output$analytics_stacked_area <- renderPlotly({
     # Build weighted dimension scores for GCC aggregate
     area_data <- gcc_ts %>%
@@ -895,7 +896,7 @@ server <- function(input, output, session) {
     p %>% layout(
       barmode = 'relative',
       xaxis = list(title = "Year", dtick = 1),
-      yaxis = list(title = "Weighted Change in GCC Index"),
+      yaxis = list(title = "Weighted Change in GCC Score"),
       hovermode = 'x unified',
       legend = list(orientation = 'h', y = -0.15),
       shapes = list(
@@ -1093,8 +1094,8 @@ dashboard_ui <- function() {
       skin = "blue",
 
       dashboardHeader(
-        title = "GCC Economic Integration Index",
-        titleWidth = 350
+        title = "GCC Economic Integration Dashboard",
+        titleWidth = 380
       ),
 
       dashboardSidebar(
@@ -1158,12 +1159,13 @@ overview_tab_ui <- function() {
     fluidRow(
       box(
         width = 12,
-        title = "GCC Economic Integration Index Dashboard",
+        title = "GCC Economic Integration Dashboard",
         status = "primary",
         solidHeader = TRUE,
-        h4("Welcome to the GCC Economic Integration Index Dashboard"),
-        p("This dashboard provides comprehensive analysis of economic integration across GCC member states from 2015 to 2024,
-          based on 32 indicators across 6 dimensions constructed using the COINr framework."),
+        h4("Welcome to the Integration Pathway"),
+        p("Part of the ", strong("GCC Economic Observatory"), ", this dashboard provides comprehensive
+          analysis of economic integration across GCC member states from 2015 to 2024, based on a
+          composite indicator built from 32 indicators across 6 dimensions using the COINr framework."),
         hr(),
         h5(strong("Dashboard Features:")),
         tags$ul(
@@ -1171,7 +1173,7 @@ overview_tab_ui <- function() {
           tags$li(strong("GCC Timeseries:"), "Analyze trends across all six dimensions over time"),
           tags$li(strong("Country Profiles:"), "Deep dive into individual country performance with timeseries"),
           tags$li(strong("Country Heatmap:"), "Compare countries across dimensions visually"),
-          tags$li(strong("GCC Analytics:"), "Examine year-over-year changes and contributions to total GCC index"),
+          tags$li(strong("GCC Analytics:"), "Examine year-over-year changes and contributions to the GCC integration score"),
           tags$li(strong("Data Explorer:"), "Access and export underlying data")
         ),
         hr(),
@@ -1230,7 +1232,7 @@ gcc_timeseries_tab_ui <- function() {
       column(12, uiOutput("ts_summary_bar"))
     ),
     fluidRow(
-      box(width = 12, title = "GCC Overall Index Trend (2015\u20132024)",
+      box(width = 12, title = "GCC Overall Score Trend (2015\u20132024)",
           status = "primary", solidHeader = TRUE,
           plotlyOutput("gcc_overall_trend", height = "250px"))
     ),
@@ -1305,7 +1307,7 @@ country_profiles_tab_ui <- function() {
       box(width = 5, title = "Dimension Profile (Latest Year)",
           status = "info", solidHeader = TRUE,
           plotlyOutput("country_radar", height = "380px")),
-      box(width = 7, title = "Overall Index: Country vs GCC Average",
+      box(width = 7, title = "Overall Score: Country vs GCC Average",
           status = "info", solidHeader = TRUE,
           plotlyOutput("country_vs_gcc_combined", height = "380px"))
     ),
@@ -1389,7 +1391,7 @@ gcc_analytics_tab_ui <- function() {
             column(6,
               div(style = "padding-top: 25px; color: #666; font-size: 0.9rem;",
                 icon("info-circle"),
-                "Decompose the GCC index change between two years",
+                "Decompose the GCC integration score change between two years",
                 "by dimension contribution and country contribution."
               )
             )
@@ -1412,12 +1414,12 @@ gcc_analytics_tab_ui <- function() {
           status = "primary", solidHeader = TRUE,
           p(style = "color: #666; font-size: 0.9rem; margin-bottom: 0;",
             icon("info-circle"),
-            "How has the GCC index composition evolved over time, and",
+            "How has the GCC integration score composition evolved over time, and",
             "what drove the year-over-year changes in each period?")
       )
     ),
     fluidRow(
-      box(width = 6, title = "GCC Index Composition by Dimension",
+      box(width = 6, title = "GCC Score Composition by Dimension",
           status = "success", solidHeader = TRUE,
           plotlyOutput("analytics_stacked_area", height = "400px")),
       box(width = 6, title = "Dimension Contributions to Annual Change",

@@ -239,28 +239,30 @@ metadata_tab_ui <- function() {
     fluidRow(
       box(
         width = 12,
-        title = "About the GCC Economic Integration Index",
+        title = "About the GCC Economic Integration Composite Indicator",
         status = "primary",
         solidHeader = TRUE,
 
         h4("Purpose"),
-        p("The GCC Economic Integration Index (EII) is a composite indicator designed to measure
-          the depth and progress of economic integration among the six Gulf Cooperation Council
-          member states: Bahrain, Kuwait, Oman, Qatar, Saudi Arabia, and the United Arab Emirates."),
+        p("The GCC Economic Integration composite indicator is part of the ",
+          strong("Integration Pathway"), " within the GCC Economic Observatory. It is designed to
+          measure the depth and progress of economic integration among the six Gulf Cooperation
+          Council member states: Bahrain, Kuwait, Oman, Qatar, Saudi Arabia, and the United
+          Arab Emirates."),
 
-        p("The index supports Vision 2030 transformation goals by providing an authoritative,
-          data-driven assessment of regional integration across multiple economic dimensions.
-          It enables policymakers to identify strengths, gaps, and opportunities for deeper
-          cooperation within the GCC common market framework."),
+        p("The composite indicator supports Vision 2030 transformation goals by providing an
+          authoritative, data-driven assessment of regional integration across multiple economic
+          dimensions. It enables policymakers to identify strengths, gaps, and opportunities for
+          deeper cooperation within the GCC common market framework."),
 
         h4("Scope"),
-        p("The index covers the period 2015-2024 and aggregates performance across six dimensions,
-          each capturing a distinct aspect of economic integration. Country-level scores are
-          aggregated to a GCC-wide index using GDP-weighted averaging to reflect the relative
-          economic significance of each member state."),
+        p("The composite indicator covers the period 2015-2024 and aggregates performance across
+          six dimensions, each capturing a distinct aspect of economic integration. Country-level
+          scores are aggregated to a GCC-wide score using GDP-weighted averaging to reflect the
+          relative economic significance of each member state."),
 
         h4("Methodology"),
-        p("The GCCEII is constructed using the ", strong("COINr framework"),
+        p("The composite indicator is constructed using the ", strong("COINr framework"),
           " (Composite Indicator Numerical Repository), following the JRC/OECD Handbook on
           Constructing Composite Indicators. The pipeline involves:"),
         tags$ol(
@@ -313,8 +315,8 @@ metadata_tab_ui <- function() {
         title = "Dimension Weights & Structure",
         status = "info",
         solidHeader = TRUE,
-        p("The overall index combines six dimensions with the following weights.
-          The index covers ", strong("32 operational indicators"), " across six dimensions:"),
+        p("The overall composite indicator combines six dimensions with the following weights,
+          covering ", strong("32 operational indicators"), " across six dimensions:"),
         tableOutput("dimension_weights_table")
       )
     ),
