@@ -1060,7 +1060,8 @@ server <- function(input, output, session) {
     data_to_show <- switch(input$data_table_select,
                            "dimension" = dimension_scores,
                            "gcc" = gcc_ts,
-                           "yoy" = yoy_changes)
+                           "yoy" = yoy_changes,
+                           "indicator" = indicator_detail)
 
     datatable(
       data_to_show,
@@ -1460,7 +1461,8 @@ data_explorer_tab_ui <- function() {
           selectInput("data_table_select", "Select Dataset:",
                       choices = c("Country Dimension Scores" = "dimension",
                                   "GCC Aggregate" = "gcc",
-                                  "Year-over-Year Changes" = "yoy")),
+                                  "Year-over-Year Changes" = "yoy",
+                                  "Indicator Detail" = "indicator")),
           DTOutput("data_table"))
     )
   )
