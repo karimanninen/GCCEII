@@ -1,0 +1,289 @@
+/* =============================================================================
+   www/css/rtl.css
+   GCCEII Dashboard – Arabic / RTL text styles
+   Strategy: LTR shinydashboard layout is PRESERVED.
+   Only text direction, alignment, and typography are switched.
+   Activated by adding class="lang-ar" to the <body> tag via JS.
+   ============================================================================= */
+
+/* ── 1. Google Fonts: Arabic typefaces ────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&display=swap');
+
+/* ── 2. Body-level Arabic overrides ──────────────────────────────────────── */
+body.lang-ar,
+body.lang-ar .content-wrapper,
+body.lang-ar .main-sidebar,
+body.lang-ar .main-footer {
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.8; /* Arabic needs more breathing room */
+}
+
+/* ── 3. General text containers ──────────────────────────────────────────── */
+body.lang-ar p,
+body.lang-ar li,
+body.lang-ar label,
+body.lang-ar span,
+body.lang-ar td,
+body.lang-ar th,
+body.lang-ar .shiny-text-output {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+/* ── 4. Headings ──────────────────────────────────────────────────────────── */
+body.lang-ar h1,
+body.lang-ar h2,
+body.lang-ar h3,
+body.lang-ar h4,
+body.lang-ar h5,
+body.lang-ar h6 {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0; /* Reset English letter-spacing for Arabic */
+}
+
+/* ── 5. shinydashboard box titles ─────────────────────────────────────────── */
+body.lang-ar .box-header .box-title {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-weight: 600;
+}
+
+/* Box tool buttons stay on the left (LTR layout), so we don't move them */
+body.lang-ar .box-header .box-tools {
+  float: left;
+}
+
+/* ── 6. Value boxes ───────────────────────────────────────────────────────── */
+body.lang-ar .small-box h3,
+body.lang-ar .small-box p,
+body.lang-ar .info-box-text,
+body.lang-ar .info-box-number {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+/* ── 7. Sidebar menu labels ──────────────────────────────────────────────── */
+body.lang-ar .sidebar-menu > li > a > span,
+body.lang-ar .sidebar-menu > li > a {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+/* Icons remain on the left in LTR sidebar */
+body.lang-ar .sidebar-menu > li > a > .fa,
+body.lang-ar .sidebar-menu > li > a > .glyphicon {
+  margin-right: 8px;
+  margin-left: 0;
+}
+
+/* ── 8. Form inputs & selects ────────────────────────────────────────────── */
+body.lang-ar .form-control,
+body.lang-ar select.form-control,
+body.lang-ar input.form-control {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+body.lang-ar .selectize-input,
+body.lang-ar .selectize-dropdown {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+body.lang-ar .control-label {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-weight: 600;
+}
+
+/* ── 9. DT (DataTables) ──────────────────────────────────────────────────── */
+body.lang-ar .dataTables_wrapper,
+body.lang-ar table.dataTable td,
+body.lang-ar table.dataTable th {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+body.lang-ar .dataTables_filter label,
+body.lang-ar .dataTables_length label,
+body.lang-ar .dataTables_info {
+  direction: rtl;
+  text-align: right;
+}
+
+/* ── 10. Plotly chart containers: keep LTR internally ────────────────────── */
+/* Plotly renders its own SVG/canvas — we only control the wrapper title text  */
+body.lang-ar .plotly-graph-div {
+  direction: ltr !important; /* internal SVG must stay LTR */
+}
+
+body.lang-ar .plotly-chart-title,
+body.lang-ar .js-plotly-plot .plotly .gtitle {
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif !important;
+}
+
+/* ── 11. Language toggle button (fixed in top-right corner) ──────────────── */
+#lang-toggle-container {
+  position: fixed;
+  top: 10px;
+  right: 15px;
+  z-index: 9999;
+  display: flex;
+  gap: 4px;
+}
+
+.lang-btn {
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: 1px solid #3c8dbc;
+  background: white;
+  color: #3c8dbc;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  transition: background 0.15s, color 0.15s;
+}
+
+.lang-btn.active {
+  background: #3c8dbc;
+  color: white;
+}
+
+.lang-btn:hover:not(.active) {
+  background: #eaf3fb;
+}
+
+/* ── 12. Landing page – hero section ─────────────────────────────────────── */
+#landing-hero {
+  direction: ltr; /* structural: keep centered layout */
+}
+
+body.lang-ar #landing-hero .hero-title,
+body.lang-ar #landing-hero .hero-subtitle {
+  direction: rtl;
+  text-align: center; /* centred heading is fine for both languages */
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+body.lang-ar #landing-hero .hero-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+body.lang-ar #landing-hero .hero-subtitle {
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+/* ── 13. Landing page – carousel quotes ──────────────────────────────────── */
+body.lang-ar .carousel-quote {
+  direction: rtl;
+  text-align: center;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-size: 1.15rem;
+  font-style: normal; /* Arabic doesn't use italic */
+  font-weight: 500;
+}
+
+/* ── 14. Landing page – about section ───────────────────────────────────── */
+body.lang-ar #landing-about p,
+body.lang-ar #landing-about h2,
+body.lang-ar #landing-about h3 {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+/* ── 15. Landing page – stat boxes ──────────────────────────────────────── */
+body.lang-ar .landing-stat-label {
+  direction: rtl;
+  text-align: center;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-size: 0.85rem;
+}
+
+body.lang-ar .landing-stat-value {
+  text-align: center;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* ── 16. Landing page – dimension cards ─────────────────────────────────── */
+body.lang-ar .dim-card-title,
+body.lang-ar .dim-card-desc {
+  direction: rtl;
+  text-align: center;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+/* ── 17. Modals ──────────────────────────────────────────────────────────── */
+body.lang-ar .modal-title,
+body.lang-ar .modal-body,
+body.lang-ar .modal-body p,
+body.lang-ar .modal-body li,
+body.lang-ar .modal-footer .btn {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+body.lang-ar .modal-header .close {
+  float: left; /* keep × on the left even in RTL text context */
+}
+
+/* ── 18. Landing page – footer ──────────────────────────────────────────── */
+body.lang-ar #landing-footer p,
+body.lang-ar #landing-footer span {
+  direction: rtl;
+  text-align: center;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-size: 0.85rem;
+}
+
+/* ── 19. Metadata tab – long-form text ──────────────────────────────────── */
+body.lang-ar .metadata-body p,
+body.lang-ar .metadata-body li,
+body.lang-ar .metadata-body h4,
+body.lang-ar .metadata-body h5 {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  line-height: 2.0;
+}
+
+body.lang-ar .metadata-body table th,
+body.lang-ar .metadata-body table td {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+/* ── 20. Responsive adjustments ─────────────────────────────────────────── */
+@media (max-width: 767px) {
+  body.lang-ar #landing-hero .hero-title {
+    font-size: 1.6rem;
+  }
+
+  body.lang-ar #landing-hero .hero-subtitle {
+    font-size: 0.95rem;
+  }
+
+  #lang-toggle-container {
+    top: 6px;
+    right: 8px;
+  }
+}
