@@ -838,7 +838,18 @@ server <- function(input, output, session) {
              infrastructure_score, sustainability_score, convergence_score,
              integration_level)
 
-    setNames(base, .col_names(l))
+    # Filter columns by selected dataset
+    cols_to_show <- switch(ds,
+      "trade"       = c(1, 2, 4),        # country, year, trade_score
+      "financial"   = c(1, 2, 5),        # country, year, financial_score
+      "labor"       = c(1, 2, 6),        # country, year, labor_score
+      "infra"       = c(1, 2, 7),        # country, year, infrastructure_score
+      "sustain"     = c(1, 2, 8),        # country, year, sustainability_score
+      "convergence" = c(1, 2, 9),        # country, year, convergence_score
+      seq_len(ncol(base))                # "overall" → all columns
+    )
+
+    setNames(base[, cols_to_show, drop = FALSE], .col_names(l)[cols_to_show])
   })
 
   output$data_table <- renderDT({

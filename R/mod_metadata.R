@@ -416,12 +416,11 @@ metadata_ui <- function(id, lang = "en") {
     ),
 
     # ── Section 3: Indicator List ────────────────────────────────────────────
-    .meta_h2(t("meta_section_dimensions", lang) |>
-               (\(x) if (lang == "ar")
-                 "\u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062a"
-               else
-                 "Indicator List")(),
-             "list"),
+    .meta_h2(
+      if (lang == "ar") "\u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062a"
+      else "Indicator List",
+      "list"
+    ),
 
     tags$p(
       style = "font-size:0.92rem; margin-bottom:10px;",
@@ -485,8 +484,8 @@ metadata_ui <- function(id, lang = "en") {
       "3",
       "Normalisation",
       "\u0627\u0644\u062a\u0637\u0628\u064a\u0639",
-      t("meta_normalisation_p1", lang),
-      t("meta_normalisation_p1", lang),
+      t("meta_normalisation_p1", "en"),
+      t("meta_normalisation_p1", "ar"),
       lang, "sliders", "#7d3c98"
     ),
 
@@ -494,8 +493,8 @@ metadata_ui <- function(id, lang = "en") {
       "4",
       "Weighting & Aggregation",
       "\u0627\u0644\u0623\u0648\u0632\u0627\u0646 \u0648\u0627\u0644\u062a\u062c\u0645\u064a\u0639",
-      paste(t("meta_weighting_p1", lang), t("meta_aggregation_p1", lang)),
-      paste(t("meta_weighting_p1", lang), t("meta_aggregation_p1", lang)),
+      paste(t("meta_weighting_p1", "en"), t("meta_aggregation_p1", "en")),
+      paste(t("meta_weighting_p1", "ar"), t("meta_aggregation_p1", "ar")),
       lang, "balance-scale", "#c0392b"
     ),
 

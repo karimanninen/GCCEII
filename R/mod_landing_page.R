@@ -297,7 +297,7 @@ landing_page_ui <- function(id, lang = "en") {
         tags$div(
           class = "hero-logo",
           tags$img(
-            src   = "gccstat_logo.png",
+            src   = "images/GCC-MAIN-01-WHITE.png",
             alt   = "GCC-Stat",
             style = "height:60px; margin-bottom:16px;"
           )
@@ -592,25 +592,9 @@ landing_page_ui <- function(id, lang = "en") {
       "))
     ),
 
-    # ── JavaScript: language switching ───────────────────────────────────────
+    # ── JavaScript: on-load RTL class (setLang is defined in app.R <head>) ──
     tags$script(HTML("
-      function setLang(lang) {
-        // Update hidden Shiny input so server knows the chosen language
-        Shiny.setInputValue('selected_lang', lang, {priority: 'event'});
-
-        // Toggle active class on buttons
-        document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
-        document.getElementById('btn-lang-ar').classList.toggle('active', lang === 'ar');
-
-        // Apply / remove RTL class on body for instant CSS response
-        if (lang === 'ar') {
-          document.body.classList.add('lang-ar');
-        } else {
-          document.body.classList.remove('lang-ar');
-        }
-      }
-
-      // On load: apply class if server rendered in Arabic
+      // On load: apply lang-ar class if server rendered in Arabic
       (function() {
         var lang = document.getElementById('selected_lang');
         if (lang && lang.value === 'ar') {
