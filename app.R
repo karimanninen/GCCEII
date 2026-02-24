@@ -1,1477 +1,888 @@
-# ==============================================================================
-# GCC ECONOMIC INTEGRATION DASHBOARD
-# Integration Pathway | GCC Economic Observatory
-# Version: 4.0 - COINr Pipeline Integration
-# Date: February 2026
-# ==============================================================================
+# =============================================================================
+# app.R  —  GCC Economic Integration Index Dashboard
+# Bilingual (English / Arabic) | Shiny + shinydashboard
+# =============================================================================
 #
-# A comprehensive Shiny dashboard for analyzing GCC economic integration
-# across six member states (Bahrain, Kuwait, Oman, Qatar, Saudi Arabia, UAE)
+# Required file layout
+# ├── app.R                          ← this file
+# ├── R/
+# │   ├── translations.R
+# │   ├── mod_landing_page.R
+# │   ├── mod_charts.R
+# │   └── mod_metadata.R
+# ├── www/
+# │   ├── rtl.css
+# │   └── gccstat_logo.png           ← place actual logo here
+# └── output/
+#     └── time_series_complete.csv   ← or gcc_integration_workspace.RData
 #
-# Features:
-# - ARIIP-style landing page with rotating quotes carousel
-# - 7 interactive tabs with 25+ visualizations
-# - Time series analysis (2015-2024)
-# - 32 indicators across 6 dimensions (COINr framework)
-# - Country comparisons and rankings
-# - Year-over-year change analytics
-# - Dual data source: gcceii_scores.csv (primary) or Fusion Registry
-#
-# ==============================================================================
+# =============================================================================
 
-# Load required packages
+# =============================================================================
+# SECTION 1  Libraries
+# =============================================================================
+
 library(shiny)
 library(shinydashboard)
-library(readr)
 library(dplyr)
-library(tibble)
-library(ggplot2)
-library(plotly)
 library(tidyr)
+library(tibble)
+library(readr)
+library(plotly)
 library(DT)
-library(scales)
 library(viridis)
+library(scales)
 
-# Source modular components
-source("R/utils.R")
-source("R/data_loading.R")
+# =============================================================================
+# SECTION 2  Source modules
+# =============================================================================
+
+source("R/translations.R")
 source("R/mod_landing_page.R")
-source("R/mod_metadata.R")
 source("R/mod_charts.R")
+source("R/mod_metadata.R")
 
-# ==============================================================================
-# LOAD DATA
-# ==============================================================================
+# =============================================================================
+# SECTION 3  Data loading
+# =============================================================================
 
-gcc_data <- load_gcc_data("output")
-dimension_scores <- gcc_data$dimension_scores
-gcc_ts <- gcc_data$gcc_ts
-yoy_changes <- gcc_data$yoy_changes
-country_data <- gcc_data$country_data
-indicator_detail <- gcc_data$indicator_detail  # NULL for legacy data sources
+OUTPUT_DIR <- "output"
 
-# Get unique countries
-countries <- get_countries(dimension_scores)
+.load_data <- function() {
+  ws_path  <- file.path(OUTPUT_DIR, "gcc_integration_workspace.RData")
+  csv_path <- file.path(OUTPUT_DIR, "time_series_complete.csv")
 
-# ==============================================================================
-# UI
-# ==============================================================================
+  if (file.exists(ws_path)) {
+    message("Loading data from workspace ...")
+    e <- new.env()
+    load(ws_path, envir = e)
+    ts <- if (exists("time_series_complete", envir = e)) e$time_series_complete
+          else if (exists("country_index_2023", envir = e)) e$country_index_2023
+          else stop("Cannot locate time-series data in workspace.")
+    message("\u2714 Workspace loaded")
+    return(ts)
+  } else if (file.exists(csv_path)) {
+    message("Loading data from CSV ...")
+    ts <- read_csv(csv_path, show_col_types = FALSE)
+    message("\u2714 CSV loaded")
+    return(ts)
+  } else {
+    stop(
+      "ERROR: Data files not found.\n",
+      "  Expected: ", ws_path, "\n",
+      "  Or:       ", csv_path, "\n",
+      "Run GCC_Integration_Master.R first to produce these files."
+    )
+  }
+}
 
-ui <- fluidPage(
+time_series_complete <- .load_data()
 
-  # Link external CSS
-  tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
-  ),
+# ── Extract analytic frames ───────────────────────────────────────────────────
 
-  # Conditional display: Landing Page OR Dashboard
-  uiOutput("main_ui"),
+dimension_scores <- time_series_complete %>%
+  filter(country != "GCC AGGREGATE") %>%
+  select(country, year,
+         overall_index, trade_score, financial_score, labor_score,
+         infrastructure_score, sustainability_score, convergence_score) %>%
+  mutate(integration_level = case_when(
+    overall_index >= 60 ~ "Good",
+    overall_index >= 40 ~ "Moderate",
+    TRUE                ~ "Weak"
+  ))
 
-  # Carousel JavaScript
-  carousel_js()
+gcc_ts <- time_series_complete %>%
+  filter(country == "GCC AGGREGATE") %>%
+  mutate(overall = overall_index) %>%
+  select(country, year, overall,
+         trade_score, financial_score, labor_score,
+         infrastructure_score, sustainability_score, convergence_score)
+
+yoy_changes <- dimension_scores %>%
+  arrange(country, year) %>%
+  group_by(country) %>%
+  mutate(across(
+    c(overall_index, trade_score, financial_score, labor_score,
+      infrastructure_score, sustainability_score, convergence_score),
+    ~ . - lag(.),
+    .names = "{.col}_change"
+  )) %>%
+  ungroup() %>%
+  filter(!is.na(overall_index_change)) %>%
+  rename(overall_change = overall_index_change) %>%
+  select(year, country, ends_with("_change"))
+
+# =============================================================================
+# SECTION 4  Derived constants
+# =============================================================================
+
+.dim_cols <- c(
+  "trade_score", "financial_score", "labor_score",
+  "infrastructure_score", "sustainability_score", "convergence_score"
+)
+.dim_labels_en <- c(
+  "Trade", "Financial", "Labor",
+  "Infrastructure", "Sustainability", "Convergence"
 )
 
-# ==============================================================================
-# SERVER
-# ==============================================================================
-
-server <- function(input, output, session) {
-
-  # ---------------------------------------------------------------------------
-  # Navigation State
-  # ---------------------------------------------------------------------------
-
-  entered_dashboard <- reactiveVal(FALSE)
-
-  observeEvent(input$enter_dashboard, { entered_dashboard(TRUE) })
-  observeEvent(input$back_to_welcome, { entered_dashboard(FALSE) })
-
-  # ---------------------------------------------------------------------------
-  # Main UI Renderer
-  # ---------------------------------------------------------------------------
-
-  output$main_ui <- renderUI({
-    if (!entered_dashboard()) {
-      landing_page_ui()
-    } else {
-      dashboard_ui()
-    }
-  })
-
-  # ---------------------------------------------------------------------------
-  # Overview Tab Outputs
-  # ---------------------------------------------------------------------------
-
-  output$latest_overall <- renderValueBox({
-    latest <- gcc_ts %>% filter(year == max(year))
-    valueBox(
-      value = round(latest$overall, 1),
-      subtitle = "Overall GCC Score",
-      icon = icon("chart-line"),
-      color = "blue"
-    )
-  })
-
-  output$latest_year <- renderValueBox({
-    valueBox(
-      value = max(dimension_scores$year),
-      subtitle = "Latest Year",
-      icon = icon("calendar"),
-      color = "green"
-    )
-  })
-
-  output$num_countries <- renderValueBox({
-    valueBox(
-      value = length(countries),
-      subtitle = "Member States",
-      icon = icon("flag"),
-      color = "purple"
-    )
-  })
-
-  # ---------------------------------------------------------------------------
-  # Metadata Tab Outputs
-  # ---------------------------------------------------------------------------
-
-  output$dimension_weights_table <- renderTable({
-    get_dimension_weights_table()
-  }, striped = TRUE, hover = TRUE, width = "100%")
-
-  output$trade_indicators_table <- renderTable({
-    get_trade_indicators_table()
-  }, striped = TRUE, hover = TRUE, width = "100%")
-
-  output$financial_indicators_table <- renderTable({
-    get_financial_indicators_table()
-  }, striped = TRUE, hover = TRUE, width = "100%")
-
-  output$labor_indicators_table <- renderTable({
-    get_labor_indicators_table()
-  }, striped = TRUE, hover = TRUE, width = "100%")
-
-  output$infrastructure_indicators_table <- renderTable({
-    get_infrastructure_indicators_table()
-  }, striped = TRUE, hover = TRUE, width = "100%")
-
-  output$sustainability_indicators_table <- renderTable({
-    get_sustainability_indicators_table()
-  }, striped = TRUE, hover = TRUE, width = "100%")
-
-  output$convergence_indicators_table <- renderTable({
-    get_convergence_indicators_table()
-  }, striped = TRUE, hover = TRUE, width = "100%")
-
-  # ---------------------------------------------------------------------------
-  # GCC Overall Tab Outputs
-  # ---------------------------------------------------------------------------
-
-  output$gcc_overall_gauge <- renderPlotly({
-    latest <- gcc_ts %>% filter(year == max(year))
-    prev <- gcc_ts %>% filter(year == max(year) - 1) %>% pull(overall)
-    create_gauge_chart(latest$overall, prev, paste("GCC Integration Score", max(gcc_ts$year)))
-  })
-
-  output$gcc_dimension_bars <- renderPlotly({
-    latest <- gcc_ts %>% filter(year == max(year))
-    dim_data <- create_dimension_df(latest)
-    create_dimension_bar_chart(dim_data)
-  })
-
-  output$dimension_boxes <- renderUI({
-    latest <- gcc_ts %>% filter(year == max(year))
-    scores <- get_scores_vector(latest)
-
-    tagList(
-      fluidRow(
-        lapply(1:3, function(i) {
-          column(4,
-            div(class = "info-box",
-              span(class = paste("info-box-icon bg", DIMENSION_BOX_COLORS[i], sep = "-"),
-                   icon(DIMENSION_ICONS[i])),
-              div(class = "info-box-content",
-                span(class = "info-box-text", DIMENSION_LABELS[i]),
-                span(class = "info-box-number", round(scores[i], 1))
-              )
-            )
-          )
-        })
-      ),
-      fluidRow(
-        lapply(4:6, function(i) {
-          column(4,
-            div(class = "info-box",
-              span(class = paste("info-box-icon bg", DIMENSION_BOX_COLORS[i], sep = "-"),
-                   icon(DIMENSION_ICONS[i])),
-              div(class = "info-box-content",
-                span(class = "info-box-text", DIMENSION_LABELS[i]),
-                span(class = "info-box-number", round(scores[i], 1))
-              )
-            )
-          )
-        })
-      )
-    )
-  })
-
-  output$country_ranking <- renderPlotly({
-    latest_year <- max(dimension_scores$year)
-    ranking <- dimension_scores %>%
-      filter(year == latest_year) %>%
-      arrange(desc(overall_index))
-    create_ranking_chart(ranking, title = paste("Country Rankings -", latest_year))
-  })
-
-  # ---------------------------------------------------------------------------
-  # GCC Timeseries Tab Outputs
-  # ---------------------------------------------------------------------------
-
-  # -- Reactive: selected dimension (default: Trade) --
-  selected_dimension <- reactiveVal("Trade")
-
-  observeEvent(input$dim_btn_Trade, { selected_dimension("Trade") })
-  observeEvent(input$dim_btn_Financial, { selected_dimension("Financial") })
-  observeEvent(input$dim_btn_Labor, { selected_dimension("Labor") })
-  observeEvent(input$dim_btn_Infrastructure, { selected_dimension("Infrastructure") })
-  observeEvent(input$dim_btn_Sustainability, { selected_dimension("Sustainability") })
-  observeEvent(input$dim_btn_Convergence, { selected_dimension("Convergence") })
-
-  # -- Summary header bar --
-  output$ts_summary_bar <- renderUI({
-    latest <- gcc_ts %>% filter(year == max(year))
-    prev <- gcc_ts %>% filter(year == max(year) - 1)
-    change <- round(latest$overall - prev$overall, 1)
-    change_class <- if (change >= 0) "positive" else "negative"
-    change_arrow <- if (change >= 0) "\u25b2" else "\u25bc"
-    level <- latest$integration_level
-    level_class <- tolower(level)
-
-    div(class = "ts-summary-bar",
-      div(class = "ts-summary-item",
-        div(class = "ts-summary-value", round(latest$overall, 1)),
-        div(class = "ts-summary-label", paste("GCC Score", max(gcc_ts$year)))
-      ),
-      div(class = "ts-summary-item",
-        div(class = paste("ts-summary-change", change_class),
-          paste(change_arrow, abs(change), "pts from", max(gcc_ts$year) - 1)),
-        div(class = "ts-summary-label", "Year-over-Year")
-      ),
-      div(class = "ts-summary-item",
-        span(class = paste("ts-level-badge", level_class), level),
-        div(class = "ts-summary-label", "Integration Level")
-      ),
-      div(class = "ts-summary-item",
-        div(class = "ts-summary-value", paste0(min(gcc_ts$year), "\u2013", max(gcc_ts$year))),
-        div(class = "ts-summary-label", "Time Coverage")
-      )
-    )
-  })
-
-  # -- Overall trend (compact) --
-  output$gcc_overall_trend <- renderPlotly({
-    create_line_chart(gcc_ts, "year", "overall")
-  })
-
-  # -- Dynamic titles --
-  output$ts_dimension_title <- renderUI({
-    dim <- selected_dimension()
-    tags$span(paste(dim, "Integration \u2014 Country Comparison"))
-  })
-
-  output$ts_indicators_title <- renderUI({
-    dim <- selected_dimension()
-    tags$span(paste(dim, "Indicators \u2014 GCC Aggregate Time Series"))
-  })
-
-  # -- Dimension country comparison chart --
-  output$ts_dimension_countries <- renderPlotly({
-    dim <- selected_dimension()
-    col_name <- DIMENSION_CODE_MAP[dim]
-
-    p <- plot_ly()
-
-    # Country lines (thin, colored)
-    for (ctry in countries) {
-      ctry_data <- dimension_scores %>% dplyr::filter(country == ctry)
-      p <- p %>% add_trace(
-        data = ctry_data, x = ~year,
-        y = as.formula(paste0("~", col_name)),
-        name = ctry, type = 'scatter', mode = 'lines+markers',
-        line = list(color = COUNTRY_COLORS[ctry], width = 1.5),
-        marker = list(size = 5),
-        legendgroup = ctry
-      )
-    }
-
-    # GCC aggregate (thick, gold, dashed)
-    p <- p %>% add_trace(
-      data = gcc_ts, x = ~year,
-      y = as.formula(paste0("~", col_name)),
-      name = "GCC", type = 'scatter', mode = 'lines+markers',
-      line = list(color = COUNTRY_COLORS_WITH_GCC["GCC"], width = 3.5, dash = "dash"),
-      marker = list(size = 9, symbol = "diamond",
-                    color = COUNTRY_COLORS_WITH_GCC["GCC"]),
-      legendgroup = "GCC"
-    )
-
-    p %>% layout(
-      xaxis = list(title = "Year", dtick = 1),
-      yaxis = list(title = paste(dim, "Score"), range = c(0, 100)),
-      hovermode = 'x unified',
-      legend = list(orientation = 'h', y = -0.15)
-    )
-  })
-
-  # -- Indicator small multiples (GCC aggregate, subplot grid) --
-  output$ts_indicator_multiples <- renderPlotly({
-    dim <- selected_dimension()
-
-    if (is.null(indicator_detail) || nrow(indicator_detail) == 0) {
-      return(
-        plot_ly() %>%
-          layout(title = "Indicator detail data not available",
-                 xaxis = list(visible = FALSE), yaxis = list(visible = FALSE))
-      )
-    }
-
-    # Filter to GCC aggregate for the selected dimension
-    gcc_ind <- indicator_detail %>%
-      dplyr::filter(dimension == dim, country == "GCC") %>%
-      dplyr::arrange(indicator_code, year)
-
-    # Get unique indicators and their labels
-    ind_info <- gcc_ind %>%
-      dplyr::distinct(indicator_code, indicator_label) %>%
-      dplyr::arrange(indicator_code)
-
-    n_ind <- nrow(ind_info)
-    if (n_ind == 0) {
-      return(
-        plot_ly() %>%
-          layout(title = paste("No indicators found for", dim),
-                 xaxis = list(visible = FALSE), yaxis = list(visible = FALSE))
-      )
-    }
-
-    # Dimension-specific accent color for the small multiples
-    dim_colors <- c(
-      "Trade" = "#1565c0", "Financial" = "#f57f17",
-      "Labor" = "#2e7d32", "Infrastructure" = "#c62828",
-      "Sustainability" = "#6a1b9a", "Convergence" = "#00838f"
-    )
-    accent <- dim_colors[dim]
-
-    # Build one subplot per indicator
-    plots <- lapply(seq_len(n_ind), function(i) {
-      ind_code <- ind_info$indicator_code[i]
-      ind_label <- ind_info$indicator_label[i]
-      ind_data <- gcc_ind %>% dplyr::filter(indicator_code == ind_code)
-
-      plot_ly(ind_data, x = ~year, y = ~normalized_value,
-              type = 'scatter', mode = 'lines+markers',
-              line = list(color = accent, width = 2),
-              marker = list(size = 5, color = accent),
-              hovertemplate = paste0(
-                "<b>", ind_label, "</b><br>",
-                "Year: %{x}<br>",
-                "Score: %{y:.1f}<br>",
-                "<extra></extra>"
-              ),
-              showlegend = FALSE) %>%
-        layout(
-          annotations = list(
-            list(text = ind_label, x = 0.5, y = 1.08,
-                 xref = "paper", yref = "paper",
-                 showarrow = FALSE,
-                 font = list(size = 11, color = "#333"))
-          ),
-          xaxis = list(dtick = 2),
-          yaxis = list(range = c(0, 100))
-        )
-    })
-
-    n_cols <- min(3, n_ind)
-    n_rows <- ceiling(n_ind / n_cols)
-
-    # Calculate dynamic height: 250px per row
-    chart_height <- n_rows * 250
-
-    subplot(plots, nrows = n_rows, shareX = TRUE, shareY = TRUE,
-            titleX = FALSE, titleY = FALSE, margin = 0.06) %>%
-      layout(
-        yaxis = list(title = "Score (0\u2013100)", range = c(0, 100)),
-        margin = list(t = 30, b = 40),
-        height = chart_height
-      )
-  })
-
-  # ---------------------------------------------------------------------------
-  # Country Profiles Tab Outputs
-  # ---------------------------------------------------------------------------
-
-  output$country_overall <- renderValueBox({
-    latest <- dimension_scores %>%
-      filter(country == input$selected_country, year == max(year))
-    valueBox(
-      value = round(latest$overall_index, 1),
-      subtitle = paste(input$selected_country, "Overall Score"),
-      icon = icon("chart-line"),
-      color = "blue"
-    )
-  })
-
-  output$country_rank <- renderValueBox({
-    latest_year <- max(dimension_scores$year)
-    ranking <- dimension_scores %>%
-      filter(year == latest_year) %>%
-      arrange(desc(overall_index)) %>%
-      mutate(rank = row_number())
-
-    rank_val <- ranking %>% filter(country == input$selected_country) %>% pull(rank)
-    valueBox(
-      value = paste("#", rank_val),
-      subtitle = paste("Rank in", latest_year),
-      icon = icon("trophy"),
-      color = "green"
-    )
-  })
-
-  output$country_radar <- renderPlotly({
-    latest <- dimension_scores %>%
-      filter(country == input$selected_country, year == max(year))
-    scores <- get_scores_vector(latest)
-    create_radar_chart(scores)
-  })
-
-  # -- Combined Country vs GCC trend (replaces two separate charts) --
-  output$country_vs_gcc_combined <- renderPlotly({
-    ctry <- input$selected_country
-    ctry_data <- dimension_scores %>% filter(country == ctry)
-
-    plot_ly() %>%
-      add_trace(data = ctry_data, x = ~year, y = ~overall_index,
-                name = ctry, type = 'scatter', mode = 'lines+markers',
-                line = list(color = COUNTRY_COLORS[ctry], width = 3),
-                marker = list(size = 10)) %>%
-      add_trace(data = gcc_ts, x = ~year, y = ~overall,
-                name = "GCC Average", type = 'scatter', mode = 'lines+markers',
-                line = list(color = COUNTRY_COLORS_WITH_GCC["GCC"], width = 3, dash = 'dash'),
-                marker = list(size = 8, symbol = "diamond")) %>%
-      layout(
-        xaxis = list(title = "Year", dtick = 1),
-        yaxis = list(title = "Overall Score", range = c(0, 100)),
-        hovermode = 'x unified',
-        legend = list(orientation = 'h', y = -0.15)
-      )
-  })
-
-  # -- Lollipop chart: country vs GCC indicator comparison --
-  output$cp_indicator_lollipop <- renderPlotly({
-    ctry <- input$selected_country
-    dim <- input$cp_dimension_select
-
-    if (is.null(indicator_detail) || nrow(indicator_detail) == 0) {
-      return(plot_ly() %>% layout(title = "Indicator data not available"))
-    }
-
-    latest_year <- max(indicator_detail$year)
-
-    # Get country and GCC scores for each indicator in the dimension
-    ctry_ind <- indicator_detail %>%
-      dplyr::filter(country == ctry, dimension == dim, year == latest_year) %>%
-      dplyr::select(indicator_code, indicator_label, ctry_score = normalized_value)
-
-    gcc_ind <- indicator_detail %>%
-      dplyr::filter(country == "GCC", dimension == dim, year == latest_year) %>%
-      dplyr::select(indicator_code, gcc_score = normalized_value)
-
-    combined <- ctry_ind %>%
-      dplyr::left_join(gcc_ind, by = "indicator_code") %>%
-      dplyr::arrange(ctry_score)
-
-    if (nrow(combined) == 0) {
-      return(plot_ly() %>% layout(title = paste("No indicators for", dim)))
-    }
-
-    # Ordered factor for y-axis
-    combined$indicator_label <- factor(combined$indicator_label,
-                                       levels = combined$indicator_label)
-
-    ctry_color <- COUNTRY_COLORS[ctry]
-
-    p <- plot_ly()
-
-    # Connecting lines (gap segments)
-    for (i in seq_len(nrow(combined))) {
-      p <- p %>% add_trace(
-        x = c(combined$ctry_score[i], combined$gcc_score[i]),
-        y = c(combined$indicator_label[i], combined$indicator_label[i]),
-        type = 'scatter', mode = 'lines',
-        line = list(color = '#cccccc', width = 2),
-        showlegend = FALSE, hoverinfo = 'skip'
-      )
-    }
-
-    # Country dots
-    p <- p %>% add_trace(
-      data = combined, x = ~ctry_score, y = ~indicator_label,
-      type = 'scatter', mode = 'markers',
-      marker = list(size = 14, color = ctry_color,
-                    line = list(color = 'white', width = 1.5)),
-      name = ctry,
-      hovertemplate = paste0("<b>%{y}</b><br>", ctry, ": %{x:.1f}<extra></extra>")
-    )
-
-    # GCC dots
-    p <- p %>% add_trace(
-      data = combined, x = ~gcc_score, y = ~indicator_label,
-      type = 'scatter', mode = 'markers',
-      marker = list(size = 14, color = COUNTRY_COLORS_WITH_GCC["GCC"],
-                    symbol = "diamond",
-                    line = list(color = 'white', width = 1.5)),
-      name = "GCC Average",
-      hovertemplate = "<b>%{y}</b><br>GCC: %{x:.1f}<extra></extra>"
-    )
-
-    p %>% layout(
-      xaxis = list(title = paste("Score (", latest_year, ")"),
-                   range = c(0, 105)),
-      yaxis = list(title = "", automargin = TRUE),
-      legend = list(orientation = 'h', y = -0.15),
-      margin = list(l = 160)
-    )
-  })
-
-  # -- Small multiples: indicator trends for selected country + GCC overlay --
-  output$cp_indicator_trends <- renderPlotly({
-    ctry <- input$selected_country
-    dim <- input$cp_dimension_select
-
-    if (is.null(indicator_detail) || nrow(indicator_detail) == 0) {
-      return(plot_ly() %>% layout(title = "Indicator data not available"))
-    }
-
-    # Filter indicator data for this dimension (country + GCC)
-    ind_data <- indicator_detail %>%
-      dplyr::filter(dimension == dim,
-                    country %in% c(ctry, "GCC")) %>%
-      dplyr::arrange(indicator_code, year)
-
-    ind_info <- ind_data %>%
-      dplyr::distinct(indicator_code, indicator_label) %>%
-      dplyr::arrange(indicator_code)
-
-    n_ind <- nrow(ind_info)
-    if (n_ind == 0) {
-      return(plot_ly() %>% layout(title = paste("No indicators for", dim)))
-    }
-
-    ctry_color <- COUNTRY_COLORS[ctry]
-    gcc_color <- COUNTRY_COLORS_WITH_GCC["GCC"]
-
-    plots <- lapply(seq_len(n_ind), function(i) {
-      ind_code <- ind_info$indicator_code[i]
-      ind_label <- ind_info$indicator_label[i]
-
-      ctry_series <- ind_data %>%
-        dplyr::filter(indicator_code == ind_code, country == ctry)
-      gcc_series <- ind_data %>%
-        dplyr::filter(indicator_code == ind_code, country == "GCC")
-
-      plot_ly() %>%
-        add_trace(data = ctry_series, x = ~year, y = ~normalized_value,
-                  type = 'scatter', mode = 'lines+markers',
-                  line = list(color = ctry_color, width = 2),
-                  marker = list(size = 4, color = ctry_color),
-                  name = ctry, showlegend = (i == 1),
-                  legendgroup = "ctry",
-                  hovertemplate = paste0(
-                    "<b>", ind_label, "</b><br>",
-                    ctry, ": %{y:.1f}<extra></extra>")) %>%
-        add_trace(data = gcc_series, x = ~year, y = ~normalized_value,
-                  type = 'scatter', mode = 'lines+markers',
-                  line = list(color = gcc_color, width = 2, dash = "dash"),
-                  marker = list(size = 4, color = gcc_color, symbol = "diamond"),
-                  name = "GCC", showlegend = (i == 1),
-                  legendgroup = "gcc",
-                  hovertemplate = paste0(
-                    "<b>", ind_label, "</b><br>",
-                    "GCC: %{y:.1f}<extra></extra>")) %>%
-        layout(
-          annotations = list(
-            list(text = ind_label, x = 0.5, y = 1.08,
-                 xref = "paper", yref = "paper",
-                 showarrow = FALSE,
-                 font = list(size = 11, color = "#333"))
-          ),
-          xaxis = list(dtick = 2),
-          yaxis = list(range = c(0, 100))
-        )
-    })
-
-    n_cols <- min(3, n_ind)
-    n_rows <- ceiling(n_ind / n_cols)
-    chart_height <- n_rows * 250
-
-    subplot(plots, nrows = n_rows, shareX = TRUE, shareY = TRUE,
-            titleX = FALSE, titleY = FALSE, margin = 0.06) %>%
-      layout(
-        yaxis = list(title = "Score (0\u2013100)", range = c(0, 100)),
-        margin = list(t = 30, b = 40),
-        height = chart_height,
-        legend = list(orientation = 'h', y = -0.08)
-      )
-  })
-
-  # -- Dynamic titles for indicator detail section --
-  output$cp_lollipop_title <- renderUI({
-    dim <- input$cp_dimension_select
-    ctry <- input$selected_country
-    tags$span(paste0(ctry, " vs GCC \u2014 ", dim, " Indicators"))
-  })
-
-  output$cp_trends_title <- renderUI({
-    dim <- input$cp_dimension_select
-    tags$span(paste(dim, "Indicator Trends"))
-  })
-
-  # ---------------------------------------------------------------------------
-  # Country Heatmap Tab Outputs
-  # ---------------------------------------------------------------------------
-
-  output$country_heatmap <- renderPlotly({
-    heatmap_data <- dimension_scores %>%
-      filter(year == input$heatmap_year) %>%
-      select(country, all_of(DIMENSION_COLS))
-
-    colnames(heatmap_data) <- c("country", DIMENSION_LABELS)
-
-    heatmap_matrix <- heatmap_data %>%
-      column_to_rownames("country") %>%
-      as.matrix()
-
-    create_heatmap(heatmap_matrix)
-  })
-
-  output$integration_levels <- renderPlotly({
-    level_data <- dimension_scores %>%
-      filter(year == input$heatmap_year) %>%
-      mutate(integration_level = factor(integration_level, levels = c("Weak", "Moderate", "Good")))
-
-    plot_ly(level_data, x = ~country, y = ~overall_index, type = 'bar',
-            marker = list(color = ~INTEGRATION_LEVEL_COLORS[integration_level])) %>%
-      layout(
-        xaxis = list(title = ""),
-        yaxis = list(title = "Overall Score", range = c(0, 100)),
-        shapes = list(
-          list(type = "line", x0 = -0.5, x1 = 5.5, y0 = 40, y1 = 40,
-               line = list(color = "orange", dash = "dash")),
-          list(type = "line", x0 = -0.5, x1 = 5.5, y0 = 60, y1 = 60,
-               line = list(color = "green", dash = "dash"))
-        )
-      )
-  })
-
-  # ---------------------------------------------------------------------------
-  # GCC Analytics Tab Outputs
-  # ---------------------------------------------------------------------------
-
-  # -- Dynamic titles --
-  output$analytics_waterfall_title <- renderUI({
-    tags$span(paste0("GCC Score Decomposition by Dimension (",
-                     input$analytics_from_year, " \u2192 ", input$analytics_to_year, ")"))
-  })
-  output$analytics_country_contrib_title <- renderUI({
-    tags$span(paste0("Country Contribution to GCC Change (",
-                     input$analytics_from_year, " \u2192 ", input$analytics_to_year, ")"))
-  })
-  output$analytics_spread_title <- renderUI({
-    tags$span(paste("Cross-Country Spread by Dimension \u2014", max(dimension_scores$year)))
-  })
-  output$analytics_movers_title <- renderUI({
-    ly <- max(dimension_scores$year)
-    tags$span(paste0("Biggest Movers (", ly - 1, " \u2192 ", ly, ")"))
-  })
-
-  # ===== Section 1: What Changed? =====
-
-  # -- Waterfall chart: dimension-level decomposition --
-  output$analytics_waterfall <- renderPlotly({
-    yr_from <- as.integer(input$analytics_from_year)
-    yr_to <- as.integer(input$analytics_to_year)
-
-    gcc_from <- gcc_ts %>% dplyr::filter(year == yr_from)
-    gcc_to <- gcc_ts %>% dplyr::filter(year == yr_to)
-
-    if (nrow(gcc_from) == 0 || nrow(gcc_to) == 0) {
-      return(plot_ly() %>% layout(title = "No data for selected years"))
-    }
-
-    # Weighted dimension changes
-    dim_changes <- data.frame(
-      dimension = DIMENSION_LABELS,
-      change = sapply(DIMENSION_COLS, function(col) {
-        (gcc_to[[col]] - gcc_from[[col]])
-      }) * DIMENSION_WEIGHTS,
-      stringsAsFactors = FALSE
-    )
-    # Sort by absolute change descending for visual clarity
-    dim_changes <- dim_changes[order(-abs(dim_changes$change)), ]
-
-    # Build waterfall data
-    from_val <- gcc_from$overall
-    to_val <- gcc_to$overall
-
-    # Construct the bar positions
-    labels <- c(as.character(yr_from), dim_changes$dimension, as.character(yr_to))
-    n <- length(labels)
-
-    base_vals <- numeric(n)
-    bar_vals <- numeric(n)
-    bar_colors <- character(n)
-
-    # First bar: starting index
-    base_vals[1] <- 0
-    bar_vals[1] <- from_val
-    bar_colors[1] <- "#003366"
-
-    # Middle bars: dimension changes
-    running <- from_val
-    for (i in seq_len(nrow(dim_changes))) {
-      ch <- dim_changes$change[i]
-      if (ch >= 0) {
-        base_vals[i + 1] <- running
-        bar_vals[i + 1] <- ch
-        bar_colors[i + 1] <- "#4caf50"
-      } else {
-        base_vals[i + 1] <- running + ch
-        bar_vals[i + 1] <- abs(ch)
-        bar_colors[i + 1] <- "#f44336"
-      }
-      running <- running + ch
-    }
-
-    # Last bar: ending index
-    base_vals[n] <- 0
-    bar_vals[n] <- to_val
-    bar_colors[n] <- "#003366"
-
-    labels_factor <- factor(labels, levels = labels)
-
-    # Invisible base bars
-    plot_ly() %>%
-      add_trace(x = labels_factor, y = base_vals,
-                type = 'bar', marker = list(color = 'rgba(0,0,0,0)'),
-                showlegend = FALSE, hoverinfo = 'skip') %>%
-      # Visible bars
-      add_trace(x = labels_factor, y = bar_vals,
-                type = 'bar', marker = list(color = bar_colors),
-                showlegend = FALSE,
-                text = round(bar_vals, 1),
-                textposition = 'outside',
-                hovertemplate = "<b>%{x}</b><br>Value: %{y:.1f}<extra></extra>") %>%
-      layout(
-        barmode = 'stack',
-        xaxis = list(title = ""),
-        yaxis = list(title = "Score", range = c(0, max(from_val, to_val) + 15)),
-        margin = list(b = 80)
-      )
-  })
-
-  # -- Country contribution: GDP-weighted bars --
-  output$analytics_country_contribution <- renderPlotly({
-    yr_from <- as.integer(input$analytics_from_year)
-    yr_to <- as.integer(input$analytics_to_year)
-
-    scores_from <- dimension_scores %>% dplyr::filter(year == yr_from)
-    scores_to <- dimension_scores %>% dplyr::filter(year == yr_to)
-
-    if (nrow(scores_from) == 0 || nrow(scores_to) == 0) {
-      return(plot_ly() %>% layout(title = "No data for selected years"))
-    }
-
-    # Join and calculate weighted overall contribution
-    contrib <- scores_to %>%
-      dplyr::select(country, overall_to = overall_index) %>%
-      dplyr::left_join(
-        scores_from %>% dplyr::select(country, overall_from = overall_index),
-        by = "country"
-      ) %>%
-      dplyr::left_join(GDP_WEIGHTS, by = "country") %>%
-      dplyr::mutate(
-        raw_change = overall_to - overall_from,
-        weighted_contrib = raw_change * weight
-      ) %>%
-      dplyr::arrange(weighted_contrib)
-
-    contrib$country <- factor(contrib$country, levels = contrib$country)
-    bar_colors <- ifelse(contrib$weighted_contrib >= 0, "#4caf50", "#f44336")
-
-    plot_ly(contrib, y = ~country, x = ~weighted_contrib,
-            type = 'bar', orientation = 'h',
-            marker = list(color = bar_colors),
-            text = ~paste0(country, ": ", sprintf("%+.2f", weighted_contrib),
-                          " (", sprintf("%+.1f", raw_change), " raw)"),
-            hovertemplate = "%{text}<extra></extra>") %>%
-      layout(
-        xaxis = list(title = "GDP-Weighted Contribution to GCC Change",
-                     zeroline = TRUE),
-        yaxis = list(title = "", automargin = TRUE),
-        shapes = list(
-          list(type = "line", x0 = 0, x1 = 0,
-               y0 = -0.5, y1 = nrow(contrib) - 0.5,
-               line = list(color = "black", width = 1, dash = "dot"))
-        ),
-        margin = list(l = 100)
-      )
-  })
-
-  # ===== Section 2: Annual Dynamics =====
-
-  # -- Stacked area: GCC score composition by dimension --
-  output$analytics_stacked_area <- renderPlotly({
-    # Build weighted dimension scores for GCC aggregate
-    area_data <- gcc_ts %>%
-      dplyr::select(year, all_of(DIMENSION_COLS)) %>%
-      tidyr::pivot_longer(cols = -year, names_to = "dim_col", values_to = "score") %>%
-      dplyr::mutate(
-        dimension = DIMENSION_COL_TO_LABEL[dim_col],
-        weighted = score * DIMENSION_WEIGHTS[dimension]
-      )
-
-    area_data$dimension <- factor(area_data$dimension, levels = rev(DIMENSION_LABELS))
-
-    p <- plot_ly()
-    for (i in rev(seq_along(DIMENSION_LABELS))) {
-      dim_name <- DIMENSION_LABELS[i]
-      d <- area_data %>% dplyr::filter(dimension == dim_name)
-      p <- p %>% add_trace(
-        data = d, x = ~year, y = ~weighted,
-        type = 'scatter', mode = 'lines',
-        fill = 'tonexty', fillcolor = paste0(DIMENSION_COLORS[i], "88"),
-        line = list(color = DIMENSION_COLORS[i], width = 1),
-        name = dim_name,
-        stackgroup = 'one',
-        hovertemplate = paste0("<b>", dim_name, "</b><br>",
-                              "Weighted: %{y:.1f}<extra></extra>")
-      )
-    }
-
-    p %>% layout(
-      xaxis = list(title = "Year", dtick = 1),
-      yaxis = list(title = "Weighted Dimension Score"),
-      hovermode = 'x unified',
-      legend = list(orientation = 'h', y = -0.15)
-    )
-  })
-
-  # -- Annual dimension change bars: what drove each year's change --
-  output$analytics_annual_dim_bars <- renderPlotly({
-    # GCC aggregate dimension changes year-over-year
-    gcc_dim_long <- gcc_ts %>%
-      dplyr::arrange(year) %>%
-      dplyr::mutate(across(all_of(DIMENSION_COLS), ~(.x - dplyr::lag(.x)))) %>%
-      dplyr::filter(!is.na(trade_score)) %>%
-      tidyr::pivot_longer(cols = all_of(DIMENSION_COLS),
-                          names_to = "dim_col", values_to = "change") %>%
-      dplyr::mutate(
-        dimension = DIMENSION_COL_TO_LABEL[dim_col],
-        weighted_change = change * DIMENSION_WEIGHTS[dimension]
-      )
-
-    gcc_dim_long$dimension <- factor(gcc_dim_long$dimension, levels = DIMENSION_LABELS)
-
-    p <- plot_ly()
-    for (i in seq_along(DIMENSION_LABELS)) {
-      d <- gcc_dim_long %>% dplyr::filter(dimension == DIMENSION_LABELS[i])
-      p <- p %>% add_trace(
-        data = d, x = ~year, y = ~weighted_change,
-        type = 'bar', name = DIMENSION_LABELS[i],
-        marker = list(color = DIMENSION_COLORS[i]),
-        hovertemplate = paste0("<b>", DIMENSION_LABELS[i], "</b><br>",
-                              "Change: %{y:+.2f}<extra></extra>")
-      )
-    }
-
-    p %>% layout(
-      barmode = 'relative',
-      xaxis = list(title = "Year", dtick = 1),
-      yaxis = list(title = "Weighted Change in GCC Score"),
-      hovermode = 'x unified',
-      legend = list(orientation = 'h', y = -0.15),
-      shapes = list(
-        list(type = "line",
-             x0 = min(gcc_dim_long$year) - 0.5,
-             x1 = max(gcc_dim_long$year) + 0.5,
-             y0 = 0, y1 = 0,
-             line = list(color = "black", width = 1, dash = "dot"))
-      )
-    )
-  })
-
-  # ===== Section 3: Cross-Country Spread =====
-
-  output$analytics_spread_chart <- renderPlotly({
-    latest_year <- max(dimension_scores$year)
-    latest <- dimension_scores %>% dplyr::filter(year == latest_year)
-
-    # Also get GCC aggregate
-    gcc_latest <- gcc_ts %>% dplyr::filter(year == latest_year)
-
-    spread_data <- lapply(seq_along(DIMENSION_COLS), function(i) {
-      col <- DIMENSION_COLS[i]
-      dim_label <- DIMENSION_LABELS[i]
-      vals <- latest[[col]]
-
-      data.frame(
-        dimension = dim_label,
-        country = latest$country,
-        score = vals,
-        gcc_avg = gcc_latest[[col]],
-        dim_min = min(vals, na.rm = TRUE),
-        dim_max = max(vals, na.rm = TRUE),
-        stringsAsFactors = FALSE
-      )
-    }) %>% dplyr::bind_rows()
-
-    spread_data$dimension <- factor(spread_data$dimension, levels = rev(DIMENSION_LABELS))
-
-    p <- plot_ly()
-
-    # Range lines (min to max)
-    range_summary <- spread_data %>%
-      dplyr::distinct(dimension, dim_min, dim_max, gcc_avg)
-
-    for (j in seq_len(nrow(range_summary))) {
-      p <- p %>% add_trace(
-        x = c(range_summary$dim_min[j], range_summary$dim_max[j]),
-        y = c(range_summary$dimension[j], range_summary$dimension[j]),
-        type = 'scatter', mode = 'lines',
-        line = list(color = '#cccccc', width = 6),
-        showlegend = FALSE, hoverinfo = 'skip'
-      )
-    }
-
-    # Individual country dots
-    for (ctry in countries) {
-      ctry_data <- spread_data %>% dplyr::filter(country == ctry)
-      p <- p %>% add_trace(
-        data = ctry_data, x = ~score, y = ~dimension,
-        type = 'scatter', mode = 'markers',
-        marker = list(size = 12, color = COUNTRY_COLORS[ctry],
-                      line = list(color = 'white', width = 1)),
-        name = ctry, legendgroup = ctry,
-        hovertemplate = paste0("<b>", ctry, "</b><br>",
-                              "%{y}: %{x:.1f}<extra></extra>")
-      )
-    }
-
-    # GCC average diamonds
-    p <- p %>% add_trace(
-      data = range_summary, x = ~gcc_avg, y = ~dimension,
-      type = 'scatter', mode = 'markers',
-      marker = list(size = 14, color = COUNTRY_COLORS_WITH_GCC["GCC"],
-                    symbol = "diamond",
-                    line = list(color = 'white', width = 1.5)),
-      name = "GCC Average", legendgroup = "gcc",
-      hovertemplate = "<b>GCC Average</b><br>%{y}: %{x:.1f}<extra></extra>"
-    )
-
-    p %>% layout(
-      xaxis = list(title = "Score", range = c(0, 105)),
-      yaxis = list(title = "", automargin = TRUE),
-      legend = list(orientation = 'h', y = -0.1),
-      margin = list(l = 120)
-    )
-  })
-
-  # ===== Section 4: Biggest Movers =====
-
-  output$analytics_biggest_movers <- renderPlotly({
-    latest_year <- max(dimension_scores$year)
-    prev_year <- latest_year - 1
-
-    curr <- dimension_scores %>% dplyr::filter(year == latest_year)
-    prev <- dimension_scores %>% dplyr::filter(year == prev_year)
-
-    if (nrow(curr) == 0 || nrow(prev) == 0) {
-      return(plot_ly() %>% layout(title = "Insufficient data for movers analysis"))
-    }
-
-    # Calculate dimension-level changes for each country
-    movers <- curr %>%
-      dplyr::select(country, all_of(DIMENSION_COLS)) %>%
-      tidyr::pivot_longer(cols = -country, names_to = "dim_col", values_to = "score_to") %>%
-      dplyr::left_join(
-        prev %>%
-          dplyr::select(country, all_of(DIMENSION_COLS)) %>%
-          tidyr::pivot_longer(cols = -country, names_to = "dim_col",
-                              values_to = "score_from"),
-        by = c("country", "dim_col")
-      ) %>%
-      dplyr::mutate(
-        dimension = DIMENSION_COL_TO_LABEL[dim_col],
-        change = score_to - score_from,
-        label = paste(country, "\u2014", dimension)
-      ) %>%
-      dplyr::arrange(change)
-
-    # Take top 8 gains and top 8 declines (or fewer if not available)
-    top_gains <- movers %>% dplyr::filter(change > 0) %>%
-      dplyr::arrange(desc(change)) %>% utils::head(8)
-    top_declines <- movers %>% dplyr::filter(change < 0) %>%
-      dplyr::arrange(change) %>% utils::head(8)
-    top_movers <- dplyr::bind_rows(top_declines, top_gains)
-
-    if (nrow(top_movers) == 0) {
-      return(plot_ly() %>% layout(title = "No changes detected"))
-    }
-
-    top_movers$label <- factor(top_movers$label, levels = top_movers$label)
-    bar_colors <- ifelse(top_movers$change >= 0, "#4caf50", "#f44336")
-
-    plot_ly(top_movers, y = ~label, x = ~change,
-            type = 'bar', orientation = 'h',
-            marker = list(color = bar_colors),
-            text = ~sprintf("%+.1f", change),
-            textposition = 'outside',
-            hovertemplate = paste0(
-              "<b>%{y}</b><br>",
-              "Change: %{x:+.1f}<br>",
-              "<extra></extra>")) %>%
-      layout(
-        xaxis = list(title = "Score Change", zeroline = TRUE),
-        yaxis = list(title = "", automargin = TRUE,
-                     categoryorder = "array",
-                     categoryarray = levels(top_movers$label)),
-        shapes = list(
-          list(type = "line", x0 = 0, x1 = 0,
-               y0 = -0.5, y1 = nrow(top_movers) - 0.5,
-               line = list(color = "black", width = 1, dash = "dot"))
-        ),
-        margin = list(l = 180)
-      )
-  })
-
-  # ---------------------------------------------------------------------------
-  # Data Explorer Tab Outputs
-  # ---------------------------------------------------------------------------
-
-  output$data_table <- renderDT({
-    data_to_show <- switch(input$data_table_select,
-                           "dimension" = dimension_scores,
-                           "gcc" = gcc_ts,
-                           "yoy" = yoy_changes,
-                           "indicator" = indicator_detail)
-
-    datatable(
-      data_to_show,
-      options = list(
-        pageLength = 25,
-        scrollX = TRUE,
-        searchHighlight = TRUE,
-        dom = 'Bfrtip',
-        buttons = c('copy', 'csv', 'excel')
-      ),
-      extensions = 'Buttons',
-      filter = 'top',
-      rownames = FALSE
-    ) %>%
-      formatRound(
-        columns = names(data_to_show)[sapply(data_to_show, is.numeric) & names(data_to_show) != "year"],
-        digits = 2
-      )
-  })
+countries <- dimension_scores %>%
+  filter(country != "GCC AGGREGATE") %>%
+  pull(country) %>% unique() %>% sort()
+
+country_colors <- c(
+  "Bahrain"      = "#E41A1C",
+  "Kuwait"       = "#377EB8",
+  "Oman"         = "#4DAF4A",
+  "Qatar"        = "#984EA3",
+  "Saudi Arabia" = "#FF7F00",
+  "UAE"          = "#A65628"
+)
+
+yr_min     <- min(dimension_scores$year, na.rm = TRUE)
+yr_max     <- max(dimension_scores$year, na.rm = TRUE)
+yr_min_yoy <- yr_min + 1L
+
+# ── Input choice helpers ──────────────────────────────────────────────────────
+
+.dim_choices <- function(lang) {
+  setNames(.dim_cols, translate_dimensions(.dim_labels_en, lang))
 }
 
-# ==============================================================================
-# Dashboard UI Definition
-# ==============================================================================
+.country_choices <- function(lang) {
+  setNames(countries, translate_countries(countries, lang))
+}
 
-dashboard_ui <- function() {
+# Preserve a selectInput selection across renderUI re-renders
+.keep <- function(val, default) {
+  v <- isolate(val)
+  if (!is.null(v) && length(v) > 0) v else default
+}
+
+# =============================================================================
+# SECTION 5  Tab UI builder functions
+# =============================================================================
+# Each function is called inside renderUI (server) so it re-executes when
+# current_lang() changes, giving fully bilingual tab bodies and box titles.
+# All input IDs are stable across re-renders; current selections are preserved
+# via .keep() + isolate().
+# =============================================================================
+
+.tab_overview <- function(lang, input) {
   tagList(
-    dashboardPage(
-      skin = "blue",
-
-      dashboardHeader(
-        title = "GCC Economic Integration Dashboard",
-        titleWidth = 380
-      ),
-
-      dashboardSidebar(
-        width = 250,
-        sidebarMenu(
-          id = "tabs",
-          menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
-          menuItem("Metadata & Analysis", tabName = "metadata", icon = icon("info-circle")),
-          menuItem("GCC Overall", tabName = "gcc_overall", icon = icon("chart-line")),
-          menuItem("GCC Timeseries", tabName = "gcc_timeseries", icon = icon("chart-area")),
-          menuItem("Country Profiles", tabName = "country_profiles", icon = icon("flag")),
-          menuItem("Country Heatmap", tabName = "country_heatmap", icon = icon("th")),
-          menuItem("GCC Analytics", tabName = "gcc_analytics", icon = icon("chart-bar")),
-          menuItem("Data Explorer", tabName = "data_explorer", icon = icon("table"))
-        )
-      ),
-
-      dashboardBody(
-        tabItems(
-          # Overview Tab
-          overview_tab_ui(),
-
-          # Metadata Tab
-          metadata_tab_ui(),
-
-          # GCC Overall Tab
-          gcc_overall_tab_ui(),
-
-          # GCC Timeseries Tab
-          gcc_timeseries_tab_ui(),
-
-          # Country Profiles Tab
-          country_profiles_tab_ui(),
-
-          # Country Heatmap Tab
-          country_heatmap_tab_ui(),
-
-          # GCC Analytics Tab
-          gcc_analytics_tab_ui(),
-
-          # Data Explorer Tab
-          data_explorer_tab_ui()
-        )
-      )
-    ),
-
-    # Back to Welcome button
-    actionButton("back_to_welcome",
-                 label = tagList(icon("home"), " Welcome"),
-                 class = "back-to-welcome")
-  )
-}
-
-# ==============================================================================
-# Tab UI Functions
-# ==============================================================================
-
-overview_tab_ui <- function() {
-  tabItem(
-    tabName = "overview",
     fluidRow(
-      box(
-        width = 12,
-        title = "GCC Economic Integration Dashboard",
-        status = "primary",
-        solidHeader = TRUE,
-        h4("Welcome to the Integration Pathway"),
-        p("Part of the ", strong("GCC Economic Observatory"), ", this dashboard provides comprehensive
-          analysis of economic integration across GCC member states from 2015 to 2024, based on a
-          composite indicator built from 32 indicators across 6 dimensions using the COINr framework."),
-        hr(),
-        h5(strong("Dashboard Features:")),
-        tags$ul(
-          tags$li(strong("GCC Overall:"), "View aggregate GCC integration metrics and latest performance"),
-          tags$li(strong("GCC Timeseries:"), "Analyze trends across all six dimensions over time"),
-          tags$li(strong("Country Profiles:"), "Deep dive into individual country performance with timeseries"),
-          tags$li(strong("Country Heatmap:"), "Compare countries across dimensions visually"),
-          tags$li(strong("GCC Analytics:"), "Examine year-over-year changes and contributions to the GCC integration score"),
-          tags$li(strong("Data Explorer:"), "Access and export underlying data")
-        ),
-        hr(),
-        h5(strong("Six Integration Dimensions:")),
-        fluidRow(
-          column(4, tags$div(icon("exchange-alt"), strong(" Trade Integration"))),
-          column(4, tags$div(icon("university"), strong(" Financial Integration"))),
-          column(4, tags$div(icon("users"), strong(" Labor Mobility")))
-        ),
-        br(),
-        fluidRow(
-          column(4, tags$div(icon("road"), strong(" Infrastructure Connectivity"))),
-          column(4, tags$div(icon("leaf"), strong(" Sustainability"))),
-          column(4, tags$div(icon("chart-line"), strong(" Economic Convergence")))
-        )
+      box(width = 12, status = "primary", solidHeader = TRUE,
+          title = t("overview_box_dashboard", lang),
+          tags$p(style = "font-size:1rem; line-height:1.75;",
+                 t("meta_overview_p1", lang)),
+          tags$hr(),
+          tags$h5(tags$strong(
+            if (lang == "ar")
+              "\u0645\u0632\u0627\u064a\u0627 \u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u062d\u0643\u0645"
+            else "Dashboard Sections:"
+          )),
+          tags$ul(
+            tags$li(tags$strong(t("menu_gcc_overall",      lang)), " \u2014 ",
+                    t("overview_box_aggregate",        lang)),
+            tags$li(tags$strong(t("menu_gcc_timeseries",   lang)), " \u2014 ",
+                    t("gcc_box_dimensions_time",       lang)),
+            tags$li(tags$strong(t("menu_country_profiles", lang)), " \u2014 ",
+                    t("cp_box_all_dim",                lang)),
+            tags$li(tags$strong(t("menu_country_heatmap",  lang)), " \u2014 ",
+                    t("hm_box_heatmap",                lang)),
+            tags$li(tags$strong(t("menu_gcc_analytics",    lang)), " \u2014 ",
+                    t("an_box_contribution",           lang)),
+            tags$li(tags$strong(t("menu_data_explorer",    lang)), " \u2014 ",
+                    t("de_box_explorer",               lang))
+          ),
+          tags$hr(),
+          tags$h5(tags$strong(
+            if (lang == "ar")
+              "\u0633\u062a\u0629 \u0623\u0628\u0639\u0627\u062f \u0644\u0644\u062a\u0643\u0627\u0645\u0644"
+            else "Six Integration Dimensions:"
+          )),
+          fluidRow(
+            column(4, icon("exchange-alt"), " ",
+                   tags$strong(translate_dimension("Trade",          lang))),
+            column(4, icon("university"),   " ",
+                   tags$strong(translate_dimension("Financial",      lang))),
+            column(4, icon("users"),        " ",
+                   tags$strong(translate_dimension("Labor",          lang)))
+          ),
+          tags$br(),
+          fluidRow(
+            column(4, icon("road"),       " ",
+                   tags$strong(translate_dimension("Infrastructure", lang))),
+            column(4, icon("leaf"),       " ",
+                   tags$strong(translate_dimension("Sustainability", lang))),
+            column(4, icon("chart-line"), " ",
+                   tags$strong(translate_dimension("Convergence",    lang)))
+          )
       )
     ),
     fluidRow(
-      valueBoxOutput("latest_overall", width = 4),
-      valueBoxOutput("latest_year", width = 4),
-      valueBoxOutput("num_countries", width = 4)
+      valueBoxOutput("vb_overall",   width = 4),
+      valueBoxOutput("vb_year",      width = 4),
+      valueBoxOutput("vb_countries", width = 4)
     )
   )
 }
 
-gcc_overall_tab_ui <- function() {
-  tabItem(
-    tabName = "gcc_overall",
+.tab_gcc_overall <- function(lang, input) {
+  tagList(
     fluidRow(
-      box(width = 12, title = "GCC Aggregate Integration Performance",
-          status = "primary", solidHeader = TRUE,
+      box(width = 12, status = "primary", solidHeader = TRUE,
+          title = t("overview_box_aggregate", lang),
           plotlyOutput("gcc_overall_gauge", height = "300px"))
     ),
     fluidRow(
-      box(width = 6, title = "Current Dimension Scores",
-          status = "info", solidHeader = TRUE,
+      box(width = 6, status = "info", solidHeader = TRUE,
+          title = t("overview_box_dimension_scores", lang),
           plotlyOutput("gcc_dimension_bars", height = "400px")),
-      box(width = 6, title = "Dimension Score Cards",
-          status = "info", solidHeader = TRUE,
+      box(width = 6, status = "info", solidHeader = TRUE,
+          title = t("overview_box_score_cards", lang),
           uiOutput("dimension_boxes"))
     ),
     fluidRow(
-      box(width = 12, title = "Country Ranking",
-          status = "success", solidHeader = TRUE,
-          plotlyOutput("country_ranking", height = "350px"))
+      box(width = 12, status = "success", solidHeader = TRUE,
+          title = t("gcc_box_trend", lang),
+          plotlyOutput("gcc_overall_trend", height = "350px"))
     )
   )
 }
 
-gcc_timeseries_tab_ui <- function() {
-  tabItem(
-    tabName = "gcc_timeseries",
-
-    # --- Tier 1: Summary header + compact overall trend ---
+.tab_gcc_timeseries <- function(lang, input) {
+  tagList(
     fluidRow(
-      column(12, uiOutput("ts_summary_bar"))
-    ),
-    fluidRow(
-      box(width = 12, title = "GCC Overall Score Trend (2015\u20132024)",
-          status = "primary", solidHeader = TRUE,
-          plotlyOutput("gcc_overall_trend", height = "250px"))
-    ),
-
-    # --- Tier 2: Dimension selector pills ---
-    fluidRow(
-      column(12,
-        div(class = "dimension-selector",
-          tags$label("Explore by dimension:", class = "dim-selector-label"),
-          div(class = "dim-pills",
-            actionButton("dim_btn_Trade", tagList(icon("exchange-alt"), " Trade"),
-                         class = "dim-pill dim-pill-trade"),
-            actionButton("dim_btn_Financial", tagList(icon("university"), " Financial"),
-                         class = "dim-pill dim-pill-financial"),
-            actionButton("dim_btn_Labor", tagList(icon("users"), " Labor"),
-                         class = "dim-pill dim-pill-labor"),
-            actionButton("dim_btn_Infrastructure", tagList(icon("road"), " Infrastructure"),
-                         class = "dim-pill dim-pill-infrastructure"),
-            actionButton("dim_btn_Sustainability", tagList(icon("leaf"), " Sustainability"),
-                         class = "dim-pill dim-pill-sustainability"),
-            actionButton("dim_btn_Convergence", tagList(icon("chart-line"), " Convergence"),
-                         class = "dim-pill dim-pill-convergence")
-          )
-        ),
-        # JS to toggle active class on pill buttons
-        tags$script(HTML("
-          $(document).on('click', '.dim-pill', function() {
-            $('.dim-pill').removeClass('active');
-            $(this).addClass('active');
-          });
-          $(document).on('shiny:sessioninitialized', function() {
-            $('#dim_btn_Trade').addClass('active');
-          });
-        "))
-      )
-    ),
-
-    # --- Tier 3: Selected dimension — country comparison ---
-    fluidRow(
-      box(width = 12,
-          title = uiOutput("ts_dimension_title"),
-          status = "info", solidHeader = TRUE,
-          plotlyOutput("ts_dimension_countries", height = "350px"))
-    ),
-
-    # --- Tier 4: Indicator small multiples (GCC aggregate) ---
-    fluidRow(
-      box(width = 12,
-          title = uiOutput("ts_indicators_title"),
-          status = "success", solidHeader = TRUE,
-          plotlyOutput("ts_indicator_multiples", height = "500px"))
-    )
-  )
-}
-
-country_profiles_tab_ui <- function() {
-  tabItem(
-    tabName = "country_profiles",
-
-    # --- Row 1: Country selector + value boxes ---
-    fluidRow(
-      box(width = 4, title = "Select Country",
-          status = "primary", solidHeader = TRUE,
-          selectInput("selected_country", "Country:",
-                      choices = countries, selected = countries[1])),
-      valueBoxOutput("country_overall", width = 4),
-      valueBoxOutput("country_rank", width = 4)
-    ),
-
-    # --- Row 2: Radar chart + combined Country vs GCC trend ---
-    fluidRow(
-      box(width = 5, title = "Dimension Profile (Latest Year)",
-          status = "info", solidHeader = TRUE,
-          plotlyOutput("country_radar", height = "380px")),
-      box(width = 7, title = "Overall Score: Country vs GCC Average",
-          status = "info", solidHeader = TRUE,
-          plotlyOutput("country_vs_gcc_combined", height = "380px"))
-    ),
-
-    # --- Row 3: Dimension selector for indicator drill-down ---
-    fluidRow(
-      box(width = 12, title = "Indicator Detail",
-          status = "primary", solidHeader = TRUE,
+      box(width = 12, status = "primary", solidHeader = TRUE,
+          title = t("gcc_box_dimensions_time", lang),
           fluidRow(
-            column(4,
-              selectInput("cp_dimension_select", "Select dimension to explore:",
-                          choices = DIMENSION_LABELS, selected = "Trade")
+            column(9,
+              selectInput("dimension_select",
+                label    = if (lang == "ar")
+                             "\u0627\u062e\u062a\u0631 \u0627\u0644\u0623\u0628\u0639\u0627\u062f"
+                           else "Select Dimension(s):",
+                choices  = .dim_choices(lang),
+                selected = .keep(input$dimension_select, .dim_cols),
+                multiple = TRUE)
             ),
-            column(8,
-              div(style = "padding-top: 25px; color: #666; font-size: 0.9rem;",
-                icon("info-circle"),
-                "Compare the selected country\u2019s indicator scores against the GCC average,",
-                "and track individual indicator trends over time."
-              )
+            column(3,
+              tags$br(),
+              checkboxInput("show_overall",
+                label = if (lang == "ar")
+                          "\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u0645\u0624\u0634\u0631 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a"
+                        else "Show Overall Index",
+                value = .keep(input$show_overall, TRUE))
             )
           )
       )
     ),
-
-    # --- Row 4: Lollipop comparison + small multiples side by side ---
     fluidRow(
-      box(width = 5,
-          title = uiOutput("cp_lollipop_title"),
-          status = "success", solidHeader = TRUE,
-          plotlyOutput("cp_indicator_lollipop", height = "450px")),
-      box(width = 7,
-          title = uiOutput("cp_trends_title"),
-          status = "success", solidHeader = TRUE,
-          plotlyOutput("cp_indicator_trends", height = "450px"))
+      box(width = 12, status = "info", solidHeader = TRUE,
+          title = t("ts_box_dimension_ts", lang),
+          plotlyOutput("gcc_dimension_timeseries", height = "450px"))
+    ),
+    fluidRow(
+      box(width = 6, status = "success", solidHeader = TRUE,
+          title = t("ts_box_dimension_compare", lang),
+          plotlyOutput("dimension_radar", height = "400px")),
+      box(width = 6, status = "warning", solidHeader = TRUE,
+          title = t("ts_box_correlation", lang),
+          plotlyOutput("dimension_correlation", height = "400px"))
     )
   )
 }
 
-country_heatmap_tab_ui <- function() {
-  tabItem(
-    tabName = "country_heatmap",
+.tab_country_profiles <- function(lang, input) {
+  tagList(
     fluidRow(
-      box(width = 4, title = "Select Year",
-          status = "primary", solidHeader = TRUE,
-          selectInput("heatmap_year", "Year:",
-                      choices = sort(unique(dimension_scores$year), decreasing = TRUE),
-                      selected = max(dimension_scores$year)))
+      box(width = 12, status = "primary", solidHeader = TRUE,
+          title = t("cp_box_select", lang),
+          selectInput("country_select",
+            label    = t("cp_label_select", lang),
+            choices  = .country_choices(lang),
+            selected = .keep(input$country_select, countries[1]))
+      )
     ),
     fluidRow(
-      box(width = 12, title = "Country-Dimension Heatmap",
-          status = "info", solidHeader = TRUE,
-          plotlyOutput("country_heatmap", height = "500px"))
+      valueBoxOutput("vb_country_overall", width = 3),
+      valueBoxOutput("vb_country_rank",    width = 3),
+      valueBoxOutput("vb_country_level",   width = 3),
+      valueBoxOutput("vb_country_change",  width = 3)
     ),
     fluidRow(
-      box(width = 12, title = "Integration Levels by Country",
-          status = "success", solidHeader = TRUE,
-          plotlyOutput("integration_levels", height = "350px"))
+      box(width = 6, status = "info", solidHeader = TRUE,
+          title = t("cp_box_trend", lang),
+          plotlyOutput("country_overall_trend", height = "350px")),
+      box(width = 6, status = "info", solidHeader = TRUE,
+          title = t("cp_box_radar", lang),
+          plotlyOutput("country_dimension_current", height = "350px"))
+    ),
+    fluidRow(
+      box(width = 12, status = "success", solidHeader = TRUE,
+          title = t("cp_box_all_dim", lang),
+          plotlyOutput("country_all_dimensions", height = "400px"))
+    ),
+    fluidRow(
+      box(width = 12, status = "warning", solidHeader = TRUE,
+          title = t("cp_box_vs_gcc", lang),
+          plotlyOutput("country_vs_gcc", height = "350px"))
     )
   )
 }
 
-gcc_analytics_tab_ui <- function() {
-  tabItem(
-    tabName = "gcc_analytics",
-
-    # ===== Section 1: What Changed? (Period Decomposition) =====
+.tab_country_heatmap <- function(lang, input) {
+  tagList(
     fluidRow(
-      box(width = 12, title = "Section 1: What Changed?",
-          status = "primary", solidHeader = TRUE,
+      box(width = 12, status = "primary", solidHeader = TRUE,
+          title = t("hm_box_controls", lang),
           fluidRow(
-            column(3,
-              selectInput("analytics_from_year", "From:",
-                          choices = sort(unique(dimension_scores$year)),
-                          selected = max(dimension_scores$year) - 1)
+            column(5,
+              selectInput("heatmap_countries",
+                label    = t("axis_country", lang),
+                choices  = .country_choices(lang),
+                selected = .keep(input$heatmap_countries, countries),
+                multiple = TRUE)
             ),
-            column(3,
-              selectInput("analytics_to_year", "To:",
-                          choices = sort(unique(dimension_scores$year)),
-                          selected = max(dimension_scores$year))
+            column(5,
+              selectInput("heatmap_dimensions",
+                label    = t("axis_dimension", lang),
+                choices  = .dim_choices(lang),
+                selected = .keep(input$heatmap_dimensions, .dim_cols),
+                multiple = TRUE)
             ),
+            column(2,
+              sliderInput("heatmap_year",
+                label = t("hm_label_year", lang),
+                min   = yr_min, max = yr_max,
+                value = .keep(input$heatmap_year, yr_max),
+                step  = 1, sep = "")
+            )
+          )
+      )
+    ),
+    fluidRow(
+      box(width = 12, status = "info", solidHeader = TRUE,
+          title = t("hm_box_heatmap", lang),
+          plotlyOutput("country_dimension_heatmap", height = "500px"))
+    ),
+    fluidRow(
+      box(width = 12, status = "success", solidHeader = TRUE,
+          title = t("hm_box_rankings", lang),
+          plotlyOutput("dimension_rankings", height = "400px"))
+    )
+  )
+}
+
+.tab_gcc_analytics <- function(lang, input) {
+  tagList(
+    fluidRow(
+      box(width = 12, status = "primary", solidHeader = TRUE,
+          title = t("an_box_year_select", lang),
+          sliderInput("analytics_year",
+            label = t("an_label_year", lang),
+            min   = yr_min_yoy, max = yr_max,
+            value = .keep(input$analytics_year, yr_max),
+            step  = 1, sep = "")
+      )
+    ),
+    fluidRow(
+      box(width = 6, status = "info", solidHeader = TRUE,
+          title = t("an_box_yoy_overall", lang),
+          plotlyOutput("yoy_overall_changes", height = "400px")),
+      box(width = 6, status = "info", solidHeader = TRUE,
+          title = t("an_box_yoy_dim", lang),
+          plotlyOutput("yoy_dimension_changes", height = "400px"))
+    ),
+    fluidRow(
+      box(width = 12, status = "success", solidHeader = TRUE,
+          title = t("an_box_contribution", lang),
+          tags$p(class = "text-muted small",
+                 t("an_info_contribution", lang)),
+          plotlyOutput("contribution_analysis", height = "400px"))
+    ),
+    fluidRow(
+      box(width = 6, status = "warning", solidHeader = TRUE,
+          title = t("an_box_trends", lang),
+          plotlyOutput("annual_change_trends", height = "400px")),
+      box(width = 6, status = "warning", solidHeader = TRUE,
+          title = t("an_box_change_heatmap", lang),
+          plotlyOutput("change_heatmap", height = "400px"))
+    )
+  )
+}
+
+.tab_data_explorer <- function(lang, input) {
+  de_choices <- c(
+    "overall"     = t("de_dataset_overall",     lang),
+    "trade"       = t("de_dataset_trade",        lang),
+    "financial"   = t("de_dataset_financial",    lang),
+    "labor"       = t("de_dataset_labor",        lang),
+    "infra"       = t("de_dataset_infra",        lang),
+    "sustain"     = t("de_dataset_sustain",      lang),
+    "convergence" = t("de_dataset_convergence",  lang)
+  )
+  # flip to named-value format expected by selectInput
+  de_choices_named <- setNames(names(de_choices), de_choices)
+
+  tagList(
+    fluidRow(
+      box(width = 12, status = "primary", solidHeader = TRUE,
+          title = t("de_box_explorer", lang),
+          fluidRow(
             column(6,
-              div(style = "padding-top: 25px; color: #666; font-size: 0.9rem;",
-                icon("info-circle"),
-                "Decompose the GCC integration score change between two years",
-                "by dimension contribution and country contribution."
-              )
+              selectInput("data_table_select",
+                label    = t("de_label_dataset", lang),
+                choices  = de_choices_named,
+                selected = .keep(input$data_table_select, "overall"))
+            ),
+            column(3,
+              tags$br(),
+              downloadButton("data_download",
+                             t("de_btn_download", lang),
+                             class = "btn-sm")
             )
           )
       )
     ),
     fluidRow(
-      box(width = 7, title = uiOutput("analytics_waterfall_title"),
-          status = "info", solidHeader = TRUE,
-          plotlyOutput("analytics_waterfall", height = "420px")),
-      box(width = 5, title = uiOutput("analytics_country_contrib_title"),
-          status = "info", solidHeader = TRUE,
-          plotlyOutput("analytics_country_contribution", height = "420px"))
-    ),
-
-    # ===== Section 2: Annual Dynamics (All Years) =====
-    fluidRow(
-      box(width = 12,
-          title = "Section 2: Annual Dynamics (2015\u20132024)",
-          status = "primary", solidHeader = TRUE,
-          p(style = "color: #666; font-size: 0.9rem; margin-bottom: 0;",
-            icon("info-circle"),
-            "How has the GCC integration score composition evolved over time, and",
-            "what drove the year-over-year changes in each period?")
-      )
-    ),
-    fluidRow(
-      box(width = 6, title = "GCC Score Composition by Dimension",
-          status = "success", solidHeader = TRUE,
-          plotlyOutput("analytics_stacked_area", height = "400px")),
-      box(width = 6, title = "Dimension Contributions to Annual Change",
-          status = "success", solidHeader = TRUE,
-          plotlyOutput("analytics_annual_dim_bars", height = "400px"))
-    ),
-
-    # ===== Section 3: Cross-Country Spread =====
-    fluidRow(
-      box(width = 12,
-          title = uiOutput("analytics_spread_title"),
-          status = "primary", solidHeader = TRUE,
-          p(style = "color: #666; font-size: 0.9rem; margin-bottom: 5px;",
-            icon("info-circle"),
-            "Where do GCC countries converge and where do they diverge?",
-            "Narrow spreads indicate harmonization; wide spreads highlight",
-            "dimensions needing coordinated action."),
-          plotlyOutput("analytics_spread_chart", height = "380px"))
-    ),
-
-    # ===== Section 4: Biggest Movers =====
-    fluidRow(
-      box(width = 12,
-          title = uiOutput("analytics_movers_title"),
-          status = "primary", solidHeader = TRUE,
-          p(style = "color: #666; font-size: 0.9rem; margin-bottom: 5px;",
-            icon("info-circle"),
-            "Largest dimension-level score changes across all countries",
-            "in the most recent year. Shows what improved and what declined the most."),
-          plotlyOutput("analytics_biggest_movers", height = "450px"))
-    )
-  )
-}
-
-data_explorer_tab_ui <- function() {
-  tabItem(
-    tabName = "data_explorer",
-    fluidRow(
-      box(width = 12, title = "Data Explorer",
-          status = "primary", solidHeader = TRUE,
-          selectInput("data_table_select", "Select Dataset:",
-                      choices = c("Country Dimension Scores" = "dimension",
-                                  "GCC Aggregate" = "gcc",
-                                  "Year-over-Year Changes" = "yoy",
-                                  "Indicator Detail" = "indicator")),
+      box(width = 12, status = "info", solidHeader = TRUE,
+          title = t("de_box_table", lang),
           DTOutput("data_table"))
     )
   )
 }
 
-# ==============================================================================
-# Run the Application
-# ==============================================================================
+# =============================================================================
+# SECTION 6  UI skeleton
+# =============================================================================
+# The full shinydashboard structure is rendered once at startup.
+# The landing page sits on top as a fixed full-screen uiOutput overlay;
+# it returns NULL once the user enters the dashboard.
+# Tab bodies are uiOutput placeholders refreshed when language changes.
+# =============================================================================
+
+ui <- dashboardPage(
+  skin = "blue",
+
+  # ── Header ──────────────────────────────────────────────────────────────────
+  dashboardHeader(
+    title     = "GCCEII",
+    titleWidth = 220,
+    # Language toggle in the header bar
+    tags$li(
+      class = "dropdown",
+      style = "padding: 8px 14px 0;",
+      tags$button(
+        id      = "dash_lang_en",
+        class   = "btn btn-xs btn-default lang-btn active",
+        onclick = "setLang('en')",
+        "EN"
+      ),
+      tags$span("\u00a0"),
+      tags$button(
+        id      = "dash_lang_ar",
+        class   = "btn btn-xs btn-default lang-btn",
+        onclick = "setLang('ar')",
+        "\u0639\u0631"          # عر
+      )
+    )
+  ),
+
+  # ── Sidebar ──────────────────────────────────────────────────────────────────
+  dashboardSidebar(
+    width = 240,
+    sidebarMenuOutput("sidebar_menu")
+  ),
+
+  # ── Body ─────────────────────────────────────────────────────────────────────
+  dashboardBody(
+
+    # ── <head> assets ──────────────────────────────────────────────────────────
+    tags$head(
+      # Google Fonts (Arabic-capable)
+      tags$link(rel = "preconnect",  href = "https://fonts.googleapis.com"),
+      tags$link(rel = "preconnect",  href = "https://fonts.gstatic.com",
+                crossorigin = NA),
+      tags$link(rel = "stylesheet",
+                href = "https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&display=swap"),
+      # RTL stylesheet (www/rtl.css)
+      tags$link(rel = "stylesheet",  type = "text/css", href = "rtl.css"),
+      # Inline fixes
+      tags$style(HTML("
+        .content-wrapper, .right-side { background: #f4f6f9; }
+        .box       { box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+        .small-box { box-shadow: 0 2px 4px rgba(0,0,0,.15); }
+        .info-box  { box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+        .lang-btn          { min-width:36px; font-weight:600; margin:0 2px; }
+        .lang-btn.active   { background:#3c8dbc !important;
+                             color:white       !important;
+                             border-color:#367fa9 !important; }
+      ")),
+      # Shared setLang() JS — works on both landing page and dashboard
+      tags$script(HTML("
+        function setLang(lang) {
+          Shiny.setInputValue('selected_lang', lang, {priority: 'event'});
+          document.body.classList.toggle('lang-ar', lang === 'ar');
+          ['btn-lang-en','btn-lang-ar','dash_lang_en','dash_lang_ar'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.remove('active');
+          });
+          var toActivate = lang === 'ar'
+            ? ['btn-lang-ar', 'dash_lang_ar']
+            : ['btn-lang-en', 'dash_lang_en'];
+          toActivate.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.add('active');
+          });
+        }
+      "))
+    ),
+
+    # ── Landing page overlay ────────────────────────────────────────────────────
+    # Renders a full-screen fixed div on startup; becomes NULL after entry.
+    uiOutput("landing_overlay"),
+
+    # ── Tab items (bodies filled reactively in server) ──────────────────────────
+    tabItems(
+      tabItem(tabName = "overview",         uiOutput("tab_overview")),
+      tabItem(tabName = "gcc_overall",      uiOutput("tab_gcc_overall")),
+      tabItem(tabName = "gcc_timeseries",   uiOutput("tab_gcc_timeseries")),
+      tabItem(tabName = "country_profiles", uiOutput("tab_country_profiles")),
+      tabItem(tabName = "country_heatmap",  uiOutput("tab_country_heatmap")),
+      tabItem(tabName = "gcc_analytics",    uiOutput("tab_gcc_analytics")),
+      tabItem(tabName = "data_explorer",    uiOutput("tab_data_explorer")),
+      tabItem(tabName = "metadata",         uiOutput("tab_metadata"))
+    )
+  )
+)
+
+# =============================================================================
+# SECTION 7  Server
+# =============================================================================
+
+server <- function(input, output, session) {
+
+  # ── Reactive state ────────────────────────────────────────────────────────────
+
+  current_lang <- reactiveVal("en")
+  current_page <- reactiveVal("landing")
+
+  observeEvent(input$selected_lang, {
+    req(input$selected_lang %in% c("en", "ar"))
+    current_lang(input$selected_lang)
+  })
+
+  # ── Landing page module ────────────────────────────────────────────────────────
+
+  landing <- landing_page_server("landing")
+
+  observeEvent(landing$enter(), {
+    req(landing$enter())
+    current_page("dashboard")
+    updateTabItems(session, "tabs", selected = "overview")
+  })
+
+  # ── Landing overlay ────────────────────────────────────────────────────────────
+
+  output$landing_overlay <- renderUI({
+    if (current_page() == "landing") {
+      tags$div(
+        style = paste0(
+          "position:fixed; top:0; left:0;",
+          "width:100vw; height:100vh;",
+          "z-index:9999; overflow-y:auto; background:white;"
+        ),
+        landing_page_ui("landing", lang = current_lang())
+      )
+    } else {
+      NULL
+    }
+  })
+
+  # ── Sidebar (reactive labels) ──────────────────────────────────────────────────
+
+  output$sidebar_menu <- renderMenu({
+    l <- current_lang()
+    sidebarMenu(
+      id = "tabs",
+      menuItem(t("menu_overview",         l), tabName = "overview",         icon = icon("dashboard")),
+      menuItem(t("menu_gcc_overall",      l), tabName = "gcc_overall",      icon = icon("chart-line")),
+      menuItem(t("menu_gcc_timeseries",   l), tabName = "gcc_timeseries",   icon = icon("chart-area")),
+      menuItem(t("menu_country_profiles", l), tabName = "country_profiles", icon = icon("flag")),
+      menuItem(t("menu_country_heatmap",  l), tabName = "country_heatmap",  icon = icon("th")),
+      menuItem(t("menu_gcc_analytics",    l), tabName = "gcc_analytics",    icon = icon("chart-bar")),
+      menuItem(t("menu_data_explorer",    l), tabName = "data_explorer",    icon = icon("table")),
+      menuItem(t("menu_metadata",         l), tabName = "metadata",         icon = icon("book"))
+    )
+  })
+
+  # ── Tab bodies (re-render on language change) ──────────────────────────────────
+
+  output$tab_overview         <- renderUI(.tab_overview(current_lang(), input))
+  output$tab_gcc_overall      <- renderUI(.tab_gcc_overall(current_lang(), input))
+  output$tab_gcc_timeseries   <- renderUI(.tab_gcc_timeseries(current_lang(), input))
+  output$tab_country_profiles <- renderUI(.tab_country_profiles(current_lang(), input))
+  output$tab_country_heatmap  <- renderUI(.tab_country_heatmap(current_lang(), input))
+  output$tab_gcc_analytics    <- renderUI(.tab_gcc_analytics(current_lang(), input))
+  output$tab_data_explorer    <- renderUI(.tab_data_explorer(current_lang(), input))
+
+  # Metadata: module handles its own internal DTs
+  output$tab_metadata <- renderUI(metadata_ui("metadata", lang = current_lang()))
+  metadata_server("metadata", lang = current_lang)
+
+  # ============================================================================
+  # CHART OUTPUTS
+  # All chart functions are sourced from R/mod_charts.R.
+  # ============================================================================
+
+  # ── Overview KPI value boxes ──────────────────────────────────────────────────
+
+  output$vb_overall <- renderValueBox({
+    latest_gcc <- gcc_ts %>% filter(year == max(year))
+    valueBox(round(latest_gcc$overall, 1),
+             t("vb_gcc_index",  current_lang()), icon("chart-line"), color = "blue")
+  })
+
+  output$vb_year <- renderValueBox({
+    valueBox(max(gcc_ts$year),
+             t("vb_latest_year", current_lang()), icon("calendar"), color = "green")
+  })
+
+  output$vb_countries <- renderValueBox({
+    valueBox(length(countries),
+             t("vb_members", current_lang()), icon("flag"), color = "yellow")
+  })
+
+  # ── GCC Overall ───────────────────────────────────────────────────────────────
+
+  output$gcc_overall_gauge <- renderPlotly(
+    chart_gcc_gauge(gcc_ts, lang = current_lang())
+  )
+  output$gcc_dimension_bars <- renderPlotly(
+    chart_dimension_bars(gcc_ts, lang = current_lang())
+  )
+  output$dimension_boxes <- renderUI(
+    chart_dimension_scoreboxes(gcc_ts, lang = current_lang())
+  )
+  output$gcc_overall_trend <- renderPlotly(
+    chart_gcc_trend(gcc_ts, lang = current_lang())
+  )
+
+  # ── GCC Timeseries ────────────────────────────────────────────────────────────
+
+  output$gcc_dimension_timeseries <- renderPlotly({
+    req(input$dimension_select)
+    chart_gcc_dimension_ts(gcc_ts,
+                           selected_cols = input$dimension_select,
+                           show_overall  = isTRUE(input$show_overall),
+                           lang          = current_lang())
+  })
+
+  output$dimension_radar <- renderPlotly({
+    latest <- gcc_ts %>% filter(year == max(year))
+    scores <- c(latest$trade_score, latest$financial_score,
+                latest$labor_score, latest$infrastructure_score,
+                latest$sustainability_score, latest$convergence_score)
+    chart_radar(scores, label = "GCC", lang = current_lang())
+  })
+
+  output$dimension_correlation <- renderPlotly(
+    chart_correlation(gcc_ts, lang = current_lang())
+  )
+
+  # ── Country Profiles ──────────────────────────────────────────────────────────
+
+  # country_select value is always an English country name (it is the *value*
+  # of the named choice vector, not the displayed label).
+  country_data_r <- reactive({
+    req(input$country_select)
+    dimension_scores %>% filter(country == input$country_select)
+  })
+
+  output$vb_country_overall <- renderValueBox({
+    latest <- country_data_r() %>% filter(year == max(year))
+    valueBox(round(latest$overall_index, 1),
+             t("vb_overall_index", current_lang()), icon("chart-line"), color = "blue")
+  })
+
+  output$vb_country_rank <- renderValueBox({
+    ly   <- max(dimension_scores$year)
+    rnks <- dimension_scores %>%
+      filter(year == ly) %>%
+      arrange(desc(overall_index)) %>%
+      mutate(rank = row_number())
+    r <- rnks %>% filter(country == input$country_select) %>% pull(rank)
+    valueBox(paste0("#", r, " / ", nrow(rnks)),
+             t("vb_country_rank", current_lang()), icon("trophy"), color = "yellow")
+  })
+
+  output$vb_country_level <- renderValueBox({
+    latest <- country_data_r() %>% filter(year == max(year))
+    valueBox(translate_level(latest$integration_level, current_lang()),
+             t("vb_integration_lvl", current_lang()),
+             icon("signal"),
+             color = if (latest$integration_level == "Good") "green" else "orange")
+  })
+
+  output$vb_country_change <- renderValueBox({
+    data <- country_data_r()
+    if (nrow(data) >= 2) {
+      now  <- data %>% filter(year == max(year))     %>% pull(overall_index)
+      prev <- data %>% filter(year == max(year) - 1) %>% pull(overall_index)
+      chg  <- now - prev
+      valueBox(paste0(if (chg > 0) "+" else "", round(chg, 1)),
+               t("vb_yoy_overall", current_lang()),
+               icon(if (chg > 0) "arrow-up" else "arrow-down"),
+               color = if (chg > 0) "green" else "red")
+    } else {
+      valueBox("N/A", t("vb_yoy_overall", current_lang()),
+               icon("minus"), color = "gray")
+    }
+  })
+
+  output$country_overall_trend <- renderPlotly(
+    chart_country_trend(country_data_r(),
+                        country_name = input$country_select,
+                        lang         = current_lang())
+  )
+
+  output$country_dimension_current <- renderPlotly({
+    latest <- country_data_r() %>% filter(year == max(year))
+    chart_country_dims_current(latest,
+                               country_name = input$country_select,
+                               lang         = current_lang())
+  })
+
+  output$country_all_dimensions <- renderPlotly(
+    chart_country_all_dims(country_data_r(), lang = current_lang())
+  )
+
+  output$country_vs_gcc <- renderPlotly(
+    chart_country_vs_gcc(dimension_scores, gcc_ts,
+                         country_name = input$country_select,
+                         lang         = current_lang())
+  )
+
+  # ── Country Heatmap ───────────────────────────────────────────────────────────
+
+  output$country_dimension_heatmap <- renderPlotly({
+    req(input$heatmap_countries, input$heatmap_dimensions, input$heatmap_year)
+    chart_country_heatmap(dimension_scores,
+                          selected_year      = input$heatmap_year,
+                          selected_countries = input$heatmap_countries,
+                          selected_dims      = input$heatmap_dimensions,
+                          lang               = current_lang())
+  })
+
+  output$dimension_rankings <- renderPlotly({
+    req(input$heatmap_dimensions, input$heatmap_year)
+    chart_rankings(dimension_scores,
+                   selected_year = input$heatmap_year,
+                   selected_dims = input$heatmap_dimensions,
+                   lang          = current_lang())
+  })
+
+  # ── GCC Analytics ─────────────────────────────────────────────────────────────
+
+  output$yoy_overall_changes <- renderPlotly({
+    req(input$analytics_year)
+    chart_yoy_overall(yoy_changes,
+                      selected_year = input$analytics_year,
+                      lang          = current_lang())
+  })
+
+  output$yoy_dimension_changes <- renderPlotly({
+    req(input$analytics_year)
+    chart_yoy_dimensions(yoy_changes,
+                         selected_year = input$analytics_year,
+                         lang          = current_lang())
+  })
+
+  output$contribution_analysis <- renderPlotly({
+    req(input$analytics_year)
+    if (input$analytics_year <= yr_min) return(plotly_empty())
+    chart_contribution(dimension_scores,
+                       selected_year = input$analytics_year,
+                       lang          = current_lang())
+  })
+
+  output$annual_change_trends <- renderPlotly(
+    chart_annual_trends(yoy_changes, lang = current_lang())
+  )
+
+  output$change_heatmap <- renderPlotly(
+    chart_change_heatmap(yoy_changes, lang = current_lang())
+  )
+
+  # ── Data Explorer ─────────────────────────────────────────────────────────────
+
+  .col_names <- function(lang) {
+    c(t("col_country",     lang), t("col_year",     lang),
+      t("col_overall",     lang), t("col_trade",    lang),
+      t("col_financial",   lang), t("col_labor",    lang),
+      t("col_infra",       lang), t("col_sustain",  lang),
+      t("col_convergence", lang), t("col_level",    lang))
+  }
+
+  .explorer_df <- reactive({
+    l  <- current_lang()
+    ds <- input$data_table_select %||% "overall"
+
+    base <- dimension_scores %>%
+      mutate(
+        country           = translate_countries(country, l),
+        integration_level = translate_level(integration_level, l)
+      ) %>%
+      select(country, year,
+             overall_index, trade_score, financial_score, labor_score,
+             infrastructure_score, sustainability_score, convergence_score,
+             integration_level)
+
+    # Filter columns by selected dataset
+    cols_to_show <- switch(ds,
+      "trade"       = c(1, 2, 4),        # country, year, trade_score
+      "financial"   = c(1, 2, 5),        # country, year, financial_score
+      "labor"       = c(1, 2, 6),        # country, year, labor_score
+      "infra"       = c(1, 2, 7),        # country, year, infrastructure_score
+      "sustain"     = c(1, 2, 8),        # country, year, sustainability_score
+      "convergence" = c(1, 2, 9),        # country, year, convergence_score
+      seq_len(ncol(base))                # "overall" → all columns
+    )
+
+    setNames(base[, cols_to_show, drop = FALSE], .col_names(l)[cols_to_show])
+  })
+
+  output$data_table <- renderDT({
+    datatable(
+      .explorer_df(),
+      filter     = "top",
+      extensions = "Buttons",
+      options    = list(
+        pageLength      = 25,
+        scrollX         = TRUE,
+        searchHighlight = TRUE,
+        dom             = "Bfrtip",
+        buttons         = c("copy", "csv", "excel"),
+        language        = if (current_lang() == "ar")
+          list(url = "//cdn.datatables.net/plug-ins/1.13.4/i18n/ar.json")
+        else list()
+      ),
+      rownames = FALSE
+    ) %>%
+      formatRound(columns = which(sapply(.explorer_df(), is.numeric)), digits = 2)
+  })
+
+  output$data_download <- downloadHandler(
+    filename = function()
+      paste0("GCCEII_", input$data_table_select %||% "data",
+             "_", format(Sys.Date(), "%Y%m%d"), ".csv"),
+    content  = function(file) write_csv(.explorer_df(), file)
+  )
+
+}  # end server
+
+# =============================================================================
+# SECTION 8  Run
+# =============================================================================
 
 shinyApp(ui = ui, server = server)
