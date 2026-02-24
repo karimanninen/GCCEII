@@ -70,9 +70,6 @@ ui <- fluidPage(
   # Conditional display: Landing Page OR Dashboard
   uiOutput("main_ui"),
 
-  # Carousel JavaScript
-  carousel_js(),
-
   # Language direction JavaScript
   tags$script(HTML("
     Shiny.addCustomMessageHandler('setLang', function(lang) {
@@ -117,7 +114,7 @@ server <- function(input, output, session) {
   output$main_ui <- renderUI({
     lang <- current_lang()
     if (!entered_dashboard()) {
-      landing_page_ui()
+      landing_page_ui(lang)
     } else {
       dashboard_ui(lang)
     }
