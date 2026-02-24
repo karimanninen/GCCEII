@@ -38,6 +38,7 @@ source("R/data_loading.R")
 source("R/mod_landing_page.R")
 source("R/mod_metadata.R")
 source("R/mod_charts.R")
+source("R/translations.R")
 
 # ==============================================================================
 # LOAD DATA
@@ -61,14 +62,27 @@ ui <- fluidPage(
 
   # Link external CSS
   tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
+    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "rtl.css"),
+    tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap")
   ),
 
   # Conditional display: Landing Page OR Dashboard
   uiOutput("main_ui"),
 
   # Carousel JavaScript
-  carousel_js()
+  carousel_js(),
+
+  # Language direction JavaScript
+  tags$script(HTML("
+    Shiny.addCustomMessageHandler('setLang', function(lang) {
+      if (lang === 'ar') {
+        $('body').addClass('rtl-layout').attr('dir', 'rtl');
+      } else {
+        $('body').removeClass('rtl-layout').attr('dir', 'ltr');
+      }
+    });
+  "))
 )
 
 # ==============================================================================
@@ -82,6 +96,16 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
 
   entered_dashboard <- reactiveVal(FALSE)
+  current_lang <- reactiveVal("en")
+
+  observeEvent(input$lang_toggle, {
+    new_lang <- if (current_lang() == "en") "ar" else "en"
+    current_lang(new_lang)
+  })
+
+  observe({
+    session$sendCustomMessage("setLang", current_lang())
+  })
 
   observeEvent(input$enter_dashboard, { entered_dashboard(TRUE) })
   observeEvent(input$back_to_welcome, { entered_dashboard(FALSE) })
@@ -91,10 +115,11 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
 
   output$main_ui <- renderUI({
+    lang <- current_lang()
     if (!entered_dashboard()) {
       landing_page_ui()
     } else {
-      dashboard_ui()
+      dashboard_ui(lang)
     }
   })
 
@@ -106,7 +131,7 @@ server <- function(input, output, session) {
     latest <- gcc_ts %>% filter(year == max(year))
     valueBox(
       value = round(latest$overall, 1),
-      subtitle = "Overall GCC Score",
+      subtitle = t("vb_overall_score", current_lang()),
       icon = icon("chart-line"),
       color = "blue"
     )
@@ -115,7 +140,7 @@ server <- function(input, output, session) {
   output$latest_year <- renderValueBox({
     valueBox(
       value = max(dimension_scores$year),
-      subtitle = "Latest Year",
+      subtitle = t("vb_latest_year", current_lang()),
       icon = icon("calendar"),
       color = "green"
     )
@@ -124,7 +149,7 @@ server <- function(input, output, session) {
   output$num_countries <- renderValueBox({
     valueBox(
       value = length(countries),
-      subtitle = "Member States",
+      subtitle = t("vb_member_states", current_lang()),
       icon = icon("flag"),
       color = "purple"
     )
@@ -414,7 +439,7 @@ server <- function(input, output, session) {
       filter(country == input$selected_country, year == max(year))
     valueBox(
       value = round(latest$overall_index, 1),
-      subtitle = paste(input$selected_country, "Overall Score"),
+      subtitle = paste(translate_country(input$selected_country, current_lang()), t("vb_country_overall", current_lang())),
       icon = icon("chart-line"),
       color = "blue"
     )
@@ -430,7 +455,7 @@ server <- function(input, output, session) {
     rank_val <- ranking %>% filter(country == input$selected_country) %>% pull(rank)
     valueBox(
       value = paste("#", rank_val),
-      subtitle = paste("Rank in", latest_year),
+      subtitle = paste(t("vb_country_rank", current_lang()), latest_year),
       icon = icon("trophy"),
       color = "green"
     )
@@ -1088,63 +1113,70 @@ server <- function(input, output, session) {
 # Dashboard UI Definition
 # ==============================================================================
 
-dashboard_ui <- function() {
+dashboard_ui <- function(lang = "en") {
   tagList(
     dashboardPage(
       skin = "blue",
 
       dashboardHeader(
-        title = "GCC Economic Integration Dashboard",
-        titleWidth = 380
+        title = t("app_title", lang),
+        titleWidth = 380,
+        tags$li(class = "dropdown",
+          actionButton("lang_toggle",
+            label = if (lang == "ar") "English" else "\u0639\u0631\u0628\u064a",
+            class = "lang-toggle-btn",
+            style = "margin-top: 8px; margin-right: 10px; color: #fff; background: transparent; border: 1px solid rgba(255,255,255,0.5); padding: 4px 12px; font-size: 13px;"
+          )
+        )
       ),
 
       dashboardSidebar(
         width = 250,
         sidebarMenu(
           id = "tabs",
-          menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
-          menuItem("Metadata & Analysis", tabName = "metadata", icon = icon("info-circle")),
-          menuItem("GCC Overall", tabName = "gcc_overall", icon = icon("chart-line")),
-          menuItem("GCC Timeseries", tabName = "gcc_timeseries", icon = icon("chart-area")),
-          menuItem("Country Profiles", tabName = "country_profiles", icon = icon("flag")),
-          menuItem("Country Heatmap", tabName = "country_heatmap", icon = icon("th")),
-          menuItem("GCC Analytics", tabName = "gcc_analytics", icon = icon("chart-bar")),
-          menuItem("Data Explorer", tabName = "data_explorer", icon = icon("table"))
+          menuItem(t("menu_overview", lang), tabName = "overview", icon = icon("dashboard")),
+          menuItem(t("menu_metadata", lang), tabName = "metadata", icon = icon("info-circle")),
+          menuItem(t("menu_gcc_overall", lang), tabName = "gcc_overall", icon = icon("chart-line")),
+          menuItem(t("menu_gcc_timeseries", lang), tabName = "gcc_timeseries", icon = icon("chart-area")),
+          menuItem(t("menu_country_profiles", lang), tabName = "country_profiles", icon = icon("flag")),
+          menuItem(t("menu_country_heatmap", lang), tabName = "country_heatmap", icon = icon("th")),
+          menuItem(t("menu_gcc_analytics", lang), tabName = "gcc_analytics", icon = icon("chart-bar")),
+          menuItem(t("menu_data_explorer", lang), tabName = "data_explorer", icon = icon("table"))
         )
       ),
 
       dashboardBody(
         tabItems(
           # Overview Tab
-          overview_tab_ui(),
+          overview_tab_ui(lang),
 
           # Metadata Tab
-          metadata_tab_ui(),
+          metadata_tab_ui(lang),
 
           # GCC Overall Tab
-          gcc_overall_tab_ui(),
+          gcc_overall_tab_ui(lang),
 
           # GCC Timeseries Tab
-          gcc_timeseries_tab_ui(),
+          gcc_timeseries_tab_ui(lang),
 
           # Country Profiles Tab
-          country_profiles_tab_ui(),
+          country_profiles_tab_ui(lang),
 
           # Country Heatmap Tab
-          country_heatmap_tab_ui(),
+          country_heatmap_tab_ui(lang),
 
           # GCC Analytics Tab
-          gcc_analytics_tab_ui(),
+          gcc_analytics_tab_ui(lang),
 
           # Data Explorer Tab
-          data_explorer_tab_ui()
+          data_explorer_tab_ui(lang)
         )
       )
     ),
 
     # Back to Welcome button
     actionButton("back_to_welcome",
-                 label = tagList(icon("home"), " Welcome"),
+                 label = tagList(icon("home"), paste0(" ", t("btn_back_welcome", lang))),
                  class = "back-to-welcome")
   )
 }
@@ -1153,41 +1185,39 @@ dashboard_ui <- function() {
 # Tab UI Functions
 # ==============================================================================
 
-overview_tab_ui <- function() {
+overview_tab_ui <- function(lang = "en") {
   tabItem(
     tabName = "overview",
     fluidRow(
       box(
         width = 12,
-        title = "GCC Economic Integration Dashboard",
+        title = t("overview_title", lang),
         status = "primary",
         solidHeader = TRUE,
-        h4("Welcome to the Integration Pathway"),
-        p("Part of the ", strong("GCC Economic Observatory"), ", this dashboard provides comprehensive
-          analysis of economic integration across GCC member states from 2015 to 2024, based on a
-          composite indicator built from 32 indicators across 6 dimensions using the COINr framework."),
+        h4(t("overview_welcome", lang)),
+        p(t("overview_description", lang)),
         hr(),
-        h5(strong("Dashboard Features:")),
+        h5(strong(t("overview_features_title", lang))),
         tags$ul(
-          tags$li(strong("GCC Overall:"), "View aggregate GCC integration metrics and latest performance"),
-          tags$li(strong("GCC Timeseries:"), "Analyze trends across all six dimensions over time"),
-          tags$li(strong("Country Profiles:"), "Deep dive into individual country performance with timeseries"),
-          tags$li(strong("Country Heatmap:"), "Compare countries across dimensions visually"),
-          tags$li(strong("GCC Analytics:"), "Examine year-over-year changes and contributions to the GCC integration score"),
-          tags$li(strong("Data Explorer:"), "Access and export underlying data")
+          tags$li(strong(t("menu_gcc_overall", lang), ":"), t("feat_gcc_overall", lang)),
+          tags$li(strong(t("menu_gcc_timeseries", lang), ":"), t("feat_gcc_timeseries", lang)),
+          tags$li(strong(t("menu_country_profiles", lang), ":"), t("feat_country_profiles", lang)),
+          tags$li(strong(t("menu_country_heatmap", lang), ":"), t("feat_country_heatmap", lang)),
+          tags$li(strong(t("menu_gcc_analytics", lang), ":"), t("feat_gcc_analytics", lang)),
+          tags$li(strong(t("menu_data_explorer", lang), ":"), t("feat_data_explorer", lang))
         ),
         hr(),
-        h5(strong("Six Integration Dimensions:")),
+        h5(strong(t("overview_dimensions_title", lang))),
         fluidRow(
-          column(4, tags$div(icon("exchange-alt"), strong(" Trade Integration"))),
-          column(4, tags$div(icon("university"), strong(" Financial Integration"))),
-          column(4, tags$div(icon("users"), strong(" Labor Mobility")))
+          column(4, tags$div(icon("exchange-alt"), strong(paste0(" ", t("dim_trade", lang))))),
+          column(4, tags$div(icon("university"), strong(paste0(" ", t("dim_financial", lang))))),
+          column(4, tags$div(icon("users"), strong(paste0(" ", t("dim_labor", lang)))))
         ),
         br(),
         fluidRow(
-          column(4, tags$div(icon("road"), strong(" Infrastructure Connectivity"))),
-          column(4, tags$div(icon("leaf"), strong(" Sustainability"))),
-          column(4, tags$div(icon("chart-line"), strong(" Economic Convergence")))
+          column(4, tags$div(icon("road"), strong(paste0(" ", t("dim_infrastructure", lang))))),
+          column(4, tags$div(icon("leaf"), strong(paste0(" ", t("dim_sustainability", lang))))),
+          column(4, tags$div(icon("chart-line"), strong(paste0(" ", t("dim_convergence", lang)))))
         )
       )
     ),
@@ -1199,31 +1229,31 @@ overview_tab_ui <- function() {
   )
 }
 
-gcc_overall_tab_ui <- function() {
+gcc_overall_tab_ui <- function(lang = "en") {
   tabItem(
     tabName = "gcc_overall",
     fluidRow(
-      box(width = 12, title = "GCC Aggregate Integration Performance",
+      box(width = 12, title = t("gcc_box_aggregate", lang),
           status = "primary", solidHeader = TRUE,
           plotlyOutput("gcc_overall_gauge", height = "300px"))
     ),
     fluidRow(
-      box(width = 6, title = "Current Dimension Scores",
+      box(width = 6, title = t("gcc_box_dim_scores", lang),
           status = "info", solidHeader = TRUE,
           plotlyOutput("gcc_dimension_bars", height = "400px")),
-      box(width = 6, title = "Dimension Score Cards",
+      box(width = 6, title = t("gcc_box_score_cards", lang),
           status = "info", solidHeader = TRUE,
           uiOutput("dimension_boxes"))
     ),
     fluidRow(
-      box(width = 12, title = "Country Ranking",
+      box(width = 12, title = t("gcc_box_ranking", lang),
           status = "success", solidHeader = TRUE,
           plotlyOutput("country_ranking", height = "350px"))
     )
   )
 }
 
-gcc_timeseries_tab_ui <- function() {
+gcc_timeseries_tab_ui <- function(lang = "en") {
   tabItem(
     tabName = "gcc_timeseries",
 
@@ -1232,7 +1262,7 @@ gcc_timeseries_tab_ui <- function() {
       column(12, uiOutput("ts_summary_bar"))
     ),
     fluidRow(
-      box(width = 12, title = "GCC Overall Score Trend (2015\u20132024)",
+      box(width = 12, title = t("ts_box_overall_trend", lang),
           status = "primary", solidHeader = TRUE,
           plotlyOutput("gcc_overall_trend", height = "250px"))
     ),
@@ -1241,7 +1271,7 @@ gcc_timeseries_tab_ui <- function() {
     fluidRow(
       column(12,
         div(class = "dimension-selector",
-          tags$label("Explore by dimension:", class = "dim-selector-label"),
+          tags$label(t("ts_pills_label", lang), class = "dim-selector-label"),
           div(class = "dim-pills",
             actionButton("dim_btn_Trade", tagList(icon("exchange-alt"), " Trade"),
                          class = "dim-pill dim-pill-trade"),
@@ -1288,15 +1318,15 @@ gcc_timeseries_tab_ui <- function() {
   )
 }
 
-country_profiles_tab_ui <- function() {
+country_profiles_tab_ui <- function(lang = "en") {
   tabItem(
     tabName = "country_profiles",
 
     # --- Row 1: Country selector + value boxes ---
     fluidRow(
-      box(width = 4, title = "Select Country",
+      box(width = 4, title = t("cp_box_select", lang),
           status = "primary", solidHeader = TRUE,
-          selectInput("selected_country", "Country:",
+          selectInput("selected_country", t("cp_label_country", lang),
                       choices = countries, selected = countries[1])),
       valueBoxOutput("country_overall", width = 4),
       valueBoxOutput("country_rank", width = 4)
@@ -1304,28 +1334,27 @@ country_profiles_tab_ui <- function() {
 
     # --- Row 2: Radar chart + combined Country vs GCC trend ---
     fluidRow(
-      box(width = 5, title = "Dimension Profile (Latest Year)",
+      box(width = 5, title = t("cp_box_radar", lang),
           status = "info", solidHeader = TRUE,
           plotlyOutput("country_radar", height = "380px")),
-      box(width = 7, title = "Overall Score: Country vs GCC Average",
+      box(width = 7, title = t("cp_box_vs_gcc", lang),
           status = "info", solidHeader = TRUE,
           plotlyOutput("country_vs_gcc_combined", height = "380px"))
     ),
 
     # --- Row 3: Dimension selector for indicator drill-down ---
     fluidRow(
-      box(width = 12, title = "Indicator Detail",
+      box(width = 12, title = t("cp_box_indicator_detail", lang),
           status = "primary", solidHeader = TRUE,
           fluidRow(
             column(4,
-              selectInput("cp_dimension_select", "Select dimension to explore:",
+              selectInput("cp_dimension_select", t("cp_dim_select_label", lang),
                           choices = DIMENSION_LABELS, selected = "Trade")
             ),
             column(8,
               div(style = "padding-top: 25px; color: #666; font-size: 0.9rem;",
                 icon("info-circle"),
-                "Compare the selected country\u2019s indicator scores against the GCC average,",
-                "and track individual indicator trends over time."
+                t("cp_dim_info", lang)
               )
             )
           )
@@ -1346,53 +1375,52 @@ country_profiles_tab_ui <- function() {
   )
 }
 
-country_heatmap_tab_ui <- function() {
+country_heatmap_tab_ui <- function(lang = "en") {
   tabItem(
     tabName = "country_heatmap",
     fluidRow(
-      box(width = 4, title = "Select Year",
+      box(width = 4, title = t("hm_box_year", lang),
           status = "primary", solidHeader = TRUE,
-          selectInput("heatmap_year", "Year:",
+          selectInput("heatmap_year", t("hm_label_year", lang),
                       choices = sort(unique(dimension_scores$year), decreasing = TRUE),
                       selected = max(dimension_scores$year)))
     ),
     fluidRow(
-      box(width = 12, title = "Country-Dimension Heatmap",
+      box(width = 12, title = t("hm_box_heatmap", lang),
           status = "info", solidHeader = TRUE,
           plotlyOutput("country_heatmap", height = "500px"))
     ),
     fluidRow(
-      box(width = 12, title = "Integration Levels by Country",
+      box(width = 12, title = t("hm_box_levels", lang),
           status = "success", solidHeader = TRUE,
           plotlyOutput("integration_levels", height = "350px"))
     )
   )
 }
 
-gcc_analytics_tab_ui <- function() {
+gcc_analytics_tab_ui <- function(lang = "en") {
   tabItem(
     tabName = "gcc_analytics",
 
     # ===== Section 1: What Changed? (Period Decomposition) =====
     fluidRow(
-      box(width = 12, title = "Section 1: What Changed?",
+      box(width = 12, title = t("an_section1_title", lang),
           status = "primary", solidHeader = TRUE,
           fluidRow(
             column(3,
-              selectInput("analytics_from_year", "From:",
+              selectInput("analytics_from_year", t("an_label_from", lang),
                           choices = sort(unique(dimension_scores$year)),
                           selected = max(dimension_scores$year) - 1)
             ),
             column(3,
-              selectInput("analytics_to_year", "To:",
+              selectInput("analytics_to_year", t("an_label_to", lang),
                           choices = sort(unique(dimension_scores$year)),
                           selected = max(dimension_scores$year))
             ),
             column(6,
               div(style = "padding-top: 25px; color: #666; font-size: 0.9rem;",
                 icon("info-circle"),
-                "Decompose the GCC integration score change between two years",
-                "by dimension contribution and country contribution."
+                t("an_section1_info", lang)
               )
             )
           )
@@ -1410,19 +1438,18 @@ gcc_analytics_tab_ui <- function() {
     # ===== Section 2: Annual Dynamics (All Years) =====
     fluidRow(
       box(width = 12,
-          title = "Section 2: Annual Dynamics (2015\u20132024)",
+          title = t("an_section2_title", lang),
           status = "primary", solidHeader = TRUE,
           p(style = "color: #666; font-size: 0.9rem; margin-bottom: 0;",
             icon("info-circle"),
-            "How has the GCC integration score composition evolved over time, and",
-            "what drove the year-over-year changes in each period?")
+            t("an_section2_info", lang))
       )
     ),
     fluidRow(
-      box(width = 6, title = "GCC Score Composition by Dimension",
+      box(width = 6, title = t("an_box_stacked_area", lang),
           status = "success", solidHeader = TRUE,
           plotlyOutput("analytics_stacked_area", height = "400px")),
-      box(width = 6, title = "Dimension Contributions to Annual Change",
+      box(width = 6, title = t("an_box_annual_dim_bars", lang),
           status = "success", solidHeader = TRUE,
           plotlyOutput("analytics_annual_dim_bars", height = "400px"))
     ),
@@ -1434,9 +1461,7 @@ gcc_analytics_tab_ui <- function() {
           status = "primary", solidHeader = TRUE,
           p(style = "color: #666; font-size: 0.9rem; margin-bottom: 5px;",
             icon("info-circle"),
-            "Where do GCC countries converge and where do they diverge?",
-            "Narrow spreads indicate harmonization; wide spreads highlight",
-            "dimensions needing coordinated action."),
+            t("an_spread_info", lang)),
           plotlyOutput("analytics_spread_chart", height = "380px"))
     ),
 
@@ -1447,24 +1472,24 @@ gcc_analytics_tab_ui <- function() {
           status = "primary", solidHeader = TRUE,
           p(style = "color: #666; font-size: 0.9rem; margin-bottom: 5px;",
             icon("info-circle"),
-            "Largest dimension-level score changes across all countries",
-            "in the most recent year. Shows what improved and what declined the most."),
+            t("an_movers_info", lang)),
           plotlyOutput("analytics_biggest_movers", height = "450px"))
     )
   )
 }
 
-data_explorer_tab_ui <- function() {
+data_explorer_tab_ui <- function(lang = "en") {
   tabItem(
     tabName = "data_explorer",
     fluidRow(
-      box(width = 12, title = "Data Explorer",
+      box(width = 12, title = t("de_box_title", lang),
           status = "primary", solidHeader = TRUE,
-          selectInput("data_table_select", "Select Dataset:",
-                      choices = c("Country Dimension Scores" = "dimension",
-                                  "GCC Aggregate" = "gcc",
-                                  "Year-over-Year Changes" = "yoy",
-                                  "Indicator Detail" = "indicator")),
+          selectInput("data_table_select", t("de_label_dataset", lang),
+                      choices = setNames(
+                        c("dimension", "gcc", "yoy", "indicator"),
+                        c(t("de_dataset_dimension", lang), t("de_dataset_gcc", lang),
+                          t("de_dataset_yoy", lang), t("de_dataset_indicator", lang))
+                      )),
           DTOutput("data_table"))
     )
   )
