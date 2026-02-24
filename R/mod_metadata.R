@@ -231,7 +231,7 @@ get_convergence_indicators_table <- function() {
 #' Metadata Tab UI
 #'
 #' @return Shiny UI element for metadata tab
-metadata_tab_ui <- function() {
+metadata_tab_ui <- function(lang = "en") {
   tabItem(
     tabName = "metadata",
 
