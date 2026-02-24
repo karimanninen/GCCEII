@@ -1,0 +1,500 @@
+# =============================================================================
+# R/translations.R
+# GCCEII Dashboard – Bilingual Translation Dictionary (English / Arabic)
+# =============================================================================
+# Version: 4.0 – Updated for COINr pipeline, 32 indicators, 2015–2024
+#
+# Usage:
+#   source("R/translations.R")
+#   t("app_title", lang)                     # → scalar string
+#   translate_country("Saudi Arabia", lang)   # → translated country name
+#   translate_dimension("Trade", lang)        # → translated dimension name
+#   get_direction(lang)                       # → "ltr" | "rtl"
+#   get_font(lang)                            # → CSS font-family string
+# =============================================================================
+
+# ── Core lookup function ──────────────────────────────────────────────────────
+
+.translations <- list(
+
+  # ---------------------------------------------------------------------------
+  # App-level
+  # ---------------------------------------------------------------------------
+  app_title = list(
+    en = "GCC Economic Integration Dashboard",
+    ar = "\u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a \u0644\u062f\u0648\u0644 \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646 \u0627\u0644\u062e\u0644\u064a\u062c\u064a"
+  ),
+  app_subtitle = list(
+    en = "Integration Pathway | GCC Economic Observatory",
+    ar = "\u0645\u0633\u0627\u0631 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 | \u0627\u0644\u0645\u0631\u0635\u062f \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a \u0644\u062f\u0648\u0644 \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646"
+  ),
+
+  # ---------------------------------------------------------------------------
+  # Language toggle
+  # ---------------------------------------------------------------------------
+  lang_toggle_en = list(en = "English", ar = "English"),
+  lang_toggle_ar = list(en = "\u0639\u0631\u0628\u064a", ar = "\u0639\u0631\u0628\u064a"),
+
+  # ---------------------------------------------------------------------------
+  # Sidebar menu items
+  # ---------------------------------------------------------------------------
+  menu_overview = list(
+    en = "Overview",
+    ar = "\u0646\u0638\u0631\u0629 \u0639\u0627\u0645\u0629"
+  ),
+  menu_metadata = list(
+    en = "Metadata & Analysis",
+    ar = "\u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0648\u0635\u0641\u064a\u0629 \u0648\u0627\u0644\u062a\u062d\u0644\u064a\u0644"
+  ),
+  menu_gcc_overall = list(
+    en = "GCC Overall",
+    ar = "\u0627\u0644\u0645\u0633\u062a\u0648\u0649 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0644\u062f\u0648\u0644 \u0627\u0644\u0645\u062c\u0644\u0633"
+  ),
+  menu_gcc_timeseries = list(
+    en = "GCC Timeseries",
+    ar = "\u0627\u0644\u0633\u0644\u0627\u0633\u0644 \u0627\u0644\u0632\u0645\u0646\u064a\u0629 \u0644\u0644\u0645\u062c\u0644\u0633"
+  ),
+  menu_country_profiles = list(
+    en = "Country Profiles",
+    ar = "\u0645\u0644\u0641\u0627\u062a \u0627\u0644\u062f\u0648\u0644"
+  ),
+  menu_country_heatmap = list(
+    en = "Country Heatmap",
+    ar = "\u062e\u0631\u064a\u0637\u0629 \u062d\u0631\u0627\u0631\u064a\u0629 \u0644\u0644\u062f\u0648\u0644"
+  ),
+  menu_gcc_analytics = list(
+    en = "GCC Analytics",
+    ar = "\u0627\u0644\u062a\u062d\u0644\u064a\u0644\u0627\u062a \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a\u0629"
+  ),
+  menu_data_explorer = list(
+    en = "Data Explorer",
+    ar = "\u0645\u0633\u062a\u0643\u0634\u0641 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a"
+  ),
+
+  # ---------------------------------------------------------------------------
+  # Landing page
+  # ---------------------------------------------------------------------------
+  landing_title = list(
+    en = "GCC Economic Integration Index",
+    ar = "\u0645\u0624\u0634\u0631 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a \u0644\u062f\u0648\u0644 \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646 \u0627\u0644\u062e\u0644\u064a\u062c\u064a"
+  ),
+  landing_subtitle = list(
+    en = "A comprehensive framework for measuring economic integration\nacross the six GCC member states (2015\u20132024)",
+    ar = "\u0625\u0637\u0627\u0631 \u0634\u0627\u0645\u0644 \u0644\u0642\u064a\u0627\u0633 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a\n\u0639\u0628\u0631 \u0627\u0644\u062f\u0648\u0644 \u0627\u0644\u0623\u0639\u0636\u0627\u0621 \u0627\u0644\u0633\u062a \u0641\u064a \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646 \u0627\u0644\u062e\u0644\u064a\u062c\u064a (2015\u20132024)"
+  ),
+  landing_enter_dashboard = list(
+    en = "Enter Dashboard",
+    ar = "\u0627\u0644\u062f\u062e\u0648\u0644 \u0625\u0644\u0649 \u0644\u0648\u062d\u0629 \u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a"
+  ),
+  landing_about_title = list(
+    en = "About the Index",
+    ar = "\u0639\u0646 \u0627\u0644\u0645\u0624\u0634\u0631"
+  ),
+  landing_about_body = list(
+    en = paste(
+      "The GCC Economic Integration Index (GCCEII) is a composite indicator developed by GCC-Stat",
+      "to monitor and evaluate the depth of economic integration among Bahrain, Kuwait, Oman,",
+      "Qatar, Saudi Arabia, and the UAE. The index draws on internationally recognised methodologies",
+      "(JRC/OECD) and covers six integration dimensions with annual data from 2015 to 2024."
+    ),
+    ar = paste(
+      "\u0645\u0624\u0634\u0631 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a \u0644\u062f\u0648\u0644 \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646 \u0627\u0644\u062e\u0644\u064a\u062c\u064a (GCCEII) \u0645\u0624\u0634\u0631 \u0645\u0631\u0643\u0651\u0628 \u0637\u0648\u0651\u0631\u062a\u0647 \u0627\u0644\u0623\u0645\u0627\u0646\u0629 \u0627\u0644\u0639\u0627\u0645\u0629",
+      "\u0644\u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646 (GCC-Stat) \u0644\u0631\u0635\u062f \u0648\u062a\u0642\u064a\u064a\u0645 \u0639\u0645\u0642 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a \u0628\u064a\u0646 \u0627\u0644\u0628\u062d\u0631\u064a\u0646 \u0648\u0627\u0644\u0643\u0648\u064a\u062a \u0648\u0639\u064f\u0645\u0627\u0646",
+      "\u0648\u0642\u0637\u0631 \u0648\u0627\u0644\u0645\u0645\u0644\u0643\u0629 \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0648\u0627\u0644\u0625\u0645\u0627\u0631\u0627\u062a \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0645\u062a\u062d\u062f\u0629. \u064a\u0633\u062a\u0646\u062f \u0627\u0644\u0645\u0624\u0634\u0631 \u0625\u0644\u0649 \u0645\u0646\u0647\u062c\u064a\u0627\u062a \u0645\u0639\u062a\u0631\u0641 \u0628\u0647\u0627 \u062f\u0648\u0644\u064a\u0627\u064b",
+      "(JRC/OECD) \u0648\u064a\u063a\u0637\u064a \u0633\u062a\u0629 \u0623\u0628\u0639\u0627\u062f \u0644\u0644\u062a\u0643\u0627\u0645\u0644 \u0628\u0628\u064a\u0627\u0646\u0627\u062a \u0633\u0646\u0648\u064a\u0629 \u0645\u0646 2015 \u0625\u0644\u0649 2024."
+    )
+  ),
+
+  # Stat boxes on landing page
+  stat_countries  = list(en = "Member States",  ar = "\u0627\u0644\u062f\u0648\u0644 \u0627\u0644\u0623\u0639\u0636\u0627\u0621"),
+  stat_dimensions = list(en = "Dimensions",     ar = "\u0627\u0644\u0623\u0628\u0639\u0627\u062f"),
+  stat_years      = list(en = "Years of Data",  ar = "\u0633\u0646\u0648\u0627\u062a \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a"),
+  stat_indicators = list(en = "Indicators",     ar = "\u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062a"),
+
+  # Carousel / pull-quotes
+  quote_1 = list(
+    en = "\"Regional integration is the cornerstone of sustainable development across the Gulf.\"",
+    ar = "\"\u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0625\u0642\u0644\u064a\u0645\u064a \u0631\u0643\u064a\u0632\u0629 \u0627\u0644\u062a\u0646\u0645\u064a\u0629 \u0627\u0644\u0645\u0633\u062a\u062f\u0627\u0645\u0629 \u0641\u064a \u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u062e\u0644\u064a\u062c.\""
+  ),
+  quote_2 = list(
+    en = "\"Evidence-based policy requires robust, comparable, and timely statistics.\"",
+    ar = "\"\u0627\u0644\u0633\u064a\u0627\u0633\u0627\u062a \u0627\u0644\u0645\u0628\u0646\u064a\u0629 \u0639\u0644\u0649 \u0627\u0644\u0623\u062f\u0644\u0629 \u062a\u0633\u062a\u0644\u0632\u0645 \u0625\u062d\u0635\u0627\u0621\u0627\u062a \u0645\u062a\u064a\u0646\u0629 \u0648\u0642\u0627\u0628\u0644\u0629 \u0644\u0644\u0645\u0642\u0627\u0631\u0646\u0629 \u0648\u062d\u062f\u064a\u062b\u0629.\""
+  ),
+  quote_3 = list(
+    en = "\"The GCC vision of economic unity demands rigorous measurement of progress.\"",
+    ar = "\"\u062a\u0633\u062a\u0648\u062c\u0628 \u0631\u0624\u064a\u0629 \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646 \u0644\u0644\u0648\u062d\u062f\u0629 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a\u0629 \u0642\u064a\u0627\u0633\u0627\u064b \u062f\u0642\u064a\u0642\u0627\u064b \u0644\u0644\u062a\u0642\u062f\u0645 \u0627\u0644\u0645\u062d\u0631\u0632.\""
+  ),
+  quote_4 = list(
+    en = "\"Deeper integration unlocks the full potential of the Gulf economy.\"",
+    ar = "\"\u064a\u064f\u0637\u0644\u0642 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0623\u0639\u0645\u0642 \u0627\u0644\u0637\u0627\u0642\u0629 \u0627\u0644\u0643\u0627\u0645\u0644\u0629 \u0644\u0627\u0642\u062a\u0635\u0627\u062f \u0627\u0644\u062e\u0644\u064a\u062c.\""
+  ),
+
+  # Modal labels
+  modal_learn_more = list(en = "Learn More", ar = "\u0627\u0639\u0631\u0641 \u0627\u0644\u0645\u0632\u064a\u062f"),
+  modal_indicators_label = list(en = "Key Indicators", ar = "\u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062a \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629"),
+  modal_close = list(en = "Close", ar = "\u0625\u063a\u0644\u0627\u0642"),
+
+  # Footer
+  footer_produced_by = list(
+    en = "Produced by GCC-Stat | Statistical Centre for the Cooperation Council for the Arab States of the Gulf",
+    ar = "\u0645\u0646 \u0625\u0646\u062a\u0627\u062c \u0627\u0644\u062c\u0647\u0627\u0632 \u0627\u0644\u0625\u062d\u0635\u0627\u0626\u064a \u0644\u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646 \u0644\u062f\u0648\u0644 \u0627\u0644\u062e\u0644\u064a\u062c \u0627\u0644\u0639\u0631\u0628\u064a\u0629 (GCC-Stat)"
+  ),
+  footer_methodology = list(
+    en = "Methodology follows JRC/OECD Handbook on Composite Indicators",
+    ar = "\u0627\u0644\u0645\u0646\u0647\u062c\u064a\u0629 \u0645\u0633\u062a\u0646\u062f\u0629 \u0625\u0644\u0649 \u062f\u0644\u064a\u0644 JRC/OECD \u0644\u0644\u0645\u0624\u0634\u0631\u0627\u062a \u0627\u0644\u0645\u0631\u0643\u0651\u0628\u0629"
+  ),
+
+  # ---------------------------------------------------------------------------
+  # Overview tab
+  # ---------------------------------------------------------------------------
+  overview_title = list(
+    en = "GCC Economic Integration Dashboard",
+    ar = "\u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a \u0644\u062f\u0648\u0644 \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646"
+  ),
+  overview_welcome = list(
+    en = "Welcome to the Integration Pathway",
+    ar = "\u0645\u0631\u062d\u0628\u0627\u064b \u0628\u0643\u0645 \u0641\u064a \u0645\u0633\u0627\u0631 \u0627\u0644\u062a\u0643\u0627\u0645\u0644"
+  ),
+  overview_description = list(
+    en = paste(
+      "Part of the GCC Economic Observatory, this dashboard provides comprehensive",
+      "analysis of economic integration across GCC member states from 2015 to 2024, based on a",
+      "composite indicator built from 32 indicators across 6 dimensions using the COINr framework."
+    ),
+    ar = paste(
+      "\u062c\u0632\u0621 \u0645\u0646 \u0627\u0644\u0645\u0631\u0635\u062f \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a \u0644\u062f\u0648\u0644 \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646\u060c \u062a\u0648\u0641\u0631 \u0647\u0630\u0647 \u0627\u0644\u0644\u0648\u062d\u0629 \u062a\u062d\u0644\u064a\u0644\u0627\u064b \u0634\u0627\u0645\u0644\u0627\u064b",
+      "\u0644\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a \u0639\u0628\u0631 \u062f\u0648\u0644 \u0627\u0644\u0645\u062c\u0644\u0633 \u0645\u0646 2015 \u0625\u0644\u0649 2024\u060c \u0628\u0646\u0627\u0621\u064b \u0639\u0644\u0649 \u0645\u0624\u0634\u0631",
+      "\u0645\u0631\u0643\u0651\u0628 \u0645\u0646 32 \u0645\u0624\u0634\u0631\u0627\u064b \u0639\u0628\u0631 6 \u0623\u0628\u0639\u0627\u062f \u0628\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0625\u0637\u0627\u0631 COINr."
+    )
+  ),
+  overview_features_title = list(
+    en = "Dashboard Features:",
+    ar = "\u0645\u064a\u0632\u0627\u062a \u0627\u0644\u0644\u0648\u062d\u0629:"
+  ),
+  overview_dimensions_title = list(
+    en = "Six Integration Dimensions:",
+    ar = "\u0623\u0628\u0639\u0627\u062f \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0633\u062a\u0629:"
+  ),
+
+  # Value boxes
+  vb_overall_score   = list(en = "Overall GCC Score",    ar = "\u0627\u0644\u062f\u0631\u062c\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629 \u0644\u0644\u0645\u062c\u0644\u0633"),
+  vb_latest_year     = list(en = "Latest Year",          ar = "\u0622\u062e\u0631 \u0633\u0646\u0629"),
+  vb_member_states   = list(en = "Member States",        ar = "\u0627\u0644\u062f\u0648\u0644 \u0627\u0644\u0623\u0639\u0636\u0627\u0621"),
+  vb_country_overall = list(en = "Overall Score",        ar = "\u0627\u0644\u062f\u0631\u062c\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629"),
+  vb_country_rank    = list(en = "Rank in",              ar = "\u0627\u0644\u062a\u0631\u062a\u064a\u0628 \u0641\u064a"),
+
+  # ---------------------------------------------------------------------------
+  # GCC Overall tab
+  # ---------------------------------------------------------------------------
+  gcc_box_aggregate = list(
+    en = "GCC Aggregate Integration Performance",
+    ar = "\u0627\u0644\u0623\u062f\u0627\u0621 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0644\u0644\u062a\u0643\u0627\u0645\u0644 \u0641\u064a \u062f\u0648\u0644 \u0627\u0644\u0645\u062c\u0644\u0633"
+  ),
+  gcc_box_dim_scores = list(
+    en = "Current Dimension Scores",
+    ar = "\u062f\u0631\u062c\u0627\u062a \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u0627\u0644\u062d\u0627\u0644\u064a\u0629"
+  ),
+  gcc_box_score_cards = list(
+    en = "Dimension Score Cards",
+    ar = "\u0628\u0637\u0627\u0642\u0627\u062a \u062f\u0631\u062c\u0627\u062a \u0627\u0644\u0623\u0628\u0639\u0627\u062f"
+  ),
+  gcc_box_ranking = list(
+    en = "Country Ranking",
+    ar = "\u062a\u0631\u062a\u064a\u0628 \u0627\u0644\u062f\u0648\u0644"
+  ),
+
+  # ---------------------------------------------------------------------------
+  # GCC Timeseries tab
+  # ---------------------------------------------------------------------------
+  ts_box_overall_trend = list(
+    en = "GCC Overall Score Trend (2015\u20132024)",
+    ar = "\u0627\u062a\u062c\u0627\u0647 \u0627\u0644\u062f\u0631\u062c\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629 \u0644\u0644\u0645\u062c\u0644\u0633 (2015\u20132024)"
+  ),
+  ts_pills_label = list(
+    en = "Explore by dimension:",
+    ar = "\u0627\u0633\u062a\u0643\u0634\u0641 \u062d\u0633\u0628 \u0627\u0644\u0628\u064f\u0639\u062f:"
+  ),
+  ts_summary_gcc_score = list(
+    en = "GCC Score",
+    ar = "\u062f\u0631\u062c\u0629 \u0627\u0644\u0645\u062c\u0644\u0633"
+  ),
+  ts_summary_yoy = list(
+    en = "Year-over-Year",
+    ar = "\u0627\u0644\u062a\u063a\u064a\u0631 \u0627\u0644\u0633\u0646\u0648\u064a"
+  ),
+  ts_summary_level = list(
+    en = "Integration Level",
+    ar = "\u0645\u0633\u062a\u0648\u0649 \u0627\u0644\u062a\u0643\u0627\u0645\u0644"
+  ),
+  ts_summary_coverage = list(
+    en = "Time Coverage",
+    ar = "\u0627\u0644\u062a\u063a\u0637\u064a\u0629 \u0627\u0644\u0632\u0645\u0646\u064a\u0629"
+  ),
+  ts_dim_country_compare = list(
+    en = "Integration \u2014 Country Comparison",
+    ar = "\u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u2014 \u0645\u0642\u0627\u0631\u0646\u0629 \u0627\u0644\u062f\u0648\u0644"
+  ),
+  ts_dim_indicators = list(
+    en = "Indicators \u2014 GCC Aggregate Time Series",
+    ar = "\u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062a \u2014 \u0627\u0644\u0633\u0644\u0627\u0633\u0644 \u0627\u0644\u0632\u0645\u0646\u064a\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629"
+  ),
+
+  # ---------------------------------------------------------------------------
+  # Country Profiles tab
+  # ---------------------------------------------------------------------------
+  cp_box_select = list(en = "Select Country",    ar = "\u0627\u062e\u062a\u0631 \u0627\u0644\u062f\u0648\u0644\u0629"),
+  cp_label_country = list(en = "Country:",       ar = "\u0627\u0644\u062f\u0648\u0644\u0629:"),
+  cp_box_radar  = list(
+    en = "Dimension Profile (Latest Year)",
+    ar = "\u0645\u0644\u0641 \u0627\u0644\u0623\u0628\u0639\u0627\u062f (\u0622\u062e\u0631 \u0633\u0646\u0629)"
+  ),
+  cp_box_vs_gcc = list(
+    en = "Overall Score: Country vs GCC Average",
+    ar = "\u0627\u0644\u062f\u0631\u062c\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629: \u0627\u0644\u062f\u0648\u0644\u0629 \u0645\u0642\u0627\u0628\u0644 \u0645\u062a\u0648\u0633\u0637 \u0627\u0644\u0645\u062c\u0644\u0633"
+  ),
+  cp_box_indicator_detail = list(
+    en = "Indicator Detail",
+    ar = "\u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062a"
+  ),
+  cp_dim_select_label = list(
+    en = "Select dimension to explore:",
+    ar = "\u0627\u062e\u062a\u0631 \u0627\u0644\u0628\u064f\u0639\u062f \u0644\u0644\u0627\u0633\u062a\u0643\u0634\u0627\u0641:"
+  ),
+  cp_dim_info = list(
+    en = "Compare the selected country\u2019s indicator scores against the GCC average, and track individual indicator trends over time.",
+    ar = "\u0642\u0627\u0631\u0646 \u062f\u0631\u062c\u0627\u062a \u0645\u0624\u0634\u0631\u0627\u062a \u0627\u0644\u062f\u0648\u0644\u0629 \u0627\u0644\u0645\u062e\u062a\u0627\u0631\u0629 \u0645\u0639 \u0645\u062a\u0648\u0633\u0637 \u0627\u0644\u0645\u062c\u0644\u0633\u060c \u0648\u062a\u0627\u0628\u0639 \u0627\u062a\u062c\u0627\u0647\u0627\u062a \u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062a \u0627\u0644\u0641\u0631\u062f\u064a\u0629 \u0639\u0628\u0631 \u0627\u0644\u0632\u0645\u0646."
+  ),
+
+  # ---------------------------------------------------------------------------
+  # Country Heatmap tab
+  # ---------------------------------------------------------------------------
+  hm_box_year = list(en = "Select Year",  ar = "\u0627\u062e\u062a\u0631 \u0627\u0644\u0633\u0646\u0629"),
+  hm_label_year = list(en = "Year:",      ar = "\u0627\u0644\u0633\u0646\u0629:"),
+  hm_box_heatmap = list(
+    en = "Country-Dimension Heatmap",
+    ar = "\u0627\u0644\u062e\u0631\u064a\u0637\u0629 \u0627\u0644\u062d\u0631\u0627\u0631\u064a\u0629: \u0627\u0644\u062f\u0648\u0644 \u0648\u0627\u0644\u0623\u0628\u0639\u0627\u062f"
+  ),
+  hm_box_levels = list(
+    en = "Integration Levels by Country",
+    ar = "\u0645\u0633\u062a\u0648\u064a\u0627\u062a \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u062d\u0633\u0628 \u0627\u0644\u062f\u0648\u0644\u0629"
+  ),
+
+  # Integration level labels
+  level_good     = list(en = "Good",     ar = "\u062c\u064a\u062f"),
+  level_moderate = list(en = "Moderate", ar = "\u0645\u062a\u0648\u0633\u0637"),
+  level_weak     = list(en = "Weak",     ar = "\u0636\u0639\u064a\u0641"),
+
+  # ---------------------------------------------------------------------------
+  # GCC Analytics tab
+  # ---------------------------------------------------------------------------
+  an_section1_title = list(
+    en = "Section 1: What Changed?",
+    ar = "\u0627\u0644\u0642\u0633\u0645 1: \u0645\u0627 \u0627\u0644\u0630\u064a \u062a\u063a\u064a\u0651\u0631\u061f"
+  ),
+  an_label_from = list(en = "From:", ar = "\u0645\u0646:"),
+  an_label_to   = list(en = "To:",   ar = "\u0625\u0644\u0649:"),
+  an_section1_info = list(
+    en = "Decompose the GCC integration score change between two years by dimension contribution and country contribution.",
+    ar = "\u062a\u062d\u0644\u064a\u0644 \u062a\u063a\u064a\u0631 \u062f\u0631\u062c\u0629 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0628\u064a\u0646 \u0633\u0646\u062a\u064a\u0646 \u062d\u0633\u0628 \u0625\u0633\u0647\u0627\u0645 \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u0648\u0625\u0633\u0647\u0627\u0645 \u0627\u0644\u062f\u0648\u0644."
+  ),
+  an_section2_title = list(
+    en = "Section 2: Annual Dynamics (2015\u20132024)",
+    ar = "\u0627\u0644\u0642\u0633\u0645 2: \u0627\u0644\u062f\u064a\u0646\u0627\u0645\u064a\u0643\u064a\u0627\u062a \u0627\u0644\u0633\u0646\u0648\u064a\u0629 (2015\u20132024)"
+  ),
+  an_section2_info = list(
+    en = "How has the GCC integration score composition evolved over time, and what drove the year-over-year changes in each period?",
+    ar = "\u0643\u064a\u0641 \u062a\u0637\u0648\u0631 \u062a\u0631\u0643\u064a\u0628 \u062f\u0631\u062c\u0629 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0639\u0628\u0631 \u0627\u0644\u0632\u0645\u0646\u060c \u0648\u0645\u0627 \u0627\u0644\u0630\u064a \u062f\u0641\u0639 \u0627\u0644\u062a\u063a\u064a\u0631\u0627\u062a \u0627\u0644\u0633\u0646\u0648\u064a\u0629 \u0641\u064a \u0643\u0644 \u0641\u062a\u0631\u0629\u061f"
+  ),
+  an_box_stacked_area = list(
+    en = "GCC Score Composition by Dimension",
+    ar = "\u062a\u0631\u0643\u064a\u0628 \u062f\u0631\u062c\u0629 \u0627\u0644\u0645\u062c\u0644\u0633 \u062d\u0633\u0628 \u0627\u0644\u0628\u064f\u0639\u062f"
+  ),
+  an_box_annual_dim_bars = list(
+    en = "Dimension Contributions to Annual Change",
+    ar = "\u0625\u0633\u0647\u0627\u0645\u0627\u062a \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u0641\u064a \u0627\u0644\u062a\u063a\u064a\u0631 \u0627\u0644\u0633\u0646\u0648\u064a"
+  ),
+  an_spread_info = list(
+    en = "Where do GCC countries converge and where do they diverge? Narrow spreads indicate harmonization; wide spreads highlight dimensions needing coordinated action.",
+    ar = "\u0623\u064a\u0646 \u062a\u062a\u0642\u0627\u0631\u0628 \u062f\u0648\u0644 \u0627\u0644\u0645\u062c\u0644\u0633 \u0648\u0623\u064a\u0646 \u062a\u062a\u0628\u0627\u0639\u062f\u061f \u0627\u0644\u0641\u062c\u0648\u0627\u062a \u0627\u0644\u0636\u064a\u0642\u0629 \u062a\u0634\u064a\u0631 \u0625\u0644\u0649 \u0627\u0644\u062a\u0646\u0627\u0633\u0642\u061b \u0648\u0627\u0644\u0641\u062c\u0648\u0627\u062a \u0627\u0644\u0648\u0627\u0633\u0639\u0629 \u062a\u0628\u0631\u0632 \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u0627\u0644\u062a\u064a \u062a\u062d\u062a\u0627\u062c \u0639\u0645\u0644\u0627\u064b \u0645\u0646\u0633\u0642\u0627\u064b."
+  ),
+  an_movers_info = list(
+    en = "Largest dimension-level score changes across all countries in the most recent year. Shows what improved and what declined the most.",
+    ar = "\u0623\u0643\u0628\u0631 \u0627\u0644\u062a\u063a\u064a\u0631\u0627\u062a \u0641\u064a \u062f\u0631\u062c\u0627\u062a \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u0639\u0628\u0631 \u062c\u0645\u064a\u0639 \u0627\u0644\u062f\u0648\u0644 \u0641\u064a \u0622\u062e\u0631 \u0633\u0646\u0629. \u064a\u0648\u0636\u062d \u0645\u0627 \u062a\u062d\u0633\u0651\u0646 \u0648\u0645\u0627 \u062a\u0631\u0627\u062c\u0639 \u0623\u0643\u062b\u0631."
+  ),
+
+  # ---------------------------------------------------------------------------
+  # Data Explorer tab
+  # ---------------------------------------------------------------------------
+  de_box_title = list(en = "Data Explorer", ar = "\u0645\u0633\u062a\u0643\u0634\u0641 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a"),
+  de_label_dataset = list(en = "Select Dataset:", ar = "\u0627\u062e\u062a\u0631 \u0645\u062c\u0645\u0648\u0639\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a:"),
+  de_dataset_dimension   = list(en = "Country Dimension Scores", ar = "\u062f\u0631\u062c\u0627\u062a \u0623\u0628\u0639\u0627\u062f \u0627\u0644\u062f\u0648\u0644"),
+  de_dataset_gcc         = list(en = "GCC Aggregate",            ar = "\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0644\u0644\u0645\u062c\u0644\u0633"),
+  de_dataset_yoy         = list(en = "Year-over-Year Changes",   ar = "\u0627\u0644\u062a\u063a\u064a\u0631\u0627\u062a \u0627\u0644\u0633\u0646\u0648\u064a\u0629"),
+  de_dataset_indicator   = list(en = "Indicator Detail",         ar = "\u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062a"),
+
+  # ---------------------------------------------------------------------------
+  # Chart axis / label strings
+  # ---------------------------------------------------------------------------
+  axis_score     = list(en = "Score",   ar = "\u0627\u0644\u062f\u0631\u062c\u0629"),
+  axis_year      = list(en = "Year",    ar = "\u0627\u0644\u0633\u0646\u0629"),
+  axis_country   = list(en = "Country", ar = "\u0627\u0644\u062f\u0648\u0644\u0629"),
+  axis_dimension = list(en = "Dimension", ar = "\u0627\u0644\u0628\u064f\u0639\u062f"),
+  axis_change    = list(en = "Change",  ar = "\u0627\u0644\u062a\u063a\u064a\u0631"),
+  axis_overall   = list(en = "Overall Score", ar = "\u0627\u0644\u062f\u0631\u062c\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629"),
+
+  # Generic / shared
+  label_gcc_average = list(en = "GCC Average",          ar = "\u0645\u062a\u0648\u0633\u0637 \u0627\u0644\u0645\u062c\u0644\u0633"),
+  label_no_data     = list(en = "No data available",    ar = "\u0644\u0627 \u062a\u0648\u062c\u062f \u0628\u064a\u0627\u0646\u0627\u062a \u0645\u062a\u0627\u062d\u0629"),
+  label_loading     = list(en = "Loading\u2026",        ar = "\u062c\u0627\u0631\u064d \u0627\u0644\u062a\u062d\u0645\u064a\u0644\u2026"),
+  label_welcome     = list(en = "Welcome",              ar = "\u0645\u0631\u062d\u0628\u0627\u064b"),
+  label_pts_from    = list(en = "pts from",             ar = "\u0646\u0642\u0637\u0629 \u0645\u0646"),
+
+  # Back button
+  btn_back_welcome = list(en = "Welcome", ar = "\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629"),
+
+  # Feature list items (Overview tab)
+  feat_gcc_overall = list(
+    en = "View aggregate GCC integration metrics and latest performance",
+    ar = "\u0639\u0631\u0636 \u0645\u0642\u0627\u064a\u064a\u0633 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629 \u0648\u0623\u062d\u062f\u062b \u0627\u0644\u0623\u062f\u0627\u0621"
+  ),
+  feat_gcc_timeseries = list(
+    en = "Analyze trends across all six dimensions over time",
+    ar = "\u062a\u062d\u0644\u064a\u0644 \u0627\u0644\u0627\u062a\u062c\u0627\u0647\u0627\u062a \u0639\u0628\u0631 \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u0627\u0644\u0633\u062a\u0629 \u0645\u0639 \u0645\u0631\u0648\u0631 \u0627\u0644\u0648\u0642\u062a"
+  ),
+  feat_country_profiles = list(
+    en = "Deep dive into individual country performance with timeseries",
+    ar = "\u062a\u0639\u0645\u0642 \u0641\u064a \u0623\u062f\u0627\u0621 \u0643\u0644 \u062f\u0648\u0644\u0629 \u0645\u0639 \u0633\u0644\u0627\u0633\u0644 \u0632\u0645\u0646\u064a\u0629"
+  ),
+  feat_country_heatmap = list(
+    en = "Compare countries across dimensions visually",
+    ar = "\u0645\u0642\u0627\u0631\u0646\u0629 \u0627\u0644\u062f\u0648\u0644 \u0639\u0628\u0631 \u0627\u0644\u0623\u0628\u0639\u0627\u062f \u0628\u0635\u0631\u064a\u0627\u064b"
+  ),
+  feat_gcc_analytics = list(
+    en = "Examine year-over-year changes and contributions to the GCC integration score",
+    ar = "\u0641\u062d\u0635 \u0627\u0644\u062a\u063a\u064a\u0631\u0627\u062a \u0627\u0644\u0633\u0646\u0648\u064a\u0629 \u0648\u0627\u0644\u0625\u0633\u0647\u0627\u0645\u0627\u062a \u0641\u064a \u062f\u0631\u062c\u0629 \u0627\u0644\u062a\u0643\u0627\u0645\u0644"
+  ),
+  feat_data_explorer = list(
+    en = "Access and export underlying data",
+    ar = "\u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0629 \u0648\u062a\u0635\u062f\u064a\u0631\u0647\u0627"
+  ),
+
+  # Dimension full names
+  dim_trade          = list(en = "Trade Integration",          ar = "\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u062a\u062c\u0627\u0631\u0629"),
+  dim_financial      = list(en = "Financial Integration",      ar = "\u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0645\u0627\u0644\u064a"),
+  dim_labor          = list(en = "Labor Mobility",             ar = "\u062d\u0631\u0643\u0629 \u0627\u0644\u0639\u0645\u0627\u0644\u0629"),
+  dim_infrastructure = list(en = "Infrastructure Connectivity", ar = "\u062a\u0631\u0627\u0628\u0637 \u0627\u0644\u0628\u0646\u064a\u0629 \u0627\u0644\u062a\u062d\u062a\u064a\u0629"),
+  dim_sustainability = list(en = "Sustainability",             ar = "\u0627\u0644\u0627\u0633\u062a\u062f\u0627\u0645\u0629"),
+  dim_convergence    = list(en = "Economic Convergence",       ar = "\u0627\u0644\u062a\u0642\u0627\u0631\u0628 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a")
+)
+
+# ── Public API ────────────────────────────────────────────────────────────────
+
+#' Translate a single key
+#' @param key  Character. Key from .translations list.
+#' @param lang Character. "en" or "ar".
+#' @return     Character string in the requested language.
+t <- function(key, lang = "en") {
+  lang <- match.arg(lang, c("en", "ar"))
+  entry <- .translations[[key]]
+  if (is.null(entry)) {
+    warning(sprintf("[translations] Key '%s' not found. Returning key as fallback.", key))
+    return(key)
+  }
+  entry[[lang]]
+}
+
+# ── Country names ─────────────────────────────────────────────────────────────
+
+.country_translations <- c(
+  "Bahrain"      = "\u0627\u0644\u0628\u062d\u0631\u064a\u0646",
+  "Kuwait"       = "\u0627\u0644\u0643\u0648\u064a\u062a",
+  "Oman"         = "\u0639\u064f\u0645\u0627\u0646",
+  "Qatar"        = "\u0642\u0637\u0631",
+  "Saudi Arabia" = "\u0627\u0644\u0645\u0645\u0644\u0643\u0629 \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629",
+  "UAE"          = "\u0627\u0644\u0625\u0645\u0627\u0631\u0627\u062a \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0645\u062a\u062d\u062f\u0629",
+  "GCC"          = "\u062f\u0648\u0644 \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646 \u0627\u0644\u062e\u0644\u064a\u062c\u064a"
+)
+
+#' Translate a country name
+#' @param name Character. English country name.
+#' @param lang Character. "en" or "ar".
+#' @return     Character.
+translate_country <- function(name, lang = "en") {
+  if (lang == "en") return(name)
+  ar <- .country_translations[name]
+  if (is.na(ar)) {
+    warning(sprintf("[translations] Country '%s' not in dictionary.", name))
+    return(name)
+  }
+  unname(ar)
+}
+
+#' Translate a vector of country names
+translate_countries <- function(names, lang = "en") {
+  vapply(names, translate_country, character(1), lang = lang)
+}
+
+# ── Dimension names ───────────────────────────────────────────────────────────
+
+.dimension_translations <- c(
+  "Trade"          = "\u0627\u0644\u062a\u062c\u0627\u0631\u0629",
+  "Financial"      = "\u0627\u0644\u0645\u0627\u0644\u064a",
+  "Labor"          = "\u0627\u0644\u0639\u0645\u0627\u0644\u0629",
+  "Infrastructure" = "\u0627\u0644\u0628\u0646\u064a\u0629 \u0627\u0644\u062a\u062d\u062a\u064a\u0629",
+  "Sustainability" = "\u0627\u0644\u0627\u0633\u062a\u062f\u0627\u0645\u0629",
+  "Convergence"    = "\u0627\u0644\u062a\u0642\u0627\u0631\u0628"
+)
+
+#' Translate a dimension label (short form)
+#' @param name Character. E.g. "Trade", "Financial".
+#' @param lang Character. "en" or "ar".
+translate_dimension <- function(name, lang = "en") {
+  if (lang == "en") return(name)
+  ar <- .dimension_translations[name]
+  if (is.na(ar)) {
+    warning(sprintf("[translations] Dimension '%s' not in dictionary.", name))
+    return(name)
+  }
+  unname(ar)
+}
+
+#' Translate a vector of dimension labels
+translate_dimensions <- function(names, lang = "en") {
+  vapply(names, translate_dimension, character(1), lang = lang)
+}
+
+# ── Integration level ─────────────────────────────────────────────────────────
+
+#' Translate integration level string
+#' @param level Character. "Good", "Moderate", or "Weak".
+#' @param lang  Character. "en" or "ar".
+translate_level <- function(level, lang = "en") {
+  if (lang == "en") return(level)
+  map <- c(Good = "\u062c\u064a\u062f", Moderate = "\u0645\u062a\u0648\u0633\u0637", Weak = "\u0636\u0639\u064a\u0641")
+  unname(map[level])
+}
+
+# ── Layout helpers ────────────────────────────────────────────────────────────
+
+#' Return the text direction for CSS
+#' @param lang Character. "en" or "ar".
+#' @return "ltr" or "rtl"
+get_direction <- function(lang = "en") {
+  if (lang == "ar") "rtl" else "ltr"
+}
+
+#' Return the CSS font-family string appropriate for the language
+#' @param lang Character. "en" or "ar".
+#' @return Character CSS font-family string.
+get_font <- function(lang = "en") {
+  if (lang == "ar") {
+    "'Noto Sans Arabic', 'Cairo', 'Tajawal', Arial, sans-serif"
+  } else {
+    "'Source Sans Pro', 'Lato', Arial, sans-serif"
+  }
+}
+
+#' Return the text-align value for the language
+get_text_align <- function(lang = "en") {
+  if (lang == "ar") "right" else "left"
+}
