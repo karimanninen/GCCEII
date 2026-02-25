@@ -230,6 +230,7 @@ get_convergence_indicators_table <- function() {
 
 #' Metadata Tab UI
 #'
+#' @param lang Language code ("en" or "ar")
 #' @return Shiny UI element for metadata tab
 metadata_tab_ui <- function(lang = "en") {
   tabItem(
@@ -239,72 +240,47 @@ metadata_tab_ui <- function(lang = "en") {
     fluidRow(
       box(
         width = 12,
-        title = "About the GCC Economic Integration Composite Indicator",
+        title = t("meta_about_title", lang),
         status = "primary",
         solidHeader = TRUE,
 
-        h4("Purpose"),
-        p("The GCC Economic Integration composite indicator is part of the ",
-          strong("Integration Pathway"), " within the GCC Economic Observatory. It is designed to
-          measure the depth and progress of economic integration among the six Gulf Cooperation
-          Council member states: Bahrain, Kuwait, Oman, Qatar, Saudi Arabia, and the United
-          Arab Emirates."),
+        h4(t("meta_purpose", lang)),
+        p(t("meta_purpose_p1", lang)),
+        p(t("meta_purpose_p2", lang)),
 
-        p("The composite indicator supports Vision 2030 transformation goals by providing an
-          authoritative, data-driven assessment of regional integration across multiple economic
-          dimensions. It enables policymakers to identify strengths, gaps, and opportunities for
-          deeper cooperation within the GCC common market framework."),
+        h4(t("meta_scope", lang)),
+        p(t("meta_scope_p1", lang)),
 
-        h4("Scope"),
-        p("The composite indicator covers the period 2015-2024 and aggregates performance across
-          six dimensions, each capturing a distinct aspect of economic integration. Country-level
-          scores are aggregated to a GCC-wide score using GDP-weighted averaging to reflect the
-          relative economic significance of each member state."),
-
-        h4("Methodology"),
-        p("The composite indicator is constructed using the ", strong("COINr framework"),
-          " (Composite Indicator Numerical Repository), following the JRC/OECD Handbook on
-          Constructing Composite Indicators. The pipeline involves:"),
+        h4(t("meta_methodology", lang)),
+        p(t("meta_methodology_intro", lang)),
         tags$ol(
-          tags$li(strong("Data extraction:"), " Raw indicator values from GCC-Stat databases and external sources"),
-          tags$li(strong("Imputation:"), " Two-pass approach: linear interpolation for temporal gaps,
-                  followed by EM (Expectation-Maximization) algorithm for remaining missing data"),
-          tags$li(strong("Normalization:"), " Multi-strategy pipeline adapted to each indicator's distribution
-                  (see normalization details below)"),
-          tags$li(strong("Aggregation:"), " Arithmetic weighted mean within dimensions, then across dimensions
-                  using the weights shown below"),
-          tags$li(strong("GCC Aggregate:"), " GDP-weighted average across the six member states")
+          tags$li(strong(t("meta_label_data_extraction", lang)), " ", t("meta_step_extraction", lang)),
+          tags$li(strong(t("meta_label_imputation", lang)), " ", t("meta_step_imputation", lang)),
+          tags$li(strong(t("meta_label_normalization", lang)), " ", t("meta_step_normalization", lang)),
+          tags$li(strong(t("meta_label_aggregation", lang)), " ", t("meta_step_aggregation", lang)),
+          tags$li(strong(t("meta_label_gcc_aggregate", lang)), " ", t("meta_step_gcc_agg", lang))
         ),
 
-        h4("Scoring"),
-        p("All dimension and overall scores are presented on a 0-100 scale. The normalization methodology varies by indicator type:"),
+        h4(t("meta_scoring", lang)),
+        p(t("meta_scoring_intro", lang)),
         tags$ul(
-          tags$li(strong("Min-max normalization:"), " Most indicators are scaled using pooled min-max normalization
-                  across all country-year observations (2015-2024). Best observation scores 100, lowest scores 0."),
-          tags$li(strong("Winsorize + min-max:"), " Indicators with extreme outliers are first winsorized at the
-                  5th/95th percentile, then min-max normalized. This prevents single outliers from compressing
-                  the scale."),
-          tags$li(strong("Z-score + rescale:"), " OCA criteria (inflation, M2 growth) and fiscal balance use
-                  z-score normalization to handle distributions that cross zero, then rescaled to 0-100."),
-          tags$li(strong("Goalpost:"), " Stock market openness (already on a 0-100% scale) uses goalpost
-                  normalization with fixed bounds."),
-          tags$li(strong("Bounded min-max:"), " Banking penetration uses min-max within a bounded range [50, 100].")
+          tags$li(strong(t("meta_norm_label_minmax", lang)), " ", t("meta_norm_minmax", lang)),
+          tags$li(strong(t("meta_norm_label_winsorize", lang)), " ", t("meta_norm_winsorize", lang)),
+          tags$li(strong(t("meta_norm_label_zscore", lang)), " ", t("meta_norm_zscore", lang)),
+          tags$li(strong(t("meta_norm_label_goalpost", lang)), " ", t("meta_norm_goalpost", lang)),
+          tags$li(strong(t("meta_norm_label_bounded", lang)), " ", t("meta_norm_bounded", lang))
         ),
-        p("Integration levels are classified as:"),
+        p(t("meta_levels_intro", lang)),
         tags$ul(
-          tags$li(strong("Good (60-100):"), " Strong integration with well-functioning mechanisms"),
-          tags$li(strong("Moderate (40-59):"), " Partial integration with room for improvement"),
-          tags$li(strong("Weak (0-39):"), " Limited integration requiring policy attention")
+          tags$li(strong(t("meta_label_level_good", lang)), " ", t("meta_level_good", lang)),
+          tags$li(strong(t("meta_label_level_moderate", lang)), " ", t("meta_level_moderate", lang)),
+          tags$li(strong(t("meta_label_level_weak", lang)), " ", t("meta_level_weak", lang))
         ),
 
-        h4("Convergence Indicators"),
-        p("Convergence indicators use a ", strong("distance-based"), " methodology, measuring each
-          country's deviation from the GCC mean:"),
+        h4(t("meta_convergence", lang)),
+        p(t("meta_convergence_p1", lang)),
         tags$pre("score = 100 - |value - GCC_mean| / GCC_mean * 100   (capped at 0-100)"),
-        p("Unlike the coefficient-of-variation approach, this produces ", em("country-specific"),
-          " convergence scores: countries closer to the regional mean score higher.
-          Seven convergence indicators cover income, prices, non-oil GDP, manufacturing,
-          oil dependency, fiscal balance, and interest rates.")
+        p(t("meta_convergence_p2", lang))
       )
     ),
 
@@ -312,64 +288,49 @@ metadata_tab_ui <- function(lang = "en") {
     fluidRow(
       box(
         width = 12,
-        title = "Dimension Weights & Structure",
+        title = t("meta_weights_title", lang),
         status = "info",
         solidHeader = TRUE,
-        p("The overall composite indicator combines six dimensions with the following weights,
-          covering ", strong("32 operational indicators"), " across six dimensions:"),
+        p(t("meta_weights_intro", lang)),
         tableOutput("dimension_weights_table")
       )
     ),
 
     # Dimension indicator boxes
     fluidRow(
-      box(width = 12, title = "Dimension 1: Trade Integration (20%) - 6 Indicators",
+      box(width = 12, title = t("meta_dim1_title", lang),
           status = "success", solidHeader = TRUE, collapsible = TRUE,
-          p("Measures the intensity and composition of intra-GCC merchandise and services trade,
-            with emphasis on non-oil diversification and value chain participation."),
+          p(t("meta_dim1_desc", lang)),
           tableOutput("trade_indicators_table"))
     ),
     fluidRow(
-      box(width = 12, title = "Dimension 2: Financial & Monetary Integration (20%) - 8 Indicators",
+      box(width = 12, title = t("meta_dim2_title", lang),
           status = "success", solidHeader = TRUE, collapsible = TRUE,
-          p("Assesses convergence in monetary conditions (OCA criteria), banking sector integration,
-            cross-border financial flows, and fiscal positioning within the GCC. Includes three OCA
-            (Optimal Currency Area) readiness indicators: inflation convergence, monetary supply
-            convergence, and GDP growth synchronization."),
+          p(t("meta_dim2_desc", lang)),
           tableOutput("financial_indicators_table"))
     ),
     fluidRow(
-      box(width = 12, title = "Dimension 3: Labor & Human Capital (20%) - 5 Indicators",
+      box(width = 12, title = t("meta_dim3_title", lang),
           status = "success", solidHeader = TRUE, collapsible = TRUE,
-          p("Captures the mobility of labor and people across GCC borders, including
-            worker movements, tourism, and student exchanges, as well as labor market
-            indicators. Worker and student mobility use the host-country perspective:
-            how many GCC nationals does each country host?"),
+          p(t("meta_dim3_desc", lang)),
           tableOutput("labor_indicators_table"))
     ),
     fluidRow(
-      box(width = 12, title = "Dimension 4: Infrastructure Connectivity (20%) - 2 Indicators",
+      box(width = 12, title = t("meta_dim4_title", lang),
           status = "success", solidHeader = TRUE, collapsible = TRUE,
-          p("Tracks physical connectivity infrastructure that enables cross-border economic activity.
-            Currently driven by two operational indicators (aviation and energy). Four additional
-            indicators (railway, port, power grid, digital) are defined but awaiting external data sources."),
+          p(t("meta_dim4_desc", lang)),
           tableOutput("infrastructure_indicators_table"))
     ),
     fluidRow(
-      box(width = 12, title = "Dimension 5: Sustainability & Diversification (10%) - 4 Indicators",
+      box(width = 12, title = t("meta_dim5_title", lang),
           status = "success", solidHeader = TRUE, collapsible = TRUE,
-          p("Measures progress toward economic diversification away from hydrocarbon
-            dependence, aligned with national Vision 2030 strategies. Covers both
-            GDP composition and government revenue diversification."),
+          p(t("meta_dim5_desc", lang)),
           tableOutput("sustainability_indicators_table"))
     ),
     fluidRow(
-      box(width = 12, title = "Dimension 6: Macroeconomic Convergence (10%) - 7 Indicators",
+      box(width = 12, title = t("meta_dim6_title", lang),
           status = "success", solidHeader = TRUE, collapsible = TRUE,
-          p("Assesses the degree to which GCC economies are converging in key macroeconomic
-            variables, a prerequisite for deeper monetary integration and potential currency union.
-            Uses distance-based scores: each country is scored based on its deviation from the
-            GCC mean for each variable."),
+          p(t("meta_dim6_desc", lang)),
           tableOutput("convergence_indicators_table"))
     ),
 
@@ -377,24 +338,22 @@ metadata_tab_ui <- function(lang = "en") {
     fluidRow(
       box(
         width = 12,
-        title = "Data Sources",
+        title = t("meta_data_sources", lang),
         status = "warning",
         solidHeader = TRUE,
         tags$ul(
-          tags$li(strong("Trade data:"), " UN Comtrade (merchandise), GCC-Stat estimates (services)"),
-          tags$li(strong("National accounts:"), " GCC-Stat national accounts database"),
-          tags$li(strong("Financial data:"), " GCC-Stat monetary & financial database"),
-          tags$li(strong("Labor & mobility:"), " GCC-Stat labor statistics, common market database"),
-          tags$li(strong("Tourism:"), " GCC-Stat tourism database"),
-          tags$li(strong("Infrastructure:"), " GCC-Stat common market and energy databases"),
-          tags$li(strong("Price data:"), " GCC-Stat CPI database, World Bank ICP (2017, 2021)"),
-          tags$li(strong("Fiscal data:"), " GCC-Stat government finance statistics"),
-          tags$li(strong("Interest rates:"), " Central bank policy rates (harmonized panel)"),
-          tags$li(strong("FDI data:"), " UNCTAD / national sources")
+          tags$li(strong(t("meta_src_label_trade", lang)), " ", t("meta_src_trade", lang)),
+          tags$li(strong(t("meta_src_label_national", lang)), " ", t("meta_src_national", lang)),
+          tags$li(strong(t("meta_src_label_financial", lang)), " ", t("meta_src_financial", lang)),
+          tags$li(strong(t("meta_src_label_labor", lang)), " ", t("meta_src_labor", lang)),
+          tags$li(strong(t("meta_src_label_tourism", lang)), " ", t("meta_src_tourism", lang)),
+          tags$li(strong(t("meta_src_label_infra", lang)), " ", t("meta_src_infra", lang)),
+          tags$li(strong(t("meta_src_label_price", lang)), " ", t("meta_src_price", lang)),
+          tags$li(strong(t("meta_src_label_fiscal", lang)), " ", t("meta_src_fiscal", lang)),
+          tags$li(strong(t("meta_src_label_interest", lang)), " ", t("meta_src_interest", lang)),
+          tags$li(strong(t("meta_src_label_fdi", lang)), " ", t("meta_src_fdi", lang))
         ),
-        p(em("Note: Some indicators use proxy measures or estimates where direct data is unavailable.
-             The COINr pipeline applies two-pass imputation (linear interpolation + EM algorithm)
-             to handle remaining gaps."))
+        p(em(t("meta_data_note", lang)))
       )
     )
   )
