@@ -198,7 +198,7 @@ server <- function(input, output, session) {
   output$gcc_dimension_bars <- renderPlotly({
     latest <- gcc_ts %>% filter(year == max(year))
     dim_data <- create_dimension_df(latest)
-    create_dimension_bar_chart(dim_data)
+    create_dimension_bar_chart(dim_data, lang = current_lang())
   })
 
   output$dimension_boxes <- renderUI({
@@ -243,7 +243,7 @@ server <- function(input, output, session) {
     ranking <- dimension_scores %>%
       filter(year == latest_year) %>%
       arrange(desc(overall_index))
-    create_ranking_chart(ranking, title = paste(t("gcc_ranking_title", current_lang()), "-", latest_year))
+    create_ranking_chart(ranking, title = paste(t("gcc_ranking_title", current_lang()), "-", latest_year), lang = current_lang())
   })
 
   # ---------------------------------------------------------------------------
@@ -294,7 +294,7 @@ server <- function(input, output, session) {
 
   # -- Overall trend (compact) --
   output$gcc_overall_trend <- renderPlotly({
-    create_line_chart(gcc_ts, "year", "overall")
+    create_line_chart(gcc_ts, "year", "overall", lang = current_lang())
   })
 
   # -- Dynamic titles --
@@ -313,6 +313,7 @@ server <- function(input, output, session) {
   # -- Dimension country comparison chart --
   output$ts_dimension_countries <- renderPlotly({
     dim <- selected_dimension()
+    lang <- current_lang()
     col_name <- DIMENSION_CODE_MAP[dim]
 
     p <- plot_ly()
@@ -323,7 +324,7 @@ server <- function(input, output, session) {
       p <- p %>% add_trace(
         data = ctry_data, x = ~year,
         y = as.formula(paste0("~", col_name)),
-        name = ctry, type = 'scatter', mode = 'lines+markers',
+        name = translate_country(ctry, lang), type = 'scatter', mode = 'lines+markers',
         line = list(color = COUNTRY_COLORS[ctry], width = 1.5),
         marker = list(size = 5),
         legendgroup = ctry
@@ -334,7 +335,7 @@ server <- function(input, output, session) {
     p <- p %>% add_trace(
       data = gcc_ts, x = ~year,
       y = as.formula(paste0("~", col_name)),
-      name = "GCC", type = 'scatter', mode = 'lines+markers',
+      name = translate_country("GCC", lang), type = 'scatter', mode = 'lines+markers',
       line = list(color = COUNTRY_COLORS_WITH_GCC["GCC"], width = 3.5, dash = "dash"),
       marker = list(size = 9, symbol = "diamond",
                     color = COUNTRY_COLORS_WITH_GCC["GCC"]),
@@ -342,8 +343,8 @@ server <- function(input, output, session) {
     )
 
     p %>% layout(
-      xaxis = list(title = "Year", dtick = 1),
-      yaxis = list(title = paste(dim, "Score"), range = c(0, 100)),
+      xaxis = list(title = t("axis_year", lang), dtick = 1),
+      yaxis = list(title = paste(translate_dimension(dim, lang), t("axis_score", lang)), range = c(0, 100)),
       hovermode = 'x unified',
       legend = list(orientation = 'h', y = -0.15)
     )
@@ -352,11 +353,12 @@ server <- function(input, output, session) {
   # -- Indicator small multiples (GCC aggregate, subplot grid) --
   output$ts_indicator_multiples <- renderPlotly({
     dim <- selected_dimension()
+    lang <- current_lang()
 
     if (is.null(indicator_detail) || nrow(indicator_detail) == 0) {
       return(
         plot_ly() %>%
-          layout(title = "Indicator detail data not available",
+          layout(title = t("label_no_data", lang),
                  xaxis = list(visible = FALSE), yaxis = list(visible = FALSE))
       )
     }
@@ -375,7 +377,7 @@ server <- function(input, output, session) {
     if (n_ind == 0) {
       return(
         plot_ly() %>%
-          layout(title = paste("No indicators found for", dim),
+          layout(title = t("label_no_data", lang),
                  xaxis = list(visible = FALSE), yaxis = list(visible = FALSE))
       )
     }
@@ -426,7 +428,7 @@ server <- function(input, output, session) {
     subplot(plots, nrows = n_rows, shareX = TRUE, shareY = TRUE,
             titleX = FALSE, titleY = FALSE, margin = 0.06) %>%
       layout(
-        yaxis = list(title = "Score (0\u2013100)", range = c(0, 100)),
+        yaxis = list(title = paste0(t("axis_score", lang), " (0\u2013100)"), range = c(0, 100)),
         margin = list(t = 30, b = 40),
         height = chart_height
       )
@@ -467,26 +469,27 @@ server <- function(input, output, session) {
     latest <- dimension_scores %>%
       filter(country == input$selected_country, year == max(year))
     scores <- get_scores_vector(latest)
-    create_radar_chart(scores)
+    create_radar_chart(scores, lang = current_lang())
   })
 
   # -- Combined Country vs GCC trend (replaces two separate charts) --
   output$country_vs_gcc_combined <- renderPlotly({
     ctry <- input$selected_country
+    lang <- current_lang()
     ctry_data <- dimension_scores %>% filter(country == ctry)
 
     plot_ly() %>%
       add_trace(data = ctry_data, x = ~year, y = ~overall_index,
-                name = ctry, type = 'scatter', mode = 'lines+markers',
+                name = translate_country(ctry, lang), type = 'scatter', mode = 'lines+markers',
                 line = list(color = COUNTRY_COLORS[ctry], width = 3),
                 marker = list(size = 10)) %>%
       add_trace(data = gcc_ts, x = ~year, y = ~overall,
-                name = "GCC Average", type = 'scatter', mode = 'lines+markers',
+                name = t("label_gcc_average", lang), type = 'scatter', mode = 'lines+markers',
                 line = list(color = COUNTRY_COLORS_WITH_GCC["GCC"], width = 3, dash = 'dash'),
                 marker = list(size = 8, symbol = "diamond")) %>%
       layout(
-        xaxis = list(title = "Year", dtick = 1),
-        yaxis = list(title = "Overall Score", range = c(0, 100)),
+        xaxis = list(title = t("axis_year", lang), dtick = 1),
+        yaxis = list(title = t("axis_overall", lang), range = c(0, 100)),
         hovermode = 'x unified',
         legend = list(orientation = 'h', y = -0.15)
       )
@@ -496,9 +499,10 @@ server <- function(input, output, session) {
   output$cp_indicator_lollipop <- renderPlotly({
     ctry <- input$selected_country
     dim <- input$cp_dimension_select
+    lang <- current_lang()
 
     if (is.null(indicator_detail) || nrow(indicator_detail) == 0) {
-      return(plot_ly() %>% layout(title = "Indicator data not available"))
+      return(plot_ly() %>% layout(title = t("label_no_data", lang)))
     }
 
     latest_year <- max(indicator_detail$year)
@@ -517,7 +521,7 @@ server <- function(input, output, session) {
       dplyr::arrange(ctry_score)
 
     if (nrow(combined) == 0) {
-      return(plot_ly() %>% layout(title = paste("No indicators for", dim)))
+      return(plot_ly() %>% layout(title = t("label_no_data", lang)))
     }
 
     # Ordered factor for y-axis
@@ -525,6 +529,8 @@ server <- function(input, output, session) {
                                        levels = combined$indicator_label)
 
     ctry_color <- COUNTRY_COLORS[ctry]
+    ctry_label <- translate_country(ctry, lang)
+    gcc_label <- t("label_gcc_average", lang)
 
     p <- plot_ly()
 
@@ -545,8 +551,8 @@ server <- function(input, output, session) {
       type = 'scatter', mode = 'markers',
       marker = list(size = 14, color = ctry_color,
                     line = list(color = 'white', width = 1.5)),
-      name = ctry,
-      hovertemplate = paste0("<b>%{y}</b><br>", ctry, ": %{x:.1f}<extra></extra>")
+      name = ctry_label,
+      hovertemplate = paste0("<b>%{y}</b><br>", ctry_label, ": %{x:.1f}<extra></extra>")
     )
 
     # GCC dots
@@ -556,12 +562,12 @@ server <- function(input, output, session) {
       marker = list(size = 14, color = COUNTRY_COLORS_WITH_GCC["GCC"],
                     symbol = "diamond",
                     line = list(color = 'white', width = 1.5)),
-      name = "GCC Average",
-      hovertemplate = "<b>%{y}</b><br>GCC: %{x:.1f}<extra></extra>"
+      name = gcc_label,
+      hovertemplate = paste0("<b>%{y}</b><br>", gcc_label, ": %{x:.1f}<extra></extra>")
     )
 
     p %>% layout(
-      xaxis = list(title = paste("Score (", latest_year, ")"),
+      xaxis = list(title = paste(t("axis_score", lang), "(", latest_year, ")"),
                    range = c(0, 105)),
       yaxis = list(title = "", automargin = TRUE),
       legend = list(orientation = 'h', y = -0.15),
@@ -573,9 +579,10 @@ server <- function(input, output, session) {
   output$cp_indicator_trends <- renderPlotly({
     ctry <- input$selected_country
     dim <- input$cp_dimension_select
+    lang <- current_lang()
 
     if (is.null(indicator_detail) || nrow(indicator_detail) == 0) {
-      return(plot_ly() %>% layout(title = "Indicator data not available"))
+      return(plot_ly() %>% layout(title = t("label_no_data", lang)))
     }
 
     # Filter indicator data for this dimension (country + GCC)
@@ -590,11 +597,13 @@ server <- function(input, output, session) {
 
     n_ind <- nrow(ind_info)
     if (n_ind == 0) {
-      return(plot_ly() %>% layout(title = paste("No indicators for", dim)))
+      return(plot_ly() %>% layout(title = t("label_no_data", lang)))
     }
 
     ctry_color <- COUNTRY_COLORS[ctry]
     gcc_color <- COUNTRY_COLORS_WITH_GCC["GCC"]
+    ctry_label <- translate_country(ctry, lang)
+    gcc_label <- translate_country("GCC", lang)
 
     plots <- lapply(seq_len(n_ind), function(i) {
       ind_code <- ind_info$indicator_code[i]
@@ -610,20 +619,20 @@ server <- function(input, output, session) {
                   type = 'scatter', mode = 'lines+markers',
                   line = list(color = ctry_color, width = 2),
                   marker = list(size = 4, color = ctry_color),
-                  name = ctry, showlegend = (i == 1),
+                  name = ctry_label, showlegend = (i == 1),
                   legendgroup = "ctry",
                   hovertemplate = paste0(
                     "<b>", ind_label, "</b><br>",
-                    ctry, ": %{y:.1f}<extra></extra>")) %>%
+                    ctry_label, ": %{y:.1f}<extra></extra>")) %>%
         add_trace(data = gcc_series, x = ~year, y = ~normalized_value,
                   type = 'scatter', mode = 'lines+markers',
                   line = list(color = gcc_color, width = 2, dash = "dash"),
                   marker = list(size = 4, color = gcc_color, symbol = "diamond"),
-                  name = "GCC", showlegend = (i == 1),
+                  name = gcc_label, showlegend = (i == 1),
                   legendgroup = "gcc",
                   hovertemplate = paste0(
                     "<b>", ind_label, "</b><br>",
-                    "GCC: %{y:.1f}<extra></extra>")) %>%
+                    gcc_label, ": %{y:.1f}<extra></extra>")) %>%
         layout(
           annotations = list(
             list(text = ind_label, x = 0.5, y = 1.08,
@@ -643,7 +652,7 @@ server <- function(input, output, session) {
     subplot(plots, nrows = n_rows, shareX = TRUE, shareY = TRUE,
             titleX = FALSE, titleY = FALSE, margin = 0.06) %>%
       layout(
-        yaxis = list(title = "Score (0\u2013100)", range = c(0, 100)),
+        yaxis = list(title = paste0(t("axis_score", lang), " (0\u2013100)"), range = c(0, 100)),
         margin = list(t = 30, b = 40),
         height = chart_height,
         legend = list(orientation = 'h', y = -0.08)
@@ -670,29 +679,36 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
 
   output$country_heatmap <- renderPlotly({
+    lang <- current_lang()
     heatmap_data <- dimension_scores %>%
       filter(year == input$heatmap_year) %>%
       select(country, all_of(DIMENSION_COLS))
 
-    colnames(heatmap_data) <- c("country", DIMENSION_LABELS)
+    colnames(heatmap_data) <- c("country", translate_dimensions(DIMENSION_LABELS, lang))
+
+    heatmap_data$country <- translate_countries(heatmap_data$country, lang)
 
     heatmap_matrix <- heatmap_data %>%
       column_to_rownames("country") %>%
       as.matrix()
 
-    create_heatmap(heatmap_matrix)
+    create_heatmap(heatmap_matrix, lang = lang)
   })
 
   output$integration_levels <- renderPlotly({
+    lang <- current_lang()
     level_data <- dimension_scores %>%
       filter(year == input$heatmap_year) %>%
-      mutate(integration_level = factor(integration_level, levels = c("Weak", "Moderate", "Good")))
+      mutate(
+        integration_level = factor(integration_level, levels = c("Weak", "Moderate", "Good")),
+        country_label = translate_countries(country, lang)
+      )
 
-    plot_ly(level_data, x = ~country, y = ~overall_index, type = 'bar',
+    plot_ly(level_data, x = ~country_label, y = ~overall_index, type = 'bar',
             marker = list(color = ~INTEGRATION_LEVEL_COLORS[integration_level])) %>%
       layout(
         xaxis = list(title = ""),
-        yaxis = list(title = "Overall Score", range = c(0, 100)),
+        yaxis = list(title = t("axis_overall", lang), range = c(0, 100)),
         shapes = list(
           list(type = "line", x0 = -0.5, x1 = 5.5, y0 = 40, y1 = 40,
                line = list(color = "orange", dash = "dash")),
@@ -731,6 +747,7 @@ server <- function(input, output, session) {
 
   # -- Waterfall chart: dimension-level decomposition --
   output$analytics_waterfall <- renderPlotly({
+    lang <- current_lang()
     yr_from <- as.integer(input$analytics_from_year)
     yr_to <- as.integer(input$analytics_to_year)
 
@@ -738,12 +755,12 @@ server <- function(input, output, session) {
     gcc_to <- gcc_ts %>% dplyr::filter(year == yr_to)
 
     if (nrow(gcc_from) == 0 || nrow(gcc_to) == 0) {
-      return(plot_ly() %>% layout(title = "No data for selected years"))
+      return(plot_ly() %>% layout(title = t("label_no_data", lang)))
     }
 
     # Weighted dimension changes
     dim_changes <- data.frame(
-      dimension = DIMENSION_LABELS,
+      dimension = translate_dimensions(DIMENSION_LABELS, lang),
       change = sapply(DIMENSION_COLS, function(col) {
         (gcc_to[[col]] - gcc_from[[col]])
       }) * DIMENSION_WEIGHTS,
@@ -807,13 +824,14 @@ server <- function(input, output, session) {
       layout(
         barmode = 'stack',
         xaxis = list(title = ""),
-        yaxis = list(title = "Score", range = c(0, max(from_val, to_val) + 15)),
+        yaxis = list(title = t("axis_score", lang), range = c(0, max(from_val, to_val) + 15)),
         margin = list(b = 80)
       )
   })
 
   # -- Country contribution: GDP-weighted bars --
   output$analytics_country_contribution <- renderPlotly({
+    lang <- current_lang()
     yr_from <- as.integer(input$analytics_from_year)
     yr_to <- as.integer(input$analytics_to_year)
 
@@ -821,7 +839,7 @@ server <- function(input, output, session) {
     scores_to <- dimension_scores %>% dplyr::filter(year == yr_to)
 
     if (nrow(scores_from) == 0 || nrow(scores_to) == 0) {
-      return(plot_ly() %>% layout(title = "No data for selected years"))
+      return(plot_ly() %>% layout(title = t("label_no_data", lang)))
     }
 
     # Join and calculate weighted overall contribution
@@ -834,21 +852,22 @@ server <- function(input, output, session) {
       dplyr::left_join(GDP_WEIGHTS, by = "country") %>%
       dplyr::mutate(
         raw_change = overall_to - overall_from,
-        weighted_contrib = raw_change * weight
+        weighted_contrib = raw_change * weight,
+        country_label = translate_countries(country, lang)
       ) %>%
       dplyr::arrange(weighted_contrib)
 
-    contrib$country <- factor(contrib$country, levels = contrib$country)
+    contrib$country_label <- factor(contrib$country_label, levels = contrib$country_label)
     bar_colors <- ifelse(contrib$weighted_contrib >= 0, "#4caf50", "#f44336")
 
-    plot_ly(contrib, y = ~country, x = ~weighted_contrib,
+    plot_ly(contrib, y = ~country_label, x = ~weighted_contrib,
             type = 'bar', orientation = 'h',
             marker = list(color = bar_colors),
-            text = ~paste0(country, ": ", sprintf("%+.2f", weighted_contrib),
-                          " (", sprintf("%+.1f", raw_change), " raw)"),
+            text = ~paste0(country_label, ": ", sprintf("%+.2f", weighted_contrib),
+                          " (", sprintf("%+.1f", raw_change), ")"),
             hovertemplate = "%{text}<extra></extra>") %>%
       layout(
-        xaxis = list(title = "GDP-Weighted Contribution to GCC Change",
+        xaxis = list(title = t("axis_gdp_weighted_contrib", lang),
                      zeroline = TRUE),
         yaxis = list(title = "", automargin = TRUE),
         shapes = list(
@@ -864,6 +883,7 @@ server <- function(input, output, session) {
 
   # -- Stacked area: GCC score composition by dimension --
   output$analytics_stacked_area <- renderPlotly({
+    lang <- current_lang()
     # Build weighted dimension scores for GCC aggregate
     area_data <- gcc_ts %>%
       dplyr::select(year, all_of(DIMENSION_COLS)) %>%
@@ -878,22 +898,23 @@ server <- function(input, output, session) {
     p <- plot_ly()
     for (i in rev(seq_along(DIMENSION_LABELS))) {
       dim_name <- DIMENSION_LABELS[i]
+      dim_label <- translate_dimension(dim_name, lang)
       d <- area_data %>% dplyr::filter(dimension == dim_name)
       p <- p %>% add_trace(
         data = d, x = ~year, y = ~weighted,
         type = 'scatter', mode = 'lines',
         fill = 'tonexty', fillcolor = paste0(DIMENSION_COLORS[i], "88"),
         line = list(color = DIMENSION_COLORS[i], width = 1),
-        name = dim_name,
+        name = dim_label,
         stackgroup = 'one',
-        hovertemplate = paste0("<b>", dim_name, "</b><br>",
-                              "Weighted: %{y:.1f}<extra></extra>")
+        hovertemplate = paste0("<b>", dim_label, "</b><br>",
+                              "%{y:.1f}<extra></extra>")
       )
     }
 
     p %>% layout(
-      xaxis = list(title = "Year", dtick = 1),
-      yaxis = list(title = "Weighted Dimension Score"),
+      xaxis = list(title = t("axis_year", lang), dtick = 1),
+      yaxis = list(title = t("axis_weighted_dim_score", lang)),
       hovermode = 'x unified',
       legend = list(orientation = 'h', y = -0.15)
     )
@@ -901,6 +922,7 @@ server <- function(input, output, session) {
 
   # -- Annual dimension change bars: what drove each year's change --
   output$analytics_annual_dim_bars <- renderPlotly({
+    lang <- current_lang()
     # GCC aggregate dimension changes year-over-year
     gcc_dim_long <- gcc_ts %>%
       dplyr::arrange(year) %>%
@@ -917,20 +939,21 @@ server <- function(input, output, session) {
 
     p <- plot_ly()
     for (i in seq_along(DIMENSION_LABELS)) {
+      dim_label <- translate_dimension(DIMENSION_LABELS[i], lang)
       d <- gcc_dim_long %>% dplyr::filter(dimension == DIMENSION_LABELS[i])
       p <- p %>% add_trace(
         data = d, x = ~year, y = ~weighted_change,
-        type = 'bar', name = DIMENSION_LABELS[i],
+        type = 'bar', name = dim_label,
         marker = list(color = DIMENSION_COLORS[i]),
-        hovertemplate = paste0("<b>", DIMENSION_LABELS[i], "</b><br>",
-                              "Change: %{y:+.2f}<extra></extra>")
+        hovertemplate = paste0("<b>", dim_label, "</b><br>",
+                              "%{y:+.2f}<extra></extra>")
       )
     }
 
     p %>% layout(
       barmode = 'relative',
-      xaxis = list(title = "Year", dtick = 1),
-      yaxis = list(title = "Weighted Change in GCC Score"),
+      xaxis = list(title = t("axis_year", lang), dtick = 1),
+      yaxis = list(title = t("axis_weighted_change", lang)),
       hovermode = 'x unified',
       legend = list(orientation = 'h', y = -0.15),
       shapes = list(
@@ -946,15 +969,17 @@ server <- function(input, output, session) {
   # ===== Section 3: Cross-Country Spread =====
 
   output$analytics_spread_chart <- renderPlotly({
+    lang <- current_lang()
     latest_year <- max(dimension_scores$year)
     latest <- dimension_scores %>% dplyr::filter(year == latest_year)
 
     # Also get GCC aggregate
     gcc_latest <- gcc_ts %>% dplyr::filter(year == latest_year)
 
+    translated_dims <- translate_dimensions(DIMENSION_LABELS, lang)
     spread_data <- lapply(seq_along(DIMENSION_COLS), function(i) {
       col <- DIMENSION_COLS[i]
-      dim_label <- DIMENSION_LABELS[i]
+      dim_label <- translated_dims[i]
       vals <- latest[[col]]
 
       data.frame(
@@ -968,8 +993,9 @@ server <- function(input, output, session) {
       )
     }) %>% dplyr::bind_rows()
 
-    spread_data$dimension <- factor(spread_data$dimension, levels = rev(DIMENSION_LABELS))
+    spread_data$dimension <- factor(spread_data$dimension, levels = rev(translated_dims))
 
+    gcc_label <- t("label_gcc_average", lang)
     p <- plot_ly()
 
     # Range lines (min to max)
@@ -988,14 +1014,15 @@ server <- function(input, output, session) {
 
     # Individual country dots
     for (ctry in countries) {
+      ctry_label <- translate_country(ctry, lang)
       ctry_data <- spread_data %>% dplyr::filter(country == ctry)
       p <- p %>% add_trace(
         data = ctry_data, x = ~score, y = ~dimension,
         type = 'scatter', mode = 'markers',
         marker = list(size = 12, color = COUNTRY_COLORS[ctry],
                       line = list(color = 'white', width = 1)),
-        name = ctry, legendgroup = ctry,
-        hovertemplate = paste0("<b>", ctry, "</b><br>",
+        name = ctry_label, legendgroup = ctry,
+        hovertemplate = paste0("<b>", ctry_label, "</b><br>",
                               "%{y}: %{x:.1f}<extra></extra>")
       )
     }
@@ -1007,12 +1034,12 @@ server <- function(input, output, session) {
       marker = list(size = 14, color = COUNTRY_COLORS_WITH_GCC["GCC"],
                     symbol = "diamond",
                     line = list(color = 'white', width = 1.5)),
-      name = "GCC Average", legendgroup = "gcc",
-      hovertemplate = "<b>GCC Average</b><br>%{y}: %{x:.1f}<extra></extra>"
+      name = gcc_label, legendgroup = "gcc",
+      hovertemplate = paste0("<b>", gcc_label, "</b><br>%{y}: %{x:.1f}<extra></extra>")
     )
 
     p %>% layout(
-      xaxis = list(title = "Score", range = c(0, 105)),
+      xaxis = list(title = t("axis_score", lang), range = c(0, 105)),
       yaxis = list(title = "", automargin = TRUE),
       legend = list(orientation = 'h', y = -0.1),
       margin = list(l = 120)
@@ -1022,6 +1049,7 @@ server <- function(input, output, session) {
   # ===== Section 4: Biggest Movers =====
 
   output$analytics_biggest_movers <- renderPlotly({
+    lang <- current_lang()
     latest_year <- max(dimension_scores$year)
     prev_year <- latest_year - 1
 
@@ -1029,7 +1057,7 @@ server <- function(input, output, session) {
     prev <- dimension_scores %>% dplyr::filter(year == prev_year)
 
     if (nrow(curr) == 0 || nrow(prev) == 0) {
-      return(plot_ly() %>% layout(title = "Insufficient data for movers analysis"))
+      return(plot_ly() %>% layout(title = t("label_no_data", lang)))
     }
 
     # Calculate dimension-level changes for each country
@@ -1046,7 +1074,7 @@ server <- function(input, output, session) {
       dplyr::mutate(
         dimension = DIMENSION_COL_TO_LABEL[dim_col],
         change = score_to - score_from,
-        label = paste(country, "\u2014", dimension)
+        label = paste(translate_country(country, lang), "\u2014", translate_dimension(dimension, lang))
       ) %>%
       dplyr::arrange(change)
 
@@ -1058,7 +1086,7 @@ server <- function(input, output, session) {
     top_movers <- dplyr::bind_rows(top_declines, top_gains)
 
     if (nrow(top_movers) == 0) {
-      return(plot_ly() %>% layout(title = "No changes detected"))
+      return(plot_ly() %>% layout(title = t("label_no_data", lang)))
     }
 
     top_movers$label <- factor(top_movers$label, levels = top_movers$label)
@@ -1071,10 +1099,10 @@ server <- function(input, output, session) {
             textposition = 'outside',
             hovertemplate = paste0(
               "<b>%{y}</b><br>",
-              "Change: %{x:+.1f}<br>",
+              "%{x:+.1f}<br>",
               "<extra></extra>")) %>%
       layout(
-        xaxis = list(title = "Score Change", zeroline = TRUE),
+        xaxis = list(title = t("axis_score_change", lang), zeroline = TRUE),
         yaxis = list(title = "", automargin = TRUE,
                      categoryorder = "array",
                      categoryarray = levels(top_movers$label)),
