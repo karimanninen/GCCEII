@@ -75,8 +75,8 @@
   # Landing page
   # ---------------------------------------------------------------------------
   landing_title = list(
-    en = "GCC Economic Integration Index",
-    ar = "\u0645\u0624\u0634\u0631 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a \u0644\u062f\u0648\u0644 \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646 \u0627\u0644\u062e\u0644\u064a\u062c\u064a"
+    en = "GCC Economic Integration Dashboard",
+    ar = "\u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u0643\u0627\u0645\u0644 \u0627\u0644\u0627\u0642\u062a\u0635\u0627\u062f\u064a \u0644\u062f\u0648\u0644 \u0645\u062c\u0644\u0633 \u0627\u0644\u062a\u0639\u0627\u0648\u0646 \u0627\u0644\u062e\u0644\u064a\u062c\u064a"
   ),
   landing_subtitle = list(
     en = "A comprehensive framework for measuring economic integration\nacross the six GCC member states (2015\u20132024)",
