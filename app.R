@@ -189,9 +189,10 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
 
   output$gcc_overall_gauge <- renderPlotly({
+    lang <- current_lang()
     latest <- gcc_ts %>% filter(year == max(year))
     prev <- gcc_ts %>% filter(year == max(year) - 1) %>% pull(overall)
-    create_gauge_chart(latest$overall, prev, paste("GCC Integration Score", max(gcc_ts$year)))
+    create_gauge_chart(latest$overall, prev, paste(t("gcc_gauge_title", lang), max(gcc_ts$year)))
   })
 
   output$gcc_dimension_bars <- renderPlotly({
@@ -201,6 +202,7 @@ server <- function(input, output, session) {
   })
 
   output$dimension_boxes <- renderUI({
+    lang <- current_lang()
     latest <- gcc_ts %>% filter(year == max(year))
     scores <- get_scores_vector(latest)
 
@@ -212,7 +214,7 @@ server <- function(input, output, session) {
               span(class = paste("info-box-icon bg", DIMENSION_BOX_COLORS[i], sep = "-"),
                    icon(DIMENSION_ICONS[i])),
               div(class = "info-box-content",
-                span(class = "info-box-text", DIMENSION_LABELS[i]),
+                span(class = "info-box-text", translate_dimension(DIMENSION_LABELS[i], lang)),
                 span(class = "info-box-number", round(scores[i], 1))
               )
             )
@@ -226,7 +228,7 @@ server <- function(input, output, session) {
               span(class = paste("info-box-icon bg", DIMENSION_BOX_COLORS[i], sep = "-"),
                    icon(DIMENSION_ICONS[i])),
               div(class = "info-box-content",
-                span(class = "info-box-text", DIMENSION_LABELS[i]),
+                span(class = "info-box-text", translate_dimension(DIMENSION_LABELS[i], lang)),
                 span(class = "info-box-number", round(scores[i], 1))
               )
             )
@@ -241,7 +243,7 @@ server <- function(input, output, session) {
     ranking <- dimension_scores %>%
       filter(year == latest_year) %>%
       arrange(desc(overall_index))
-    create_ranking_chart(ranking, title = paste("Country Rankings -", latest_year))
+    create_ranking_chart(ranking, title = paste(t("gcc_ranking_title", current_lang()), "-", latest_year))
   })
 
   # ---------------------------------------------------------------------------
@@ -260,6 +262,7 @@ server <- function(input, output, session) {
 
   # -- Summary header bar --
   output$ts_summary_bar <- renderUI({
+    lang <- current_lang()
     latest <- gcc_ts %>% filter(year == max(year))
     prev <- gcc_ts %>% filter(year == max(year) - 1)
     change <- round(latest$overall - prev$overall, 1)
@@ -271,20 +274,20 @@ server <- function(input, output, session) {
     div(class = "ts-summary-bar",
       div(class = "ts-summary-item",
         div(class = "ts-summary-value", round(latest$overall, 1)),
-        div(class = "ts-summary-label", paste("GCC Score", max(gcc_ts$year)))
+        div(class = "ts-summary-label", paste(t("ts_summary_gcc_score", lang), max(gcc_ts$year)))
       ),
       div(class = "ts-summary-item",
         div(class = paste("ts-summary-change", change_class),
-          paste(change_arrow, abs(change), "pts from", max(gcc_ts$year) - 1)),
-        div(class = "ts-summary-label", "Year-over-Year")
+          paste(change_arrow, abs(change), t("label_pts_from", lang), max(gcc_ts$year) - 1)),
+        div(class = "ts-summary-label", t("ts_summary_yoy", lang))
       ),
       div(class = "ts-summary-item",
-        span(class = paste("ts-level-badge", level_class), level),
-        div(class = "ts-summary-label", "Integration Level")
+        span(class = paste("ts-level-badge", level_class), translate_level(level, lang)),
+        div(class = "ts-summary-label", t("ts_summary_level", lang))
       ),
       div(class = "ts-summary-item",
         div(class = "ts-summary-value", paste0(min(gcc_ts$year), "\u2013", max(gcc_ts$year))),
-        div(class = "ts-summary-label", "Time Coverage")
+        div(class = "ts-summary-label", t("ts_summary_coverage", lang))
       )
     )
   })
@@ -297,12 +300,14 @@ server <- function(input, output, session) {
   # -- Dynamic titles --
   output$ts_dimension_title <- renderUI({
     dim <- selected_dimension()
-    tags$span(paste(dim, "Integration \u2014 Country Comparison"))
+    lang <- current_lang()
+    tags$span(paste(translate_dimension(dim, lang), t("ts_dim_country_compare", lang)))
   })
 
   output$ts_indicators_title <- renderUI({
     dim <- selected_dimension()
-    tags$span(paste(dim, "Indicators \u2014 GCC Aggregate Time Series"))
+    lang <- current_lang()
+    tags$span(paste(translate_dimension(dim, lang), t("ts_dim_indicators", lang)))
   })
 
   # -- Dimension country comparison chart --
@@ -649,12 +654,15 @@ server <- function(input, output, session) {
   output$cp_lollipop_title <- renderUI({
     dim <- input$cp_dimension_select
     ctry <- input$selected_country
-    tags$span(paste0(ctry, " vs GCC \u2014 ", dim, " Indicators"))
+    lang <- current_lang()
+    tags$span(paste0(translate_country(ctry, lang), " vs ", t("label_gcc_average", lang),
+                     " \u2014 ", translate_dimension(dim, lang)))
   })
 
   output$cp_trends_title <- renderUI({
     dim <- input$cp_dimension_select
-    tags$span(paste(dim, "Indicator Trends"))
+    lang <- current_lang()
+    tags$span(translate_dimension(dim, lang))
   })
 
   # ---------------------------------------------------------------------------
@@ -700,19 +708,23 @@ server <- function(input, output, session) {
 
   # -- Dynamic titles --
   output$analytics_waterfall_title <- renderUI({
-    tags$span(paste0("GCC Score Decomposition by Dimension (",
+    lang <- current_lang()
+    tags$span(paste0(t("an_waterfall_title", lang), " (",
                      input$analytics_from_year, " \u2192 ", input$analytics_to_year, ")"))
   })
   output$analytics_country_contrib_title <- renderUI({
-    tags$span(paste0("Country Contribution to GCC Change (",
+    lang <- current_lang()
+    tags$span(paste0(t("an_country_contrib_title", lang), " (",
                      input$analytics_from_year, " \u2192 ", input$analytics_to_year, ")"))
   })
   output$analytics_spread_title <- renderUI({
-    tags$span(paste("Cross-Country Spread by Dimension \u2014", max(dimension_scores$year)))
+    lang <- current_lang()
+    tags$span(paste(t("an_spread_title", lang), "\u2014", max(dimension_scores$year)))
   })
   output$analytics_movers_title <- renderUI({
+    lang <- current_lang()
     ly <- max(dimension_scores$year)
-    tags$span(paste0("Biggest Movers (", ly - 1, " \u2192 ", ly, ")"))
+    tags$span(paste0(t("an_movers_title", lang), " (", ly - 1, " \u2192 ", ly, ")"))
   })
 
   # ===== Section 1: What Changed? =====
@@ -1270,17 +1282,17 @@ gcc_timeseries_tab_ui <- function(lang = "en") {
         div(class = "dimension-selector",
           tags$label(t("ts_pills_label", lang), class = "dim-selector-label"),
           div(class = "dim-pills",
-            actionButton("dim_btn_Trade", tagList(icon("exchange-alt"), " Trade"),
+            actionButton("dim_btn_Trade", tagList(icon("exchange-alt"), paste0(" ", translate_dimension("Trade", lang))),
                          class = "dim-pill dim-pill-trade"),
-            actionButton("dim_btn_Financial", tagList(icon("university"), " Financial"),
+            actionButton("dim_btn_Financial", tagList(icon("university"), paste0(" ", translate_dimension("Financial", lang))),
                          class = "dim-pill dim-pill-financial"),
-            actionButton("dim_btn_Labor", tagList(icon("users"), " Labor"),
+            actionButton("dim_btn_Labor", tagList(icon("users"), paste0(" ", translate_dimension("Labor", lang))),
                          class = "dim-pill dim-pill-labor"),
-            actionButton("dim_btn_Infrastructure", tagList(icon("road"), " Infrastructure"),
+            actionButton("dim_btn_Infrastructure", tagList(icon("road"), paste0(" ", translate_dimension("Infrastructure", lang))),
                          class = "dim-pill dim-pill-infrastructure"),
-            actionButton("dim_btn_Sustainability", tagList(icon("leaf"), " Sustainability"),
+            actionButton("dim_btn_Sustainability", tagList(icon("leaf"), paste0(" ", translate_dimension("Sustainability", lang))),
                          class = "dim-pill dim-pill-sustainability"),
-            actionButton("dim_btn_Convergence", tagList(icon("chart-line"), " Convergence"),
+            actionButton("dim_btn_Convergence", tagList(icon("chart-line"), paste0(" ", translate_dimension("Convergence", lang))),
                          class = "dim-pill dim-pill-convergence")
           )
         ),
@@ -1324,7 +1336,8 @@ country_profiles_tab_ui <- function(lang = "en") {
       box(width = 4, title = t("cp_box_select", lang),
           status = "primary", solidHeader = TRUE,
           selectInput("selected_country", t("cp_label_country", lang),
-                      choices = countries, selected = countries[1])),
+                      choices = setNames(countries, translate_countries(countries, lang)),
+                      selected = countries[1])),
       valueBoxOutput("country_overall", width = 4),
       valueBoxOutput("country_rank", width = 4)
     ),
@@ -1346,7 +1359,8 @@ country_profiles_tab_ui <- function(lang = "en") {
           fluidRow(
             column(4,
               selectInput("cp_dimension_select", t("cp_dim_select_label", lang),
-                          choices = DIMENSION_LABELS, selected = "Trade")
+                          choices = setNames(DIMENSION_LABELS, translate_dimensions(DIMENSION_LABELS, lang)),
+                          selected = "Trade")
             ),
             column(8,
               div(style = "padding-top: 25px; color: #666; font-size: 0.9rem;",
