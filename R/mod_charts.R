@@ -45,6 +45,9 @@ create_gauge_chart <- function(current_value, reference_value, title, lang = "en
 #' @param lang Language code ("en" or "ar")
 #' @return plotly object
 create_dimension_bar_chart <- function(dim_data, bar_color = "#003366", y_range = c(0, 100), lang = "en") {
+  translated_labels <- translate_dimensions(DIMENSION_LABELS, lang)
+  dim_data$dimension <- translate_dimensions(as.character(dim_data$dimension), lang)
+  dim_data$dimension <- factor(dim_data$dimension, levels = translated_labels)
   plotly::plot_ly(
     dim_data,
     x = ~dimension,
@@ -53,7 +56,7 @@ create_dimension_bar_chart <- function(dim_data, bar_color = "#003366", y_range 
     marker = list(color = bar_color)
   ) %>%
     plotly::layout(
-      xaxis = list(title = "", categoryorder = "array", categoryarray = DIMENSION_LABELS),
+      xaxis = list(title = "", categoryorder = "array", categoryarray = translated_labels),
       yaxis = list(title = t("axis_score", lang), range = y_range),
       margin = list(b = 100)
     )
