@@ -32,6 +32,14 @@ landing_page_ui <- function(lang = "en") {
           # Dark overlay
           div(class = "hero-overlay"),
 
+          # Language toggle (floating top-right)
+          div(id = "lang-toggle-container",
+            actionButton("lang_toggle",
+              label = if (lang == "ar") "English" else "\u0639\u0631\u0628\u064a",
+              class = "lang-btn"
+            )
+          ),
+
           # GCC-Stat Logo
           img(src = "images/GCC-MAIN-01-WHITE.png", class = "landing-logo"),
 
