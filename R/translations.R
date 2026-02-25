@@ -766,7 +766,7 @@
   meta_src_price = list(en = "GCC-Stat CPI database, World Bank ICP (2017, 2021)", ar = "\u0642\u0627\u0639\u062f\u0629 \u0628\u064a\u0627\u0646\u0627\u062a \u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0645\u0633\u062a\u0647\u0644\u0643 \u0644\u0640 GCC-Stat\u060c \u0627\u0644\u0628\u0646\u0643 \u0627\u0644\u062f\u0648\u0644\u064a ICP"),
   meta_src_fiscal = list(en = "GCC-Stat government finance statistics", ar = "\u0625\u062d\u0635\u0627\u0621\u0627\u062a \u0627\u0644\u0645\u0627\u0644\u064a\u0629 \u0627\u0644\u062d\u0643\u0648\u0645\u064a\u0629 \u0644\u0640 GCC-Stat"),
   meta_src_interest = list(en = "Central bank policy rates (harmonized panel)", ar = "\u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0641\u0627\u0626\u062f\u0629 \u0644\u0644\u0628\u0646\u0648\u0643 \u0627\u0644\u0645\u0631\u0643\u0632\u064a\u0629 (\u0644\u0648\u062d\u0629 \u0645\u0646\u0633\u0642\u0629)"),
-  meta_src_fdi = list(en = "UNCTAD / national sources", ar = "UNCTAD / \u0645\u0635\u0627\u062f\u0631 \u0648\u0637\u0646\u064a\u0629"),
+  meta_src_fdi = list(en = "GCC-Stat / national sources", ar = "GCC-Stat / \u0645\u0635\u0627\u062f\u0631 \u0648\u0637\u0646\u064a\u0629"),
   meta_src_label_trade = list(en = "Trade data:", ar = "\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u062a\u062c\u0627\u0631\u0629:"),
   meta_src_label_national = list(en = "National accounts:", ar = "\u0627\u0644\u062d\u0633\u0627\u0628\u0627\u062a \u0627\u0644\u0642\u0648\u0645\u064a\u0629:"),
   meta_src_label_financial = list(en = "Financial data:", ar = "\u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0645\u0627\u0644\u064a\u0629:"),
