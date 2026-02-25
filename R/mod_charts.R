@@ -2,6 +2,7 @@
 # CHART HELPERS MODULE
 # ==============================================================================
 # Reusable chart creation functions for the GCC EII Dashboard
+# Bilingual: all axis labels / titles use t() from R/translations.R
 # ==============================================================================
 
 #' Create Gauge Chart for Overall Index
@@ -9,8 +10,9 @@
 #' @param current_value Current overall index value
 #' @param reference_value Previous year's value for delta
 #' @param title Chart title
+#' @param lang Language code ("en" or "ar")
 #' @return plotly object
-create_gauge_chart <- function(current_value, reference_value, title) {
+create_gauge_chart <- function(current_value, reference_value, title, lang = "en") {
   plotly::plot_ly(
     type = "indicator",
     mode = "gauge+number+delta",
@@ -40,8 +42,9 @@ create_gauge_chart <- function(current_value, reference_value, title) {
 #' @param dim_data Data frame with dimension and score columns
 #' @param bar_color Color for bars (default #003366)
 #' @param y_range Y-axis range (default c(0, 100))
+#' @param lang Language code ("en" or "ar")
 #' @return plotly object
-create_dimension_bar_chart <- function(dim_data, bar_color = "#003366", y_range = c(0, 100)) {
+create_dimension_bar_chart <- function(dim_data, bar_color = "#003366", y_range = c(0, 100), lang = "en") {
   plotly::plot_ly(
     dim_data,
     x = ~dimension,
@@ -51,7 +54,7 @@ create_dimension_bar_chart <- function(dim_data, bar_color = "#003366", y_range 
   ) %>%
     plotly::layout(
       xaxis = list(title = "", categoryorder = "array", categoryarray = DIMENSION_LABELS),
-      yaxis = list(title = "Score", range = y_range),
+      yaxis = list(title = t("axis_score", lang), range = y_range),
       margin = list(b = 100)
     )
 }
@@ -65,9 +68,10 @@ create_dimension_bar_chart <- function(dim_data, bar_color = "#003366", y_range 
 #' @param line_width Line width
 #' @param marker_size Marker size
 #' @param y_range Y-axis range
+#' @param lang Language code ("en" or "ar")
 #' @return plotly object
 create_line_chart <- function(data, x_col, y_col, line_color = "#003366",
-                               line_width = 3, marker_size = 10, y_range = c(0, 100)) {
+                               line_width = 3, marker_size = 10, y_range = c(0, 100), lang = "en") {
   plotly::plot_ly(
     data,
     x = as.formula(paste0("~", x_col)),
@@ -78,8 +82,8 @@ create_line_chart <- function(data, x_col, y_col, line_color = "#003366",
     marker = list(size = marker_size)
   ) %>%
     plotly::layout(
-      xaxis = list(title = "Year"),
-      yaxis = list(title = "Score", range = y_range),
+      xaxis = list(title = t("axis_year", lang)),
+      yaxis = list(title = t("axis_score", lang), range = y_range),
       hovermode = 'x unified'
     )
 }
@@ -92,8 +96,9 @@ create_line_chart <- function(data, x_col, y_col, line_color = "#003366",
 #' @param color_col Column to use for coloring
 #' @param colors Named vector of colors
 #' @param y_range Y-axis range
+#' @param lang Language code ("en" or "ar")
 #' @return plotly object
-create_multi_line_chart <- function(data, x_col, y_col, color_col, colors, y_range = c(0, 100)) {
+create_multi_line_chart <- function(data, x_col, y_col, color_col, colors, y_range = c(0, 100), lang = "en") {
   plotly::plot_ly(
     data,
     x = as.formula(paste0("~", x_col)),
@@ -106,8 +111,8 @@ create_multi_line_chart <- function(data, x_col, y_col, color_col, colors, y_ran
     line = list(width = 2)
   ) %>%
     plotly::layout(
-      xaxis = list(title = "Year"),
-      yaxis = list(title = "Score", range = y_range),
+      xaxis = list(title = t("axis_year", lang)),
+      yaxis = list(title = t("axis_score", lang), range = y_range),
       hovermode = 'x unified',
       legend = list(orientation = 'h', y = -0.15)
     )
@@ -118,12 +123,14 @@ create_multi_line_chart <- function(data, x_col, y_col, color_col, colors, y_ran
 #' @param scores Numeric vector of 6 dimension scores
 #' @param fill_color Fill color with alpha
 #' @param line_color Line color
+#' @param lang Language code ("en" or "ar")
 #' @return plotly object
 create_radar_chart <- function(scores, fill_color = 'rgba(0, 51, 102, 0.3)',
-                                line_color = '#003366') {
+                                line_color = '#003366', lang = "en") {
   # Close the polygon by repeating first value
   radar_scores <- c(scores, scores[1])
-  radar_labels <- c(DIMENSION_LABELS, DIMENSION_LABELS[1])
+  translated_labels <- translate_dimensions(DIMENSION_LABELS, lang)
+  radar_labels <- c(translated_labels, translated_labels[1])
 
   plotly::plot_ly(
     type = 'scatterpolar',
@@ -148,8 +155,9 @@ create_radar_chart <- function(scores, fill_color = 'rgba(0, 51, 102, 0.3)',
 #' @param zmin Minimum z value
 #' @param zmax Maximum z value
 #' @param zmid Middle z value (for diverging scales)
+#' @param lang Language code ("en" or "ar")
 #' @return plotly object
-create_heatmap <- function(matrix_data, colorscale = NULL, zmin = 0, zmax = 100, zmid = NULL) {
+create_heatmap <- function(matrix_data, colorscale = NULL, zmin = 0, zmax = 100, zmid = NULL, lang = "en") {
   if (is.null(colorscale)) {
     colorscale <- HEATMAP_COLORSCALE
   }
@@ -171,8 +179,8 @@ create_heatmap <- function(matrix_data, colorscale = NULL, zmin = 0, zmax = 100,
   }
 
   p %>% plotly::layout(
-    xaxis = list(title = "Dimension"),
-    yaxis = list(title = "Country"),
+    xaxis = list(title = t("axis_dimension", lang)),
+    yaxis = list(title = t("axis_country", lang)),
     margin = list(l = 100)
   )
 }
@@ -182,8 +190,9 @@ create_heatmap <- function(matrix_data, colorscale = NULL, zmin = 0, zmax = 100,
 #' @param ranking_data Data frame with country and overall_index columns
 #' @param colors Named color vector
 #' @param title Chart title
+#' @param lang Language code ("en" or "ar")
 #' @return plotly object
-create_ranking_chart <- function(ranking_data, colors = COUNTRY_COLORS, title = NULL) {
+create_ranking_chart <- function(ranking_data, colors = COUNTRY_COLORS, title = NULL, lang = "en") {
   plotly::plot_ly(
     ranking_data,
     x = ~reorder(country, overall_index),
@@ -193,7 +202,7 @@ create_ranking_chart <- function(ranking_data, colors = COUNTRY_COLORS, title = 
   ) %>%
     plotly::layout(
       xaxis = list(title = ""),
-      yaxis = list(title = "Overall Score", range = c(0, 100)),
+      yaxis = list(title = t("axis_overall", lang), range = c(0, 100)),
       title = title
     )
 }
@@ -202,8 +211,9 @@ create_ranking_chart <- function(ranking_data, colors = COUNTRY_COLORS, title = 
 #'
 #' @param data Data frame with dimension, contribution, and country columns
 #' @param colors Named color vector
+#' @param lang Language code ("en" or "ar")
 #' @return plotly object
-create_contribution_chart <- function(data, colors = COUNTRY_COLORS) {
+create_contribution_chart <- function(data, colors = COUNTRY_COLORS, lang = "en") {
   data$dimension <- factor(data$dimension, levels = DIMENSION_LABELS)
 
   plotly::plot_ly(
@@ -215,7 +225,7 @@ create_contribution_chart <- function(data, colors = COUNTRY_COLORS) {
     type = 'bar'
   ) %>%
     plotly::layout(
-      xaxis = list(title = "Dimension", categoryorder = "array", categoryarray = DIMENSION_LABELS),
+      xaxis = list(title = t("axis_dimension", lang), categoryorder = "array", categoryarray = DIMENSION_LABELS),
       yaxis = list(title = "Contribution to GCC Score (weighted)"),
       barmode = 'stack',
       legend = list(orientation = 'h', y = -0.2)
@@ -226,8 +236,9 @@ create_contribution_chart <- function(data, colors = COUNTRY_COLORS) {
 #'
 #' @param data Data frame with dimension_label, change, and country columns
 #' @param colors Named color vector
+#' @param lang Language code ("en" or "ar")
 #' @return plotly object
-create_yoy_scatter <- function(data, colors = COUNTRY_COLORS) {
+create_yoy_scatter <- function(data, colors = COUNTRY_COLORS, lang = "en") {
   plotly::plot_ly(
     data,
     x = ~dimension_label,
@@ -239,8 +250,8 @@ create_yoy_scatter <- function(data, colors = COUNTRY_COLORS) {
     marker = list(size = 14)
   ) %>%
     plotly::layout(
-      xaxis = list(title = "Dimension", categoryorder = "array", categoryarray = DIMENSION_LABELS),
-      yaxis = list(title = "Year-over-Year Change"),
+      xaxis = list(title = t("axis_dimension", lang), categoryorder = "array", categoryarray = DIMENSION_LABELS),
+      yaxis = list(title = t("axis_change", lang)),
       hovermode = 'closest',
       legend = list(orientation = 'h', y = -0.2),
       shapes = list(
