@@ -896,3 +896,44 @@ get_font <- function(lang = "en") {
 get_text_align <- function(lang = "en") {
   if (lang == "ar") "right" else "left"
 }
+
+# ── Column header translations for Data Explorer ────────────────────────────
+
+.col_header_ar <- c(
+  country                  = "\u0627\u0644\u062f\u0648\u0644\u0629",
+  year                     = "\u0627\u0644\u0633\u0646\u0629",
+  overall_index            = "\u0627\u0644\u0645\u0624\u0634\u0631 \u0627\u0644\u0639\u0627\u0645",
+  overall                  = "\u0627\u0644\u0645\u0624\u0634\u0631 \u0627\u0644\u0639\u0627\u0645",
+  trade_score              = "\u062f\u0631\u062c\u0629 \u0627\u0644\u062a\u062c\u0627\u0631\u0629",
+  financial_score          = "\u062f\u0631\u062c\u0629 \u0627\u0644\u0645\u0627\u0644\u064a \u0648\u0627\u0644\u0646\u0642\u062f\u064a",
+  labor_score              = "\u062f\u0631\u062c\u0629 \u0627\u0644\u0639\u0645\u0627\u0644\u0629",
+  infrastructure_score     = "\u062f\u0631\u062c\u0629 \u0627\u0644\u0628\u0646\u064a\u0629 \u0627\u0644\u062a\u062d\u062a\u064a\u0629",
+  sustainability_score     = "\u062f\u0631\u062c\u0629 \u0627\u0644\u0627\u0633\u062a\u062f\u0627\u0645\u0629",
+  convergence_score        = "\u062f\u0631\u062c\u0629 \u0627\u0644\u062a\u0642\u0627\u0631\u0628",
+  integration_level        = "\u0645\u0633\u062a\u0648\u0649 \u0627\u0644\u062a\u0643\u0627\u0645\u0644",
+  overall_change           = "\u0627\u0644\u062a\u063a\u064a\u0631 \u0627\u0644\u0639\u0627\u0645",
+  trade_change             = "\u062a\u063a\u064a\u0631 \u0627\u0644\u062a\u062c\u0627\u0631\u0629",
+  financial_change         = "\u062a\u063a\u064a\u0631 \u0627\u0644\u0645\u0627\u0644\u064a",
+  labor_change             = "\u062a\u063a\u064a\u0631 \u0627\u0644\u0639\u0645\u0627\u0644\u0629",
+  infrastructure_change    = "\u062a\u063a\u064a\u0631 \u0627\u0644\u0628\u0646\u064a\u0629 \u0627\u0644\u062a\u062d\u062a\u064a\u0629",
+  sustainability_change    = "\u062a\u063a\u064a\u0631 \u0627\u0644\u0627\u0633\u062a\u062f\u0627\u0645\u0629",
+  convergence_change       = "\u062a\u063a\u064a\u0631 \u0627\u0644\u062a\u0642\u0627\u0631\u0628",
+  dimension                = "\u0627\u0644\u0628\u064f\u0639\u062f",
+  indicator_code           = "\u0631\u0645\u0632 \u0627\u0644\u0645\u0624\u0634\u0631",
+  indicator_label          = "\u0627\u0633\u0645 \u0627\u0644\u0645\u0624\u0634\u0631",
+  raw_value                = "\u0627\u0644\u0642\u064a\u0645\u0629 \u0627\u0644\u062e\u0627\u0645",
+  normalized_value         = "\u0627\u0644\u0642\u064a\u0645\u0629 \u0627\u0644\u0645\u0637\u0628\u0651\u0639\u0629"
+)
+
+#' Translate column names of a data frame for Arabic display
+#' @param df Data frame
+#' @param lang Language code
+#' @return Data frame with translated column names (Arabic) or unchanged (English)
+translate_colnames <- function(df, lang = "en") {
+  if (lang == "en") return(df)
+  nms <- names(df)
+  translated <- .col_header_ar[nms]
+  # Keep original name if no translation exists
+  names(df) <- ifelse(is.na(translated), nms, translated)
+  df
+}

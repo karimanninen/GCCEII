@@ -1120,29 +1120,48 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
 
   output$data_table <- renderDT({
+    lang <- current_lang()
     data_to_show <- switch(input$data_table_select,
                            "dimension" = dimension_scores,
                            "gcc" = gcc_ts,
                            "yoy" = yoy_changes,
                            "indicator" = indicator_detail)
 
+    # Translate country names in the data
+    if ("country" %in% names(data_to_show)) {
+      data_to_show$country <- translate_countries(data_to_show$country, lang)
+    }
+
+    # Remember numeric columns before renaming
+    num_cols <- names(data_to_show)[sapply(data_to_show, is.numeric) & names(data_to_show) != "year"]
+
+    # Translate column headers
+    data_to_show <- translate_colnames(data_to_show, lang)
+    num_cols_display <- translate_colnames(
+      setNames(data.frame(matrix(ncol = length(num_cols), nrow = 0)), num_cols), lang
+    ) |> names()
+
+    dt_options <- list(
+      pageLength = 25,
+      scrollX = TRUE,
+      searchHighlight = TRUE,
+      dom = 'Bfrtip',
+      buttons = c('copy', 'csv', 'excel')
+    )
+    if (lang == "ar") {
+      dt_options$language <- list(
+        url = "//cdn.datatables.net/plug-ins/1.13.4/i18n/ar.json"
+      )
+    }
+
     datatable(
       data_to_show,
-      options = list(
-        pageLength = 25,
-        scrollX = TRUE,
-        searchHighlight = TRUE,
-        dom = 'Bfrtip',
-        buttons = c('copy', 'csv', 'excel')
-      ),
+      options = dt_options,
       extensions = 'Buttons',
       filter = 'top',
       rownames = FALSE
     ) %>%
-      formatRound(
-        columns = names(data_to_show)[sapply(data_to_show, is.numeric) & names(data_to_show) != "year"],
-        digits = 2
-      )
+      formatRound(columns = num_cols_display, digits = 2)
   })
 }
 
