@@ -74,9 +74,9 @@ ui <- fluidPage(
   tags$script(HTML("
     Shiny.addCustomMessageHandler('setLang', function(lang) {
       if (lang === 'ar') {
-        $('body').addClass('rtl-layout').attr('dir', 'rtl');
+        $('body').addClass('lang-ar').attr('dir', 'rtl');
       } else {
-        $('body').removeClass('rtl-layout').attr('dir', 'ltr');
+        $('body').removeClass('lang-ar').attr('dir', 'ltr');
       }
     });
   "))

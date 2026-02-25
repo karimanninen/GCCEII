@@ -272,7 +272,19 @@ body.lang-ar .metadata-body table td {
   font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
 }
 
-/* ── 20. Responsive adjustments ─────────────────────────────────────────── */
+/* ── 20. Dimension pill buttons ─────────────────────────────────────────── */
+body.lang-ar .dim-pill {
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  letter-spacing: 0;
+}
+
+body.lang-ar .dim-selector-label {
+  direction: rtl;
+  text-align: center;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+/* ── 21. Responsive adjustments ─────────────────────────────────────────── */
 @media (max-width: 767px) {
   body.lang-ar #landing-hero .hero-title {
     font-size: 1.6rem;
