@@ -157,31 +157,31 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
 
   output$dimension_weights_table <- renderTable({
-    get_dimension_weights_table()
+    get_dimension_weights_table(lang = current_lang())
   }, striped = TRUE, hover = TRUE, width = "100%")
 
   output$trade_indicators_table <- renderTable({
-    get_trade_indicators_table()
+    get_trade_indicators_table(lang = current_lang())
   }, striped = TRUE, hover = TRUE, width = "100%")
 
   output$financial_indicators_table <- renderTable({
-    get_financial_indicators_table()
+    get_financial_indicators_table(lang = current_lang())
   }, striped = TRUE, hover = TRUE, width = "100%")
 
   output$labor_indicators_table <- renderTable({
-    get_labor_indicators_table()
+    get_labor_indicators_table(lang = current_lang())
   }, striped = TRUE, hover = TRUE, width = "100%")
 
   output$infrastructure_indicators_table <- renderTable({
-    get_infrastructure_indicators_table()
+    get_infrastructure_indicators_table(lang = current_lang())
   }, striped = TRUE, hover = TRUE, width = "100%")
 
   output$sustainability_indicators_table <- renderTable({
-    get_sustainability_indicators_table()
+    get_sustainability_indicators_table(lang = current_lang())
   }, striped = TRUE, hover = TRUE, width = "100%")
 
   output$convergence_indicators_table <- renderTable({
-    get_convergence_indicators_table()
+    get_convergence_indicators_table(lang = current_lang())
   }, striped = TRUE, hover = TRUE, width = "100%")
 
   # ---------------------------------------------------------------------------
@@ -1075,7 +1075,7 @@ server <- function(input, output, session) {
       dplyr::mutate(
         dimension = DIMENSION_COL_TO_LABEL[dim_col],
         change = score_to - score_from,
-        label = paste(translate_country(country, lang), "\u2014", translate_dimension(dimension, lang))
+        label = paste(translate_countries(country, lang), "\u2014", translate_dimensions(dimension, lang))
       ) %>%
       dplyr::arrange(change)
 
