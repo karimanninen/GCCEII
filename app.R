@@ -698,15 +698,22 @@ server <- function(input, output, session) {
 
   output$integration_levels <- renderPlotly({
     lang <- current_lang()
+    translated_levels <- c(
+      translate_level("Weak", lang),
+      translate_level("Moderate", lang),
+      translate_level("Good", lang)
+    )
     level_data <- dimension_scores %>%
       filter(year == input$heatmap_year) %>%
       mutate(
-        integration_level = factor(integration_level, levels = c("Weak", "Moderate", "Good")),
+        level_color = INTEGRATION_LEVEL_COLORS[integration_level],
+        integration_level = factor(translate_level(integration_level, lang),
+                                   levels = translated_levels),
         country_label = translate_countries(country, lang)
       )
 
     plot_ly(level_data, x = ~country_label, y = ~overall_index, type = 'bar',
-            marker = list(color = ~INTEGRATION_LEVEL_COLORS[integration_level])) %>%
+            marker = list(color = ~level_color)) %>%
       layout(
         xaxis = list(title = ""),
         yaxis = list(title = t("axis_overall", lang), range = c(0, 100)),
