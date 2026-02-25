@@ -393,7 +393,7 @@ server <- function(input, output, session) {
     # Build one subplot per indicator
     plots <- lapply(seq_len(n_ind), function(i) {
       ind_code <- ind_info$indicator_code[i]
-      ind_label <- ind_info$indicator_label[i]
+      ind_label <- translate_indicator(ind_info$indicator_label[i], lang)
       ind_data <- gcc_ind %>% dplyr::filter(indicator_code == ind_code)
 
       plot_ly(ind_data, x = ~year, y = ~normalized_value,
@@ -402,8 +402,8 @@ server <- function(input, output, session) {
               marker = list(size = 5, color = accent),
               hovertemplate = paste0(
                 "<b>", ind_label, "</b><br>",
-                "Year: %{x}<br>",
-                "Score: %{y:.1f}<br>",
+                t("axis_year", lang), ": %{x}<br>",
+                t("axis_score", lang), ": %{y:.1f}<br>",
                 "<extra></extra>"
               ),
               showlegend = FALSE) %>%
@@ -524,7 +524,8 @@ server <- function(input, output, session) {
       return(plot_ly() %>% layout(title = t("label_no_data", lang)))
     }
 
-    # Ordered factor for y-axis
+    # Translate indicator labels and create ordered factor for y-axis
+    combined$indicator_label <- translate_indicators(combined$indicator_label, lang)
     combined$indicator_label <- factor(combined$indicator_label,
                                        levels = combined$indicator_label)
 
@@ -607,7 +608,7 @@ server <- function(input, output, session) {
 
     plots <- lapply(seq_len(n_ind), function(i) {
       ind_code <- ind_info$indicator_code[i]
-      ind_label <- ind_info$indicator_label[i]
+      ind_label <- translate_indicator(ind_info$indicator_label[i], lang)
 
       ctry_series <- ind_data %>%
         dplyr::filter(indicator_code == ind_code, country == ctry)
@@ -1130,6 +1131,14 @@ server <- function(input, output, session) {
     # Translate country names in the data
     if ("country" %in% names(data_to_show)) {
       data_to_show$country <- translate_countries(data_to_show$country, lang)
+    }
+    # Translate indicator labels in the data
+    if ("indicator_label" %in% names(data_to_show)) {
+      data_to_show$indicator_label <- translate_indicators(data_to_show$indicator_label, lang)
+    }
+    # Translate dimension names in the data
+    if ("dimension" %in% names(data_to_show) && input$data_table_select == "indicator") {
+      data_to_show$dimension <- translate_dimensions(data_to_show$dimension, lang)
     }
 
     # Remember numeric columns before renaming

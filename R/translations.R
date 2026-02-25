@@ -861,6 +861,72 @@ translate_dimensions <- function(names, lang = "en") {
   vapply(names, translate_dimension, character(1), lang = lang)
 }
 
+# ── Indicator names ───────────────────────────────────────────────────────────
+
+.indicator_translations <- c(
+  # Trade
+  "Intra-GCC Trade Intensity"     = "\u0643\u062b\u0627\u0641\u0629 \u0627\u0644\u062a\u062c\u0627\u0631\u0629 \u0627\u0644\u0628\u064a\u0646\u064a\u0629 \u0644\u062f\u0648\u0644 \u0627\u0644\u0645\u062c\u0644\u0633",
+  "Services Trade Share"          = "\u062d\u0635\u0629 \u062a\u062c\u0627\u0631\u0629 \u0627\u0644\u062e\u062f\u0645\u0627\u062a",
+  "Non-oil Trade Intensity"       = "\u0643\u062b\u0627\u0641\u0629 \u0627\u0644\u062a\u062c\u0627\u0631\u0629 \u063a\u064a\u0631 \u0627\u0644\u0646\u0641\u0637\u064a\u0629",
+  "Services as % of Total Trade"  = "\u0627\u0644\u062e\u062f\u0645\u0627\u062a \u0643\u0646\u0633\u0628\u0629 \u0645\u0646 \u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u062a\u062c\u0627\u0631\u0629",
+  "Intermediate Goods Share"      = "\u062d\u0635\u0629 \u0627\u0644\u0633\u0644\u0639 \u0627\u0644\u0648\u0633\u064a\u0637\u0629",
+  "Trade Diversification"         = "\u062a\u0646\u0648\u064a\u0639 \u0627\u0644\u062a\u062c\u0627\u0631\u0629",
+  # Financial
+  "Annual Inflation Rate"         = "\u0645\u0639\u062f\u0644 \u0627\u0644\u062a\u0636\u062e\u0645 \u0627\u0644\u0633\u0646\u0648\u064a",
+  "M2 Money Supply Growth"        = "\u0646\u0645\u0648 \u0627\u0644\u0639\u0631\u0636 \u0627\u0644\u0646\u0642\u062f\u064a M2",
+  "Real GDP Growth Rate"          = "\u0645\u0639\u062f\u0644 \u0646\u0645\u0648 \u0627\u0644\u0646\u0627\u062a\u062c \u0627\u0644\u0645\u062d\u0644\u064a \u0627\u0644\u062d\u0642\u064a\u0642\u064a",
+  "Intra-GCC FDI Share"           = "\u062d\u0635\u0629 \u0627\u0644\u0627\u0633\u062a\u062b\u0645\u0627\u0631 \u0627\u0644\u0623\u062c\u0646\u0628\u064a \u0627\u0644\u0628\u064a\u0646\u064a",
+  "GCC Banking Penetration"       = "\u0627\u0644\u0627\u0646\u062a\u0634\u0627\u0631 \u0627\u0644\u0645\u0635\u0631\u0641\u064a \u0627\u0644\u062e\u0644\u064a\u062c\u064a",
+  "Stock Market Openness"         = "\u0627\u0646\u0641\u062a\u0627\u062d \u0633\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645",
+  "Banking Sector Depth"          = "\u0639\u0645\u0642 \u0627\u0644\u0642\u0637\u0627\u0639 \u0627\u0644\u0645\u0635\u0631\u0641\u064a",
+  "Fiscal Balance Ratio"          = "\u0646\u0633\u0628\u0629 \u0627\u0644\u062a\u0648\u0627\u0632\u0646 \u0627\u0644\u0645\u0627\u0644\u064a",
+  # Labor
+  "GCC National Worker Mobility"  = "\u062a\u0646\u0642\u0644 \u0627\u0644\u0639\u0645\u0627\u0644\u0629 \u0627\u0644\u0648\u0637\u0646\u064a\u0629 \u0627\u0644\u062e\u0644\u064a\u062c\u064a\u0629",
+  "Student Exchange Mobility"     = "\u062a\u0646\u0642\u0644 \u0627\u0644\u0637\u0644\u0627\u0628",
+  "Intra-GCC Tourism Intensity"   = "\u0643\u062b\u0627\u0641\u0629 \u0627\u0644\u0633\u064a\u0627\u062d\u0629 \u0627\u0644\u0628\u064a\u0646\u064a\u0629",
+  "Labor Force Participation Rate" = "\u0645\u0639\u062f\u0644 \u0627\u0644\u0645\u0634\u0627\u0631\u0643\u0629 \u0641\u064a \u0627\u0644\u0642\u0648\u0649 \u0627\u0644\u0639\u0627\u0645\u0644\u0629",
+  "Unemployment Rate"             = "\u0645\u0639\u062f\u0644 \u0627\u0644\u0628\u0637\u0627\u0644\u0629",
+  # Infrastructure
+  "Aviation Connectivity"         = "\u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u062c\u0648\u064a",
+  "Electricity Per Capita"        = "\u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0621 \u0644\u0644\u0641\u0631\u062f",
+  "GCC Railway Connectivity"      = "\u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u0633\u0643\u0643 \u0627\u0644\u062d\u062f\u064a\u062f\u064a\u0629",
+  "Port Connectivity Index"       = "\u0645\u0624\u0634\u0631 \u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u0628\u062d\u0631\u064a",
+  "Power Grid Interconnection"    = "\u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0626\u064a",
+  "Digital Infrastructure Index"  = "\u0645\u0624\u0634\u0631 \u0627\u0644\u0628\u0646\u064a\u0629 \u0627\u0644\u0631\u0642\u0645\u064a\u0629",
+  # Sustainability
+  "Non-oil GDP Share"             = "\u062d\u0635\u0629 \u0627\u0644\u0646\u0627\u062a\u062c \u063a\u064a\u0631 \u0627\u0644\u0646\u0641\u0637\u064a",
+  "Oil Dependency"                = "\u0627\u0644\u0627\u0639\u062a\u0645\u0627\u062f \u0639\u0644\u0649 \u0627\u0644\u0646\u0641\u0637",
+  "Manufacturing Share"           = "\u062d\u0635\u0629 \u0627\u0644\u0635\u0646\u0627\u0639\u0629",
+  "Non-oil Revenue Share"         = "\u062d\u0635\u0629 \u0627\u0644\u0625\u064a\u0631\u0627\u062f\u0627\u062a \u063a\u064a\u0631 \u0627\u0644\u0646\u0641\u0637\u064a\u0629",
+  # Convergence
+  "Real Income Convergence"       = "\u062a\u0642\u0627\u0631\u0628 \u0627\u0644\u062f\u062e\u0644 \u0627\u0644\u062d\u0642\u064a\u0642\u064a",
+  "Price Level Convergence"       = "\u062a\u0642\u0627\u0631\u0628 \u0645\u0633\u062a\u0648\u0649 \u0627\u0644\u0623\u0633\u0639\u0627\u0631",
+  "Non-oil GDP Convergence"       = "\u062a\u0642\u0627\u0631\u0628 \u0627\u0644\u0646\u0627\u062a\u062c \u063a\u064a\u0631 \u0627\u0644\u0646\u0641\u0637\u064a",
+  "Manufacturing Convergence"     = "\u062a\u0642\u0627\u0631\u0628 \u0627\u0644\u0635\u0646\u0627\u0639\u0629",
+  "Oil Dependency Convergence"    = "\u062a\u0642\u0627\u0631\u0628 \u0627\u0644\u0627\u0639\u062a\u0645\u0627\u062f \u0627\u0644\u0646\u0641\u0637\u064a",
+  "Fiscal Balance Convergence"    = "\u062a\u0642\u0627\u0631\u0628 \u0627\u0644\u062a\u0648\u0627\u0632\u0646 \u0627\u0644\u0645\u0627\u0644\u064a",
+  "Interest Rate Convergence"     = "\u062a\u0642\u0627\u0631\u0628 \u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0641\u0627\u0626\u062f\u0629"
+)
+
+#' Translate an indicator label
+#' @param name Character. English indicator label.
+#' @param lang Character. "en" or "ar".
+#' @return Character.
+translate_indicator <- function(name, lang = "en") {
+  if (lang == "en") return(name)
+  ar <- .indicator_translations[name]
+  if (is.na(ar)) {
+    warning(sprintf("[translations] Indicator '%s' not in dictionary.", name))
+    return(name)
+  }
+  unname(ar)
+}
+
+#' Translate a vector of indicator labels
+translate_indicators <- function(names, lang = "en") {
+  vapply(names, translate_indicator, character(1), lang = lang)
+}
+
 # ── Integration level ─────────────────────────────────────────────────────────
 
 #' Translate integration level string
