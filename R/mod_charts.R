@@ -193,9 +193,10 @@ create_heatmap <- function(matrix_data, colorscale = NULL, zmin = 0, zmax = 100,
 #' @param lang Language code ("en" or "ar")
 #' @return plotly object
 create_ranking_chart <- function(ranking_data, colors = COUNTRY_COLORS, title = NULL, lang = "en") {
+  ranking_data$country_label <- translate_countries(ranking_data$country, lang)
   plotly::plot_ly(
     ranking_data,
-    x = ~reorder(country, overall_index),
+    x = ~reorder(country_label, overall_index),
     y = ~overall_index,
     type = 'bar',
     marker = list(color = ~colors[country])
