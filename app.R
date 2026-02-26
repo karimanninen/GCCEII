@@ -93,7 +93,7 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
 
   entered_dashboard <- reactiveVal(FALSE)
-  current_lang <- reactiveVal("en")
+  current_lang <- reactiveVal("ar")
 
   observeEvent(input$lang_toggle, {
     new_lang <- if (current_lang() == "en") "ar" else "en"
