@@ -304,7 +304,18 @@ carousel_js <- function(lang = "en") {
             display.style.transition = 'opacity 0.3s ease';
             startCarousel();
           }
-        }, 100);
+        }, 500);
+      }
+    });
+
+    // fallback: fires when Shiny finishes all rendering
+    $(document).one('shiny:idle', function() {
+      if (!autoRotate) {
+        var display = document.getElementById('quote-display');
+        if (display) {
+          display.style.transition = 'opacity 0.3s ease';
+          startCarousel();
+        }
       }
     });
 
