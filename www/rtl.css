@@ -200,10 +200,15 @@ body.lang-ar .carousel-quote {
 
 /* ── 14. Landing page – about section ───────────────────────────────────── */
 body.lang-ar #landing-about p,
-body.lang-ar #landing-about h2,
 body.lang-ar #landing-about h3 {
   direction: rtl;
   text-align: right;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+}
+
+body.lang-ar #landing-about h2 {
+  direction: rtl;
+  text-align: center;
   font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
 }
 
