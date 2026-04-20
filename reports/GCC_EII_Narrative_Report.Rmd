@@ -1,0 +1,432 @@
+---
+title: "GCC Economic Integration Index (GCCEII)"
+subtitle: "Analytical Narrative Report — 2015–2024"
+author: "GCC-Stat | Gulf Observatory for Economic Integration Paths"
+date: "`r format(Sys.Date(), '%B %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+    number_sections: true
+    df_print: paged
+    code_folding: show
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  message    = FALSE,
+  warning    = FALSE,
+  fig.width  = 10,
+  fig.height = 6,
+  dpi        = 150,
+  out.width  = "100%"
+)
+```
+
+```{r packages, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(scales)
+```
+
+## Objective
+
+The **GCC Economic Integration Indicators Framework** is a composite statistical tool developed by GCC-Stat to measure and monitor the depth of economic integration across the six Gulf Cooperation Council member states — Bahrain, Kuwait, Oman, Qatar, Saudi Arabia, and the UAE — covering the period 2015 to 2024.
+
+The framework aggregates sub-indicators into six analytical dimensions: **Trade Integration**, **Financial & Monetary Integration**, **Labor & Human Capital**, **Infrastructure Connectivity**, **Sustainability & Diversification**, and **Macroeconomic Convergence**. Dimensions are weighted (Trade 20%, Financial 20%, Labor 20%, Infrastructure 20%, Sustainability 10%, Convergence 10%) into a single **Overall Integration Index** (0–100 scale), normalised using COINr's min-max methodology within the observed sample. GCC-level aggregation uses fixed GDP weights (Saudi Arabia 42%, UAE 35%, Qatar 10%, Kuwait 7%, Oman 4%, Bahrain 2%).
+
+The **Gulf Observatory for Economic Integration Paths** dashboard provides an interactive monitoring platform where policymakers, researchers, and statistical agencies can track integration progress, compare member state performance, and identify priority areas for deeper regional cooperation.
+
+> *All scores in this report are derived from the live `output/gcceii_scores.csv` produced by the COINr pipeline (current `main` branch of karimanninen/GCCEII). Scores differ meaningfully from earlier prototype outputs. In particular, no dimension score exceeds 100, as normalisation bounds are applied within the observed sample range.*
+
+------------------------------------------------------------------------
+
+## 1. GCC-Level Integration: The Overall Trend
+
+```{r, message=FALSE, warning=FALSE, fig.width=10, fig.height=6}
+# ── Setup: run from GCCEII project root ─────────────────────────────
+# library(tidyverse)  # loaded in setup chunk
+# library(ggplot2)  # loaded in setup chunk
+# library(scales)  # loaded in setup chunk
+
+scores <- read_csv("output/gcceii_scores.csv", show_col_types = FALSE)
+
+# Country name map: ISO3 → display names
+iso3_map <- c(ARE = "UAE", BHR = "Bahrain", SAU = "Saudi Arabia",
+              OMN = "Oman", QAT = "Qatar", KWT = "Kuwait", GCC = "GCC")
+
+# Official country colors (from R/utils.R)
+COUNTRY_COLORS <- c(
+  UAE            = "#000000",
+  Qatar          = "#99154C",
+  "Saudi Arabia" = "#008035",
+  Bahrain        = "#E20000",
+  Oman           = "#a3a3a3",
+  Kuwait         = "#00B1E6",
+  GCC            = "#DAA520"
+)
+
+# Dimension display labels and colors
+DIMENSION_LABELS <- c(
+  Trade = "Trade", Financial = "Financial", Labor = "Labor",
+  Infrastructure = "Infrastructure", Sustainability = "Sustainability",
+  Convergence = "Convergence"
+)
+DIMENSION_COLORS <- setNames(
+  c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#A65628"),
+  DIMENSION_LABELS
+)
+
+# Overall index (level 3)
+idx <- scores %>%
+  filter(level == 3) %>%
+  mutate(country = iso3_map[country]) %>%
+  select(country, year, overall_index = score, integration_level)
+
+# GCC aggregate line chart
+gcc_trend <- idx %>% filter(country == "GCC")
+
+ggplot(gcc_trend, aes(x = year, y = overall_index)) +
+  geom_ribbon(aes(ymin = 35, ymax = overall_index), fill = "#DAA520", alpha = 0.12) +
+  geom_line(color = "#DAA520", linewidth = 1.5) +
+  geom_point(aes(fill = integration_level), shape = 21, size = 4, color = "white") +
+  geom_hline(yintercept = 60, linetype = "dashed", color = "grey50") +
+  geom_hline(yintercept = 40, linetype = "dotted", color = "grey70") +
+  annotate("text", x = 2015.1, y = 61.5, label = "Good threshold (60)",
+           hjust = 0, size = 3, color = "grey40") +
+  annotate("text", x = 2015.1, y = 41.5, label = "Weak threshold (40)",
+           hjust = 0, size = 3, color = "grey50") +
+  scale_fill_manual(
+    values = c(Good = "#4DAF4A", Moderate = "#DAA520", Weak = "#E41A1C"),
+    name = "Integration Level"
+  ) +
+  scale_x_continuous(breaks = 2015:2024) +
+  scale_y_continuous(limits = c(35, 70), breaks = seq(35, 70, 5)) +
+  labs(
+    title = "GCC Overall Economic Integration Index",
+    subtitle = "GDP-weighted composite, 2015–2024",
+    x = NULL, y = "Integration Score (0–100)",
+    caption = "Source: GCC-Stat GCCEII | GDP weights: SAU 42%, UAE 35%, QAT 10%, KWT 7%, OMN 4%, BHR 2%"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"), panel.grid.minor = element_blank(),
+        legend.position = "bottom")
+```
+
+The GCC Overall Integration Index has remained **persistently in the Moderate band** throughout 2015–2024, oscillating in a narrow range of **40 to 47 points** — never approaching the *Good* threshold of 60. This finding is among the starkest conclusions from the current pipeline: a decade of high-profile integration initiatives has not yet produced measurable uplift in the composite.
+
+Three phases are visible. A **gradual erosion from 45.4 (2015) to a COVID-induced trough of 40.3 (2020)** reflects the cumulative drag of trade structure rigidities, the Qatar blockade (2017–2021), and the pandemic's disruption of physical and financial linkages. A **modest recovery from 2021 onward** brought the composite to 47.4 by 2023, holding there through 2024. Yet the pace of recovery is slow — after four years, the index has only returned to roughly 2016 levels.
+
+The GDP dominance of Saudi Arabia (42%) and the UAE (35%) means that the GCC aggregate is effectively anchored by these two economies. Saudi Arabia's extended *Weak* classification (2016–2021) was the primary drag on the weighted composite throughout this period.
+
+------------------------------------------------------------------------
+
+## 2. Dimensional Evolution: What Moves the Index?
+
+```{r, message=FALSE, warning=FALSE, fig.width=10, fig.height=6}
+# GCC Dimension Score Evolution: 2015–2024
+gcc_dims_ts <- scores %>%
+  filter(level == 2, country == "GCC") %>%
+  mutate(dimension = DIMENSION_LABELS[code]) %>%
+  select(year, dimension, score)
+
+ggplot(gcc_dims_ts, aes(x = year, y = score, color = dimension, group = dimension)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2.2) +
+  geom_hline(yintercept = 60, linetype = "dashed", color = "grey60", linewidth = 0.4) +
+  scale_color_manual(values = DIMENSION_COLORS, name = NULL) +
+  scale_x_continuous(breaks = 2015:2024) +
+  scale_y_continuous(breaks = seq(20, 75, 10), limits = c(20, 75)) +
+  labs(
+    title = "GCC Integration Index — Dimension Scores",
+    subtitle = "GCC GDP-weighted aggregate, 2015–2024",
+    x = NULL, y = "Dimension Score (0–100)",
+    caption = "Weights: Trade 20%, Financial 20%, Labor 20%, Infrastructure 20%, Sustainability 10%, Convergence 10%"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"), panel.grid.minor = element_blank(),
+        legend.position = "right", legend.text = element_text(size = 9))
+```
+
+All dimension scores are properly bounded within 0–100 — a key improvement over earlier prototype outputs. The six dimensions tell distinct stories:
+
+**Infrastructure Connectivity** is the most volatile dimension, collapsing from 57.5 (2015) to 28.3 (2020) before recovering to 57.6 by 2024. The 2020 trough corresponds to COVID border closures and logistics disruption; the near-full recovery is the most encouraging GCC-level signal in the current data.
+
+**Sustainability & Diversification** shows a complex arc: rising to a peak of 64.6 in 2020 — counterintuitively, as the oil price crash lowered hydrocarbon shares in GDP — before declining to 44.1 in 2022 and recovering to 58.4 by 2024. The volatility here partly reflects measurement sensitivity to oil price cycles rather than genuine structural transformation.
+
+**Convergence** is the most stable and consistently strong dimension (57.8–61.2), the only one to consistently approach the *Good* threshold at the GCC level. This stability reflects the shared USD peg, coordinated monetary policy, and synchronised business cycles.
+
+**Trade Integration** is chronically the weakest dimension at the GCC aggregate level (33–39), persistently below even the 40-point *Moderate* floor. GDP-weighting amplifies the effect of Saudi Arabia and UAE's low intra-GCC trade intensity — a structural feature of hydrocarbon-dominated export portfolios directed at Asian and European markets.
+
+**Labor & Human Capital** fell from 33.2 (2015) to 28.7 (2020) and has recovered only partially to 34.6 by 2024. Never exceeding 35 at the GCC level, this dimension reflects the profound underdevelopment of regional labor mobility frameworks despite the Gulf's extraordinary reliance on cross-border workforces.
+
+**Financial & Monetary Integration** shows a gradual upward drift from 45.4 (2015) to 53.5 (2024) — slow but consistent progress driven by banking system deepening and capital market linkages, without the extreme spikes that appeared in legacy prototype data.
+
+------------------------------------------------------------------------
+
+## 3. Country Profiles
+
+```{r, message=FALSE, warning=FALSE, fig.width=10, fig.height=6}
+# All-country overall index trajectories
+countries_6 <- c("UAE", "Bahrain", "Kuwait", "Oman", "Qatar", "Saudi Arabia")
+country_trend <- idx %>% filter(country %in% countries_6)
+
+ggplot(country_trend, aes(x = year, y = overall_index,
+                          color = country, group = country)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(aes(shape = integration_level), size = 2.8) +
+  geom_hline(yintercept = 60, linetype = "dashed", color = "grey50") +
+  geom_hline(yintercept = 40, linetype = "dotted", color = "grey70") +
+  scale_color_manual(values = COUNTRY_COLORS, name = NULL) +
+  scale_shape_manual(values = c(Good = 16, Moderate = 17, Weak = 4), name = "Level") +
+  scale_x_continuous(breaks = 2015:2024) +
+  scale_y_continuous(limits = c(28, 70), breaks = seq(30, 70, 5)) +
+  labs(
+    title = "Overall Integration Index by Country",
+    subtitle = "Six GCC member states, 2015–2024 | Dashed = Good (60), Dotted = Weak (40)",
+    x = NULL, y = "Overall Integration Score",
+    caption = "Source: GCC-Stat GCCEII"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"), panel.grid.minor = element_blank(),
+        legend.position = "bottom") +
+  guides(color = guide_legend(nrow = 1))
+```
+
+```{r, message=FALSE, warning=FALSE, fig.width=10, fig.height=6}
+# 2024 Dimension profiles — small multiples
+dim_2024 <- scores %>%
+  filter(level == 2, year == 2024) %>%
+  mutate(
+    country   = iso3_map[country],
+    dimension = factor(DIMENSION_LABELS[code], levels = DIMENSION_LABELS)
+  ) %>%
+  filter(country %in% countries_6)
+
+ggplot(dim_2024, aes(x = dimension, y = score, fill = country)) +
+  geom_col(show.legend = FALSE) +
+  geom_hline(yintercept = 60, linetype = "dashed", color = "grey40", linewidth = 0.5) +
+  coord_flip() +
+  facet_wrap(~ country, ncol = 3) +
+  scale_fill_manual(values = COUNTRY_COLORS) +
+  scale_y_continuous(limits = c(0, 100), breaks = c(0, 30, 60, 90)) +
+  labs(
+    title = "Dimension Scores by Country — 2024",
+    subtitle = "Dashed line = Good threshold (60)",
+    x = NULL, y = "Score (0–100)",
+    caption = "Source: GCC-Stat GCCEII"
+  ) +
+  theme_minimal(base_size = 10) +
+  theme(plot.title = element_text(face = "bold", size = 12),
+        strip.text = element_text(face = "bold"), panel.grid.minor = element_blank())
+```
+
+### Bahrain
+
+Bahrain is the **standout performer in the current data** — the only GCC member state to achieve a *Good* classification, crossing the 60-point threshold in 2023 (64.0) and holding it in 2024 (64.3). This is a meaningful result for a small, open economy with deep financial integration in the region.
+
+Its strength is concentrated in **Sustainability** (84.1), **Financial Integration** (71.9), and **Trade** (71.3) — reflecting its role as a regional banking and financial hub with a diversified, services-oriented economy. **Infrastructure** (69.8) also improved substantially from a 2020 trough (25.5). The main weaknesses are **Convergence** (48.9) and **Labor** (42.2). The upward trajectory from 56.8 (2020) to 64.3 (2024) is the clearest integration success story in the dataset.
+
+### Kuwait
+
+Kuwait presents a **split profile**: strong in Labor but weak in Trade and Sustainability. Its **Labor score of 61.3** (2024) is among the region's highest, reflecting a large expatriate workforce and relatively open mobility frameworks. However, **Sustainability (32.4)** and **Trade (26.2)** in 2024 are among the lowest in the GCC, reflecting Kuwait's oil-export concentration and slow diversification progress.
+
+The overall index has been relatively stable in the 45–53 range, with no clear improvement trend. Kuwait peaked at 52.6 in 2020 and has since slipped to 45.5 in 2024 — a mild deterioration placing it below Bahrain, Qatar, and UAE.
+
+### Oman
+
+Oman's most anomalous feature is the **near-collapse of its Infrastructure score** — just 10.3 in 2015 and bottoming at 7.2 in 2020, recovering only to 18.6 in 2023–2024. This is the lowest Infrastructure score in the GCC across all years and likely reflects a measurement gap rather than genuine infrastructure deficits; Oman's investment in Duqm, Sohar, and digital infrastructure under Vision 2040 is substantial.
+
+Against this structural anomaly, **Trade Integration (68.3)** and **Convergence (68.1)** are relative strengths in 2024, and the overall index has gradually improved from 40.7 to 46.8. Resolving the Infrastructure data gap is the most urgent methodological priority for Oman's profile.
+
+### Qatar
+
+Qatar's profile is dominated by the **recovery arc from the 2017–2021 diplomatic crisis**. The overall index declined from 50.1 (2015) to a trough of 40.9 (2019) before recovering to 51.7 in 2024 — the strongest post-blockade recovery in the dataset.
+
+The reconciliation dividend is clearest in **Infrastructure** — recovering from 34–43 during the blockade years to 62.7 by 2024, reflecting restored transport links and the FIFA World Cup 2022 legacy. **Labor (75.2)** is the highest in the GCC, a function of Qatar's extraordinarily high expatriate workforce share. **Trade (24.6)** and **Sustainability (26.3)** remain structural weaknesses reflecting LNG concentration and limited diversification.
+
+Qatar's upward trajectory is real, and further recovery toward 55+ is plausible within a few years.
+
+### Saudi Arabia
+
+Saudi Arabia's integration profile represents the central paradox of the index: the region's largest economy and the driving force of the GCC Vision framework has been the most persistent underperformer. The overall score fell from 41.8 (2015) to a decade low of **33.3 in 2020** — the only score below 35 in the dataset — and spent **six consecutive years in the Weak classification (2016–2021)**.
+
+The recovery to 44.2 in 2024 is encouraging, but the structural constraints are profound. **Trade Integration (19.8)** is the lowest in the GCC, reflecting a hydrocarbons-dominated export base. **Labor (23.9)** is second-lowest, as Saudisation policies restrict cross-GCC labor flows. The bright spots are **Infrastructure (66.0)** and **Sustainability (68.7)**, consistent with Vision 2030 investment.
+
+Given Saudi Arabia's 42% GDP weight, every 5-point improvement in its index adds approximately 2 points to the GCC composite. Its trajectory is the single most important determinant of whether the GCC aggregate can break out of the 45–50 range.
+
+### UAE
+
+The UAE presents a counterintuitive finding: despite being widely regarded as the GCC's most open economy, its COINr-normalised overall index sits in the **49–54 Moderate range** throughout the decade — below Bahrain and often below Kuwait and Qatar.
+
+This reflects min-max normalisation within the GCC sample. UAE leads clearly in **Convergence (71.3)** and **Financial Integration (65.2)** in 2024, but its **Labor (28.6)** and **Infrastructure (44.9)** scores are moderate. The old prototype data artificially anchored UAE's Trade score at 100 (using UAE as the fixed max); in the COINr pipeline, Trade is normalised across the full distribution, placing UAE at 62.9 in 2024.
+
+UAE's integration profile is best characterised as **deep but uneven** — genuine leadership in financial sophistication and macroeconomic synchronisation, but not outstanding on labor mobility and physical connectivity relative to its GCC peers in the sample.
+
+------------------------------------------------------------------------
+
+## 4. Analytical Deep Dive (GCC Analytics)
+
+### 4.1 Score Composition and Dimension Contributions to Annual Change
+
+```{r, message=FALSE, warning=FALSE, fig.width=10, fig.height=6}
+# Weighted dimension contributions to GCC year-on-year change
+dim_weights_vec <- c(
+  Trade = 0.20, Financial = 0.20, Labor = 0.20,
+  Infrastructure = 0.20, Sustainability = 0.10, Convergence = 0.10
+)
+
+gcc_contrib <- scores %>%
+  filter(level == 2, country == "GCC") %>%
+  select(year, dimension = code, score) %>%
+  arrange(dimension, year) %>%
+  group_by(dimension) %>%
+  mutate(
+    weight = dim_weights_vec[dimension],
+    contrib = (score - lag(score)) * weight
+  ) %>%
+  ungroup() %>%
+  filter(!is.na(contrib)) %>%
+  mutate(dimension = DIMENSION_LABELS[dimension])
+
+ggplot(gcc_contrib, aes(x = year, y = contrib, fill = dimension)) +
+  geom_col(position = "stack", width = 0.75) +
+  geom_hline(yintercept = 0, color = "black", linewidth = 0.5) +
+  scale_fill_manual(values = DIMENSION_COLORS, name = NULL) +
+  scale_x_continuous(breaks = 2016:2024) +
+  labs(
+    title = "Dimension Contributions to Annual Change in GCC Integration Index",
+    subtitle = "Actual weights: Trade, Financial, Labor, Infrastructure = 20%; Sustainability, Convergence = 10%",
+    x = NULL, y = "Contribution to ΔIndex (points)",
+    caption = "Source: GCC-Stat GCCEII"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"), panel.grid.minor = element_blank(),
+        legend.position = "bottom", legend.text = element_text(size = 8)) +
+  guides(fill = guide_legend(nrow = 2))
+```
+
+There is **no dominant spike year** in the current contributions chart — a key difference from legacy prototype outputs. The picture is one of competing pushes and pulls across dimensions. The largest single-year movement was **2020's broad simultaneous decline**, when Infrastructure, Labor, Sustainability, and Trade all contributed negatively as COVID disrupted physical connectivity and mobility.
+
+The **post-2020 recovery is primarily an Infrastructure story** — that dimension's weighted contribution accounts for the majority of the 2021–2024 improvement. **Sustainability** contributed positively through 2021–2022 (oil diversification metrics improving with price recovery) before reversing in 2022.
+
+**Trade's contribution is persistently near-zero** — its low absolute scores and minimal annual movement mean it neither meaningfully adds to nor detracts from the composite. This structural inertia is the most consequential long-term finding from the contributions analysis.
+
+### 4.2 Dimensional Spread: Divergence Across Member States
+
+```{r, message=FALSE, warning=FALSE, fig.width=10, fig.height=6}
+# Dimensional spread: Max – Min across 6 countries by year
+spread <- scores %>%
+  filter(level == 2, !country %in% c("GCC")) %>%
+  group_by(year, dimension = code) %>%
+  summarise(
+    spread = max(score, na.rm = TRUE) - min(score, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(dimension = DIMENSION_LABELS[dimension])
+
+ggplot(spread, aes(x = year, y = spread, color = dimension, group = dimension)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(size = 2) +
+  scale_color_manual(values = DIMENSION_COLORS, name = NULL) +
+  scale_x_continuous(breaks = 2015:2024) +
+  labs(
+    title = "Dimensional Spread Across GCC Member States",
+    subtitle = "Max minus Min score within each dimension (higher = greater divergence between countries)",
+    x = NULL, y = "Score Range (Max – Min, points)",
+    caption = "Source: GCC-Stat GCCEII"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"), panel.grid.minor = element_blank(),
+        legend.position = "right", legend.text = element_text(size = 9))
+```
+
+**Infrastructure** has the widest divergence (50–65 points), driven by Oman's anomalously low scores (7–19) versus Saudi Arabia and UAE (45–66). Given the data quality concern flagged for Oman, this spread is partially a measurement artefact and should be interpreted cautiously.
+
+**Sustainability** also shows large spread (40–60 points) — Bahrain (78–95) sits far above Kuwait and Qatar (15–33). This reflects industrial structure differences: Bahrain's services-heavy economy naturally diversifies more on standard metrics than hydrocarbon-concentrated peers.
+
+**Convergence** maintains the narrowest spread (10–30 points), confirming it as the most genuinely convergent dimension across the GCC — consistent with the shared USD peg and coordinated monetary frameworks.
+
+**Labor** spread is moderate (30–50 points), mainly because Kuwait and Qatar (60–79) consistently outperform Saudi Arabia and Oman (23–40). This reflects deliberate policy differences in labor market openness rather than structural economic divergence.
+
+### 4.3 Biggest Movers
+
+```{r, message=FALSE, warning=FALSE, fig.width=10, fig.height=6}
+# Year-on-year change in overall index by country
+movers <- idx %>%
+  filter(country %in% countries_6) %>%
+  arrange(country, year) %>%
+  group_by(country) %>%
+  mutate(change = overall_index - lag(overall_index)) %>%
+  ungroup() %>%
+  filter(!is.na(change))
+
+ggplot(movers, aes(x = year, y = change, fill = country)) +
+  geom_col(position = "dodge", width = 0.8) +
+  geom_hline(yintercept = 0, color = "black") +
+  scale_fill_manual(values = COUNTRY_COLORS, name = NULL) +
+  scale_x_continuous(breaks = 2016:2024) +
+  labs(
+    title = "Year-on-Year Change in Overall Integration Index by Country",
+    subtitle = "Biggest Movers, 2016–2024",
+    x = NULL, y = "Change in Overall Score (points)",
+    caption = "Source: GCC-Stat GCCEII"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"), panel.grid.minor = element_blank(),
+        legend.position = "bottom") +
+  guides(fill = guide_legend(nrow = 1))
+```
+
+-   **2020: Universal decline** — Every country fell, led by Saudi Arabia (−3.1), Qatar (−2.6), and UAE (−1.6). COVID impacted all dimensions simultaneously.
+-   **2022: The rebound year** — Kuwait (+8.4) and Saudi Arabia (+7.9) recorded their strongest single-year gains, exiting Weak territory. Qatar gained +4.9.
+-   **Bahrain's sustained climb**: Consistent upward movement since 2020, breaking to *Good* status with a +5.4 gain in 2023. This consistency distinguishes Bahrain from more volatile peers.
+-   **Qatar's 2024 gain** (+2.9 points to 51.7): Driven by Infrastructure and Convergence improvements — structural rather than cyclical, suggesting the recovery is durable.
+-   **UAE stagnation**: Despite its economic dynamism, UAE's index has barely moved (49–54 across the decade), reflecting normalisation effects and uneven dimensional performance.
+
+------------------------------------------------------------------------
+
+## 5. Recommendations for Future GCC Integration Priorities
+
+### 5.1 Trade Diversification Is Non-Negotiable
+
+Trade is the weakest dimension at the GCC aggregate level and the most structurally divergent across member states. Saudi Arabia (19.8), Kuwait (26.2), and Qatar (24.6) all score below 30 in 2024. Strengthening intra-GCC value chains in non-oil manufacturing and services, operationalising Common Market free movement provisions, and reducing regulatory barriers to cross-border services trade are the highest-priority integration interventions.
+
+### 5.2 Resolve Oman's Infrastructure Data Gap
+
+Oman's near-zero Infrastructure scores across the entire series (7–19) are inconsistent with its substantial connectivity investment and risk undermining the index's credibility. The indicator set should be reviewed for completeness of Oman's data coverage, and additional indicators capturing port throughput, digital infrastructure, and logistics quality should be considered.
+
+### 5.3 Labour Market Integration Requires Policy Action
+
+The GCC Labor dimension has never exceeded 35 at the aggregate level — a striking underperformance given the scale of Gulf labour mobility. Unified professional licensing, the GCC Unified Work Permit, and mutual qualifications recognition across member states would directly improve this dimension while delivering real economic value to workers and employers.
+
+### 5.4 Build on Saudi Arabia's Return to Moderate Status
+
+Saudi Arabia's exit from the Weak band in 2022 is the most important structural shift in the data. Given its 42% GDP weight, every 5-point improvement in Saudi Arabia's index adds \~2 points to the GCC composite. Deepening Vision 2030's trade diversification component and accelerating Saudi-UAE financial market integration are the highest-leverage available interventions.
+
+### 5.5 Capture the Qatar Reconciliation Dividend
+
+Qatar's recovery from 40.9 (2019) to 51.7 (2024) is the most dramatic single-country improvement. Bilateral financial market linkages between Qatar and its GCC partners — cross-listed equities, harmonised fintech regulation, joint investment vehicles — represent tractable near-term integration opportunities that are not yet visible in the scores.
+
+### 5.6 Study and Replicate Bahrain's Integration Model
+
+Bahrain is the only country to achieve *Good* status. Its combination of financial openness, services-oriented trade, and sustainability performance provides a replicable model for smaller GCC economies. GCC-Stat should commission a specific diagnostic of Bahrain's integration drivers and use the Observatory to disseminate these lessons systematically.
+
+### 5.7 Methodological Priorities for the Index
+
+Expand toward the full \~90-indicator framework; implement sensitivity analysis on dimension weights (the 20/20/20/20/10/10 structure deserves robustness testing against alternative schemes); integrate live MARSA/Fusion Registry data pipelines to reduce publication lags; and establish a formal multi-stakeholder technical working group to validate indicator relevance with member states and the GCC Secretariat.
+
+------------------------------------------------------------------------
+
+*This report is generated from the live `output/gcceii_scores.csv` on the `main` branch of [karimanninen/GCCEII](https://github.com/karimanninen/GCCEII). All R code chunks source from this file and must be run from the GCCEII project root. Dependencies: `tidyverse`, `ggplot2`, `scales`. Results represent the GCCEII proof-of-concept phase and should be interpreted as directional indicators, not definitive policy assessments.*

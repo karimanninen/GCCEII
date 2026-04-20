@@ -16,8 +16,9 @@
 #' Landing Page UI
 #'
 #' @param lang "en" or "ar"
+#' @param exec_data Named list from exec_summary_data reactive, or NULL
 #' @return Shiny UI element for landing page
-landing_page_ui <- function(lang = "en") {
+landing_page_ui <- function(lang = "en", exec_data = NULL) {
   div(class = "landing-container",
 
       # Hero Section
@@ -77,6 +78,9 @@ landing_page_ui <- function(lang = "en") {
       # Footer
       landing_footer_section(lang),
 
+      # Executive Summary modal (rendered with live score data)
+      exec_summary_modal(lang, exec_data),
+
       # Carousel + modal JavaScript (language-aware)
       carousel_js(lang)
   )
@@ -111,6 +115,16 @@ landing_about_section <- function(lang = "en") {
           div(class = "stat-box",
               div(class = "number", "2015-2024"),
               div(class = "label", t("stat_timeseries", lang))
+          )
+      ),
+
+      # Executive Summary button
+      div(class = "exec-summary-btn-row",
+          tags$button(
+            class = "exec-summary-open-btn",
+            onclick = "openExecModal()",
+            icon("file-alt"),
+            span(t("exec_summary_btn", lang))
           )
       )
   )
@@ -220,6 +234,143 @@ dimension_modals <- function(lang = "en") {
     .dim_modal("convergence",    "chart-line",   "modal_dim_convergence",    "modal_convergence_desc",    "modal_convergence_indicators",    lang)
   )
 }
+
+#' Executive Summary Modal
+#'
+#' Displays the GCC composite score, per-dimension scores, key findings, and
+#' links to the narrative reports. Uses the same overlay pattern as the
+#' dimension modals.
+#'
+#' @param lang "en" or "ar"
+#' @param data Named list from exec_summary_data reactive:
+#'   year, composite, delta, dimensions (named numeric), dim_deltas (named numeric)
+#' @return Shiny UI element
+exec_summary_modal <- function(lang = "en", data = NULL) {
+
+  # Helper: score value + trend arrow HTML
+  fmt_score <- function(val, delta) {
+    arrow  <- if (delta >  0.5) "\u2191" else if (delta < -0.5) "\u2193" else "\u2192"
+    colour <- if (delta >  0.5) "#2e7d32" else if (delta < -0.5) "#c62828" else "#888"
+    HTML(paste0(
+      '<span class="dim-score-val">',   sprintf("%.1f", val), '</span>',
+      '<span class="dim-score-arrow" style="color:', colour, ';">', arrow, '</span>'
+    ))
+  }
+
+  dims   <- if (!is.null(data)) data$dimensions else NULL
+  deltas <- if (!is.null(data)) data$dim_deltas  else NULL
+
+  dim_order <- c("Trade", "Financial", "Labor",
+                 "Infrastructure", "Sustainability", "Convergence")
+  dim_icons <- c(Trade          = "exchange-alt",
+                 Financial      = "university",
+                 Labor          = "users",
+                 Infrastructure = "road",
+                 Sustainability = "leaf",
+                 Convergence    = "chart-line")
+
+  dim_cards <- lapply(dim_order, function(d) {
+    score <- if (!is.null(dims))   dims[[d]]   else NA
+    delta <- if (!is.null(deltas)) deltas[[d]] else 0
+    div(class = paste("exec-dim-card", paste0("exec-dim-", tolower(d))),
+        div(class = "exec-dim-icon", icon(dim_icons[[d]])),
+        div(class = "exec-dim-name", t(paste0("dim_", tolower(d)), lang)),
+        if (!is.na(score)) fmt_score(score, delta)
+        else span(class = "dim-score-na", "\u2014")
+    )
+  })
+
+  # Composite score block content
+  comp_val   <- if (!is.null(data)) sprintf("%.1f", data$composite) else "\u2014"
+  comp_delta <- if (!is.null(data)) data$delta else 0
+  delta_txt  <- if (!is.null(data)) {
+    if (comp_delta > 0) paste0("\u25b2 +", sprintf("%.1f", comp_delta))
+    else if (comp_delta < 0) paste0("\u25bc ", sprintf("%.1f", comp_delta))
+    else "\u2192 0.0"
+  } else NULL
+  delta_col  <- if (!is.null(data)) {
+    if (comp_delta > 0) "#a5d6a7" else if (comp_delta < 0) "#ef9a9a" else "#ccc"
+  } else "#ccc"
+
+  div(class = "dim-modal-overlay", id = "modal-exec-summary",
+      onclick = "closeExecModal(event)",
+
+      div(class = "dim-modal exec-summary-modal",
+          onclick = "event.stopPropagation()",
+
+          # ── Header ──────────────────────────────────────────────────────────
+          div(class = "dim-modal-header exec-summary-header",
+
+              div(class = "exec-summary-header-left",
+                  icon("chart-bar"),
+                  div(
+                    h4(t("exec_summary_title", lang)),
+                    span(class = "exec-year-label",
+                         t("exec_summary_year_label", lang), ": ",
+                         if (!is.null(data)) data$year else "\u2014")
+                  )
+              ),
+
+              div(class = "exec-composite-score",
+                  div(class = "exec-score-label", t("exec_summary_score_label", lang)),
+                  div(class = "exec-score-value", comp_val),
+                  if (!is.null(delta_txt))
+                    div(class = "exec-score-delta",
+                        style = paste0("color:", delta_col, ";"),
+                        delta_txt)
+              ),
+
+              tags$button(class = "dim-modal-close",
+                          onclick = "closeExecModal(event)",
+                          HTML("&times;"))
+          ),
+
+          # ── Body ─────────────────────────────────────────────────────────────
+          div(class = "dim-modal-body exec-summary-body",
+
+              # Key findings
+              h5(icon("lightbulb"), " ", t("exec_summary_findings_heading", lang)),
+              div(class = "exec-findings-list",
+                  lapply(
+                    strsplit(t("exec_summary_findings", lang), "\n")[[1]],
+                    function(f) {
+                      div(class = "exec-finding",
+                          icon("angle-right"),
+                          span(f))
+                    }
+                  )
+              ),
+
+              # Dimension score grid
+              h5(icon("th"), " ", t("exec_summary_dim_heading", lang)),
+              div(class = "exec-dim-grid", dim_cards),
+
+              # Report links — both in current UI language
+              div(class = "exec-report-btns",
+                  tags$button(
+                    class = "exec-report-btn exec-report-btn-exec",
+                    onclick = if (lang == "ar")
+                      "window.open('reports/GCC_EII_Executive_Summary_AR.html','_blank')"
+                    else
+                      "window.open('reports/GCC_EII_Executive_Summary.html','_blank')",
+                    icon("file-alt"),
+                    span(t("exec_read_exec_summary", lang))
+                  ),
+                  tags$button(
+                    class = "exec-report-btn exec-report-btn-narrative",
+                    onclick = if (lang == "ar")
+                      "window.open('reports/GCC_EII_Narrative_AR.html','_blank')"
+                    else
+                      "window.open('reports/GCC_EII_Narrative_Report.html','_blank')",
+                    icon("book-open"),
+                    span(t("exec_read_full_report", lang))
+                  )
+              )
+          )
+      )
+  )
+}
+
 
 #' Landing Page Footer Section
 #'
@@ -332,7 +483,25 @@ carousel_js <- function(lang = "en") {
       }
     }
 
-    // Close modal on Escape key
+    // ===== EXECUTIVE SUMMARY MODAL =====
+    function openExecModal() {
+      var el = document.getElementById('modal-exec-summary');
+      if (el) {
+        el.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeExecModal(event) {
+      if (event.target === event.currentTarget ||
+          event.target.classList.contains('dim-modal-close')) {
+        var el = document.getElementById('modal-exec-summary');
+        if (el) el.classList.remove('active');
+        document.body.style.overflow = 'auto';
+      }
+    }
+
+    // Close ALL modals (dimension + exec summary) on Escape key
     document.addEventListener('keydown', function(event) {
       if (event.key === 'Escape') {
         document.querySelectorAll('.dim-modal-overlay.active').forEach(function(modal) {

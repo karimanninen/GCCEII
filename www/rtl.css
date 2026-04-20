@@ -299,3 +299,56 @@ body.lang-ar .dim-selector-label {
     right: 8px;
   }
 }
+
+/* =============================================================================
+   EXECUTIVE SUMMARY MODAL — Arabic / RTL overrides
+   ============================================================================= */
+
+/* Button icon spacing */
+body.lang-ar .exec-summary-open-btn {
+  flex-direction: row-reverse;
+}
+
+/* Header: reverse left/right layout */
+body.lang-ar .exec-summary-header {
+  flex-direction: row-reverse;
+}
+
+body.lang-ar .exec-summary-header-left {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+/* Composite score block: move margin from right to left side */
+body.lang-ar .exec-composite-score {
+  margin-right: 0;
+  margin-left: 48px;
+}
+
+/* Key findings: flip border and text direction */
+body.lang-ar .exec-finding {
+  flex-direction: row-reverse;
+  border-left: none;
+  border-right: 3px solid #008035;
+  text-align: right;
+}
+
+/* Dimension card text alignment */
+body.lang-ar .exec-dim-name {
+  direction: rtl;
+}
+
+/* Score arrow: swap side margin */
+body.lang-ar .dim-score-arrow {
+  margin-left: 0;
+  margin-right: 3px;
+}
+
+/* Report buttons: reverse order so Arabic button is on the right */
+body.lang-ar .exec-report-btns {
+  flex-direction: row-reverse;
+}
+
+body.lang-ar .exec-report-btn {
+  flex-direction: row-reverse;
+}

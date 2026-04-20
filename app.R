@@ -55,6 +55,49 @@ indicator_detail <- gcc_data$indicator_detail  # NULL for legacy data sources
 countries <- get_countries(dimension_scores)
 
 # ==============================================================================
+# PRE-COMPUTE EXECUTIVE SUMMARY DATA
+# Extracted once at startup from gcc_ts (GCC aggregate rows already in there).
+# Passed into landing_page_ui() so the modal shows live scores.
+# ==============================================================================
+
+exec_summary_data <- tryCatch({
+  latest <- max(gcc_ts$year, na.rm = TRUE)
+  prev   <- latest - 1
+
+  get_gcc_row <- function(yr) {
+    gcc_ts[gcc_ts$year == yr, ]
+  }
+
+  curr <- get_gcc_row(latest)
+  prev_row <- get_gcc_row(prev)
+
+  list(
+    year      = latest,
+    composite = curr$overall,
+    delta     = curr$overall - prev_row$overall,
+    dimensions = c(
+      Trade          = curr$trade_score,
+      Financial      = curr$financial_score,
+      Labor          = curr$labor_score,
+      Infrastructure = curr$infrastructure_score,
+      Sustainability = curr$sustainability_score,
+      Convergence    = curr$convergence_score
+    ),
+    dim_deltas = c(
+      Trade          = curr$trade_score          - prev_row$trade_score,
+      Financial      = curr$financial_score      - prev_row$financial_score,
+      Labor          = curr$labor_score          - prev_row$labor_score,
+      Infrastructure = curr$infrastructure_score - prev_row$infrastructure_score,
+      Sustainability = curr$sustainability_score - prev_row$sustainability_score,
+      Convergence    = curr$convergence_score    - prev_row$convergence_score
+    )
+  )
+}, error = function(e) {
+  message("exec_summary_data: could not compute — ", conditionMessage(e))
+  NULL
+})
+
+# ==============================================================================
 # UI
 # ==============================================================================
 
@@ -114,7 +157,7 @@ server <- function(input, output, session) {
   output$main_ui <- renderUI({
     lang <- current_lang()
     if (!entered_dashboard()) {
-      landing_page_ui(lang)
+      landing_page_ui(lang, exec_data = exec_summary_data)
     } else {
       dashboard_ui(lang)
     }

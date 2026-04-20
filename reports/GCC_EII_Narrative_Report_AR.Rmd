@@ -1,0 +1,440 @@
+---
+title: "مؤشر التكامل الاقتصادي الخليجي (GCCEII)"
+subtitle: "تقرير تحليلي سردي — 2015–2024"
+author: "مركز الإحصاء لدول مجلس التعاون الخليجي | مرصد الخليج لمسارات التكامل الاقتصادي"
+date: "`r format(Sys.Date(), '%B %Y')`"
+lang: ar
+dir: rtl
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+    number_sections: false
+    df_print: paged
+    self_contained: true
+    css: |
+      @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&display=swap');
+      body { font-family: "Amiri", "Tahoma", "Arial", sans-serif;
+             direction: rtl; text-align: right; line-height: 1.8;
+             font-size: 16px; color: #222; }
+      h1, h2, h3, h4 { color: #003366; }
+      h2 { border-bottom: 2px solid #DAA520; padding-bottom: 4px; margin-top: 36px; }
+      code, pre { direction: ltr; text-align: left; font-family: "Consolas", monospace; }
+      .tocify { direction: rtl; text-align: right; }
+      table { direction: rtl; width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+      th { background: #003366; color: white; padding: 8px 12px; text-align: right; }
+      td { padding: 7px 12px; border-bottom: 1px solid #ddd; text-align: right; }
+      tr:nth-child(even) { background: #f9f9f9; }
+      blockquote { border-right: 4px solid #DAA520; border-left: none;
+                   padding: 10px 16px; background: #fffbf0; color: #555;
+                   margin: 16px 0; border-radius: 2px; }
+      hr { border: none; border-top: 1px solid #ddd; margin: 32px 0; }
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = FALSE,
+  message    = FALSE,
+  warning    = FALSE,
+  fig.width  = 10,
+  fig.height = 6,
+  dpi        = 150,
+  out.width  = "100%"
+)
+```
+
+```{r packages, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(scales)
+
+# Arabic font support for charts (optional — graceful fallback to sans)
+if (requireNamespace("showtext", quietly = TRUE) &&
+    requireNamespace("sysfonts",  quietly = TRUE)) {
+  sysfonts::font_add_google("Amiri", "Amiri")
+  showtext::showtext_auto()
+  arabic_family <- "Amiri"
+} else {
+  arabic_family <- "sans"
+}
+
+# ── Data ──────────────────────────────────────────────────────────────────────
+scores <- read_csv("../output/gcceii_scores.csv", show_col_types = FALSE)
+
+# Arabic country labels
+iso3_ar <- c(ARE = "الإمارات", BHR = "البحرين", SAU = "السعودية",
+             OMN = "عُمان",   QAT = "قطر",     KWT = "الكويت",
+             GCC = "مجلس التعاون")
+
+# Arabic dimension labels
+dim_ar <- c(Trade          = "التجارة",
+            Financial      = "المالية",
+            Labor          = "العمل",
+            Infrastructure = "البنية التحتية",
+            Sustainability = "الاستدامة",
+            Convergence    = "التقارب")
+
+# Official country colours (matching R/utils.R)
+COUNTRY_COLORS <- c(
+  "الإمارات"     = "#000000",
+  "قطر"          = "#99154C",
+  "السعودية"     = "#008035",
+  "البحرين"      = "#E20000",
+  "عُمان"        = "#a3a3a3",
+  "الكويت"       = "#00B1E6",
+  "مجلس التعاون" = "#DAA520"
+)
+
+DIMENSION_COLORS <- setNames(
+  c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#A65628"),
+  c("التجارة", "المالية", "العمل", "البنية التحتية", "الاستدامة", "التقارب")
+)
+
+# Composite index (level 3)
+idx <- scores %>%
+  filter(level == 3) %>%
+  mutate(country = iso3_ar[country]) %>%
+  select(country, year, overall_index = score, integration_level)
+
+gcc_trend   <- idx %>% filter(country == "مجلس التعاون")
+countries_6 <- c("الإمارات", "البحرين", "الكويت", "عُمان", "قطر", "السعودية")
+
+level_ar <- c(Good = "جيد", Moderate = "متوسط", Weak = "ضعيف")
+```
+
+## الهدف
+
+طوّر مركز الإحصاء لدول مجلس التعاون الخليجي **إطار مؤشرات التكامل الاقتصادي الخليجي** كأداة إحصائية مركّبة لقياس ومتابعة عُمق التكامل الاقتصادي بين الدول الست الأعضاء في مجلس التعاون — البحرين والكويت وعُمان وقطر والمملكة العربية السعودية والإمارات — خلال الفترة من 2015 إلى 2024.
+
+يُجمّع الإطار المؤشرات الفرعية في ستة أبعاد تحليلية: **التكامل التجاري**، **التكامل المالي والنقدي**، **العمل ورأس المال البشري**، **البنية التحتية والربط**، **الاستدامة والتنويع**، **التقارب الاقتصادي الكلي**. وتُرجَّح الأبعاد (التجارة 20٪، المالية 20٪، العمل 20٪، البنية التحتية 20٪، الاستدامة 10٪، التقارب 10٪) لتُنتج **درجة تكامل إجمالية واحدة** على مقياس 0–100، باستخدام منهجية COINr للتطبيع ضمن العيّنة المرصودة. ويُستخدم في التجميع على مستوى المجلس أوزان ثابتة للناتج المحلي الإجمالي (السعودية 42٪، الإمارات 35٪، قطر 10٪، الكويت 7٪، عُمان 4٪، البحرين 2٪).
+
+توفّر لوحة **مرصد الخليج لمسارات التكامل الاقتصادي** منصّة رصد تفاعلية لصانعي السياسات والباحثين والأجهزة الإحصائية لمتابعة تقدّم التكامل، ومقارنة أداء الدول الأعضاء، وتحديد مجالات الأولوية لتعميق التعاون الإقليمي.
+
+> *جميع الدرجات في هذا التقرير مستمدّة من الملف الحيّ `output/gcceii_scores.csv` الذي يُنتجه خط COINr. تختلف هذه الدرجات عن مخرجات النموذج الأولي السابق؛ ولا تتجاوز أي درجة لبُعد 100، لأن حدود التطبيع مُطبّقة ضمن نطاق العيّنة المرصودة.*
+
+---
+
+## 1. التكامل على مستوى المجلس: الاتجاه العام
+
+```{r gcc-trend}
+ggplot(gcc_trend, aes(x = year, y = overall_index)) +
+  geom_ribbon(aes(ymin = 35, ymax = overall_index), fill = "#DAA520", alpha = 0.12) +
+  geom_line(color = "#DAA520", linewidth = 1.5) +
+  geom_point(aes(fill = level_ar[integration_level]),
+             shape = 21, size = 4, color = "white") +
+  geom_hline(yintercept = 60, linetype = "dashed", color = "grey50") +
+  geom_hline(yintercept = 40, linetype = "dotted", color = "grey70") +
+  annotate("text", x = 2015.1, y = 61.5,
+           label = "عتبة الجيد (60)", hjust = 0,
+           size = 3, color = "grey40", family = arabic_family) +
+  annotate("text", x = 2015.1, y = 41.5,
+           label = "عتبة الضعيف (40)", hjust = 0,
+           size = 3, color = "grey50", family = arabic_family) +
+  scale_fill_manual(
+    values = c("جيد" = "#4DAF4A", "متوسط" = "#DAA520", "ضعيف" = "#E41A1C"),
+    name = "مستوى التكامل"
+  ) +
+  scale_x_continuous(breaks = 2015:2024) +
+  scale_y_continuous(limits = c(35, 70), breaks = seq(35, 70, 5)) +
+  labs(
+    title    = "مؤشر التكامل الاقتصادي الخليجي الإجمالي",
+    subtitle = "مؤشر مركّب مرجّح بالناتج المحلي الإجمالي، 2015–2024",
+    x = NULL, y = "درجة التكامل (0–100)",
+    caption  = "المصدر: GCC-Stat GCCEII | الأوزان: السعودية 42٪، الإمارات 35٪، قطر 10٪، الكويت 7٪، عُمان 4٪، البحرين 2٪"
+  ) +
+  theme_minimal(base_size = 12, base_family = arabic_family) +
+  theme(plot.title      = element_text(face = "bold"),
+        panel.grid.minor = element_blank(),
+        legend.position  = "bottom")
+```
+
+ظلّ مؤشر التكامل الخليجي الإجمالي **ضمن النطاق المتوسط طوال فترة 2015–2024**، متأرجحاً في نطاق ضيّق بين **40 و47 نقطة** — دون أن يقترب من عتبة *الجيد* عند 60 نقطة. ويُعدّ هذا من أبرز الاستنتاجات: عقدٌ من المبادرات التكاملية البارزة لم يُنتج بعدُ ارتفاعاً ملموساً في المؤشر المركّب.
+
+يتّضح من المسار ثلاث مراحل. **تآكل تدريجي من 45.4 (2015) إلى قاع كوفيد عند 40.3 (2020)**، ثم **تعافٍ متواضع من 2021 فصاعداً** رفع المؤشر إلى 47.4 بحلول 2023 وثبّته حتى 2024. وتيرة التعافي بطيئة — بعد أربع سنوات، لم يعد المؤشر إلا إلى مستويات 2016 تقريباً.
+
+إن هيمنة المملكة العربية السعودية (42٪) والإمارات (35٪) من حيث الناتج المحلي تعني أن المؤشر الإجمالي مُثبَّت فعلياً بأداء هاتين الدولتين. وقوع المملكة في تصنيف *الضعيف* ست سنوات (2016–2021) كان السبب الرئيسي لتراجع المؤشر المركّب خلال هذه الفترة.
+
+---
+
+## 2. تطوّر الأبعاد: ما الذي يُحرّك المؤشر؟
+
+```{r dim-trends}
+gcc_dims_ts <- scores %>%
+  filter(level == 2, country == "GCC") %>%
+  mutate(dimension = dim_ar[code]) %>%
+  select(year, dimension, score)
+
+ggplot(gcc_dims_ts, aes(x = year, y = score, color = dimension, group = dimension)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2.2) +
+  geom_hline(yintercept = 60, linetype = "dashed", color = "grey60", linewidth = 0.4) +
+  scale_color_manual(values = DIMENSION_COLORS, name = NULL) +
+  scale_x_continuous(breaks = 2015:2024) +
+  scale_y_continuous(breaks = seq(20, 75, 10), limits = c(20, 75)) +
+  labs(
+    title    = "مؤشر التكامل الخليجي — درجات الأبعاد",
+    subtitle = "المجموع الخليجي المرجّح بالناتج المحلي الإجمالي، 2015–2024",
+    x = NULL, y = "درجة البُعد (0–100)",
+    caption  = "الأوزان: التجارة 20٪، المالية 20٪، العمل 20٪، البنية التحتية 20٪، الاستدامة 10٪، التقارب 10٪"
+  ) +
+  theme_minimal(base_size = 12, base_family = arabic_family) +
+  theme(plot.title       = element_text(face = "bold"),
+        panel.grid.minor  = element_blank(),
+        legend.position   = "right",
+        legend.text       = element_text(size = 9))
+```
+
+جميع درجات الأبعاد محصورة ضمن النطاق 0–100. وتروي الأبعاد الستة قصصاً متمايزة:
+
+**البنية التحتية والربط** هي البُعد الأكثر تقلّباً: انهار من 57.5 (2015) إلى 28.3 (2020) قبل أن يتعافى إلى 57.6 بحلول 2024. يقابل قاع 2020 إغلاقات الحدود بسبب كوفيد واضطراب سلاسل الإمداد؛ ويُعدّ التعافي شبه الكامل أكثر الإشارات الإيجابية في البيانات.
+
+**الاستدامة والتنويع** يُظهر قوساً معقّداً: ارتفع إلى ذروة 64.6 في 2020 — إذ خفّض انهيار النفط حصص الهيدروكربونات في الناتج المحلي — قبل أن يتراجع إلى 44.1 في 2022 ويتعافى إلى 58.4 بحلول 2024. يعكس التقلّب حساسية القياس لدورات أسعار النفط أكثر منه تحوّلاً هيكلياً حقيقياً.
+
+**التقارب** هو البُعد الأكثر استقراراً والأقوى اتّساقاً (57.8–61.2)، والوحيد الذي يقترب باستمرار من عتبة *الجيد*. يعكس ذلك الارتباط المشترك بالدولار، والأُطر المالية المنسّقة، ودورات الأعمال المتزامنة.
+
+**التكامل التجاري** هو الأضعف تاريخياً على مستوى المجلس (33–39)، ويظل دون أرضية *المتوسط* عند 40 نقطة. يُضخّم الترجيح بالناتج المحلي الإجمالي أثر الكثافة التجارية البينية المنخفضة للسعودية والإمارات — سمة بنيوية لمحافظ صادرات يهيمن عليها النفط.
+
+**العمل ورأس المال البشري** انخفض من 33.2 (2015) إلى 28.7 (2020) ولم يتعافَ إلا جزئياً إلى 34.6 بحلول 2024. لم يتجاوز هذا البُعد 35 على مستوى المجلس مطلقاً، ويعكس التخلّف العميق لأُطر حركة العمالة الإقليمية.
+
+**التكامل المالي والنقدي** يُظهر ارتفاعاً تدريجياً من 45.4 (2015) إلى 53.5 (2024) — تقدّم بطيء لكنّه مستمر، مدفوعاً بتعميق الأنظمة المصرفية وروابط أسواق رأس المال.
+
+---
+
+## 3. ملامح الدول
+
+```{r country-trends}
+country_trend <- idx %>% filter(country %in% countries_6)
+
+ggplot(country_trend, aes(x = year, y = overall_index,
+                           color = country, group = country)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(aes(shape = level_ar[integration_level]), size = 2.8) +
+  geom_hline(yintercept = 60, linetype = "dashed", color = "grey50") +
+  geom_hline(yintercept = 40, linetype = "dotted", color = "grey70") +
+  scale_color_manual(values = COUNTRY_COLORS, name = NULL) +
+  scale_shape_manual(values = c("جيد" = 16, "متوسط" = 17, "ضعيف" = 4),
+                     name = "المستوى") +
+  scale_x_continuous(breaks = 2015:2024) +
+  scale_y_continuous(limits = c(28, 70), breaks = seq(30, 70, 5)) +
+  labs(
+    title    = "مؤشر التكامل الإجمالي حسب الدولة",
+    subtitle = "ست دول خليجية، 2015–2024 | المتقطّع = جيد (60)، المُنقّط = ضعيف (40)",
+    x = NULL, y = "درجة التكامل الإجمالية",
+    caption  = "المصدر: GCC-Stat GCCEII"
+  ) +
+  theme_minimal(base_size = 12, base_family = arabic_family) +
+  theme(plot.title       = element_text(face = "bold"),
+        panel.grid.minor  = element_blank(),
+        legend.position   = "bottom") +
+  guides(color = guide_legend(nrow = 1))
+```
+
+```{r dim-by-country-2024}
+dim_order_ar <- c("التجارة", "المالية", "العمل",
+                  "البنية التحتية", "الاستدامة", "التقارب")
+dim_2024 <- scores %>%
+  filter(level == 2, year == 2024) %>%
+  mutate(
+    country   = iso3_ar[country],
+    dimension = factor(dim_ar[code], levels = dim_order_ar)
+  ) %>%
+  filter(country %in% countries_6)
+
+ggplot(dim_2024, aes(x = dimension, y = score, fill = country)) +
+  geom_col(show.legend = FALSE) +
+  geom_hline(yintercept = 60, linetype = "dashed", color = "grey40", linewidth = 0.5) +
+  coord_flip() +
+  facet_wrap(~ country, ncol = 3) +
+  scale_fill_manual(values = COUNTRY_COLORS) +
+  scale_y_continuous(limits = c(0, 100), breaks = c(0, 30, 60, 90)) +
+  labs(
+    title    = "درجات الأبعاد حسب الدولة — 2024",
+    subtitle = "الخط المتقطّع = عتبة الجيد (60)",
+    x = NULL, y = "الدرجة (0–100)",
+    caption  = "المصدر: GCC-Stat GCCEII"
+  ) +
+  theme_minimal(base_size = 10, base_family = arabic_family) +
+  theme(plot.title   = element_text(face = "bold", size = 12),
+        strip.text   = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+```
+
+### البحرين
+
+تُعدّ البحرين **الأداء الأبرز في البيانات الحالية** — الدولة الخليجية الوحيدة التي حقّقت تصنيف *جيد*، متجاوزةً عتبة 60 نقطة في 2023 (64.0) ومحافظةً عليها في 2024 (64.3). تتركّز قوّتها في **الاستدامة** (84.1)، و**التكامل المالي** (71.9)، و**التجارة** (71.3) — مما يعكس دورها كمركز مصرفي ومالي إقليمي. وتُعدّ نقاط ضعفها الرئيسية في **التقارب** (48.9) و**العمل** (42.2). مسارها الصاعد من 56.8 (2020) إلى 64.3 (2024) هو أوضح قصة نجاح تكاملية في البيانات.
+
+### الكويت
+
+تُظهر الكويت **ملامح منقسمة**: قوية في العمل لكنّها ضعيفة في التجارة والاستدامة. درجتها في **العمل 61.3** (2024) من أعلى الدرجات في المنطقة، غير أن **الاستدامة (32.4)** و**التجارة (26.2)** من أدنى درجات المجلس، مما يعكس تركّز صادراتها النفطية. ظلّ المؤشر الإجمالي في نطاق 45–53 دون اتجاه تحسّن واضح.
+
+### عُمان
+
+السمة الأكثر شذوذاً لعُمان هي **الانهيار شبه التام لدرجة بنيتها التحتية** — 10.3 فقط في 2015، ولم تتعافَ إلا إلى 18.6 في 2024. على الأرجح يعكس هذا فجوة في القياس أكثر منه عجزاً فعلياً؛ فاستثمار عُمان في الدقم وصحار والبنية الرقمية تحت رؤية 2040 ضخم. في المقابل، تُعدّ **التجارة (68.3)** و**التقارب (68.1)** نقاط قوة نسبية. ومعالجة فجوة بيانات البنية التحتية هي الأولوية المنهجية الأكثر إلحاحاً في ملف عُمان.
+
+### قطر
+
+تهيمن على ملامح قطر **قوس التعافي من فترة الحصار 2017–2021**. انخفض المؤشر الإجمالي إلى قاع 40.9 (2019) قبل أن يتعافى إلى 51.7 في 2024. يتّضح ربح المصالحة أوضح ما يكون في **البنية التحتية** — تعافت إلى 62.7 بحلول 2024 — و**العمل** (75.2 في 2024) هي الأعلى في المجلس. **التجارة (24.6)** و**الاستدامة (26.3)** لا تزالان من نقاط الضعف البنيوية.
+
+### المملكة العربية السعودية
+
+تُمثّل ملامح المملكة المفارقةَ المركزية للمؤشر: أكبر اقتصاد في المنطقة كانت الأكثر تراجعاً باستمرار. انخفضت الدرجة إلى قاع العقد عند **33.3 في 2020** وقضت **ست سنوات متتالية في تصنيف الضعيف (2016–2021)**. التعافي إلى 44.2 في 2024 مشجّع، غير أن القيود البنيوية عميقة. **التجارة (19.8)** الأدنى في المجلس. أما النقاط المضيئة فهي **البنية التحتية (66.0)** و**الاستدامة (68.7)**.
+
+بالنظر إلى وزن المملكة (42٪)، فإن كل تحسّن بمقدار 5 نقاط في مؤشرها يُضيف نحو نقطتين للمؤشر المركّب الخليجي. مسارها المحدّد الأهم لما إذا كان المؤشر الإجمالي يستطيع الخروج من نطاق 45–50.
+
+### الإمارات العربية المتحدة
+
+تُقدّم الإمارات نتيجة مُخالفة للحدس: رغم أنها تُعتبر الاقتصادَ الأكثر انفتاحاً، فإن مؤشرها الإجمالي يقع في **نطاق 49–54 متوسط** طوال العقد. تتصدّر الإمارات في **التقارب (71.3)** و**التكامل المالي (65.2)**، غير أن درجاتها في **العمل (28.6)** و**البنية التحتية (44.9)** متوسطة. أفضل وصف لملامحها هو **عميقة لكنها غير متوازنة**.
+
+---
+
+## 4. تحليل مُعمَّق
+
+### 4.1 مساهمات الأبعاد في التغيّر السنوي
+
+```{r contributions}
+dim_weights_vec <- c(
+  Trade = 0.20, Financial = 0.20, Labor = 0.20,
+  Infrastructure = 0.20, Sustainability = 0.10, Convergence = 0.10
+)
+
+gcc_contrib <- scores %>%
+  filter(level == 2, country == "GCC") %>%
+  select(year, dimension = code, score) %>%
+  arrange(dimension, year) %>%
+  group_by(dimension) %>%
+  mutate(
+    weight = dim_weights_vec[dimension],
+    contrib = (score - lag(score)) * weight
+  ) %>%
+  ungroup() %>%
+  filter(!is.na(contrib)) %>%
+  mutate(dimension = dim_ar[dimension])
+
+ggplot(gcc_contrib, aes(x = year, y = contrib, fill = dimension)) +
+  geom_col(position = "stack", width = 0.75) +
+  geom_hline(yintercept = 0, color = "black", linewidth = 0.5) +
+  scale_fill_manual(values = DIMENSION_COLORS, name = NULL) +
+  scale_x_continuous(breaks = 2016:2024) +
+  labs(
+    title    = "مساهمات الأبعاد في التغيّر السنوي للمؤشر الخليجي",
+    subtitle = "أوزان فعلية: التجارة والمالية والعمل والبنية التحتية 20٪؛ الاستدامة والتقارب 10٪",
+    x = NULL, y = "المساهمة في Δ المؤشر (نقطة)",
+    caption  = "المصدر: GCC-Stat GCCEII"
+  ) +
+  theme_minimal(base_size = 12, base_family = arabic_family) +
+  theme(plot.title       = element_text(face = "bold"),
+        panel.grid.minor  = element_blank(),
+        legend.position   = "bottom",
+        legend.text       = element_text(size = 8)) +
+  guides(fill = guide_legend(nrow = 2))
+```
+
+كان أكبر تحرّك هو **الانخفاض العام المتزامن في 2020**، حيث ساهمت البنية التحتية والعمل والاستدامة والتجارة كلها بشكل سلبي مع تعطيل كوفيد. **التعافي بعد 2020 هو في المقام الأول قصة بنية تحتية**. **مساهمة التجارة قريبة من الصفر باستمرار** — درجاتها المطلقة المنخفضة وحركتها المحدودة تعني أنها لا تُضيف ولا تُضعف المؤشر بشكل ملموس.
+
+### 4.2 التباين بين الأبعاد
+
+```{r spread}
+spread <- scores %>%
+  filter(level == 2, !country %in% c("GCC")) %>%
+  group_by(year, dimension = code) %>%
+  summarise(spread = max(score, na.rm = TRUE) - min(score, na.rm = TRUE),
+            .groups = "drop") %>%
+  mutate(dimension = dim_ar[dimension])
+
+ggplot(spread, aes(x = year, y = spread, color = dimension, group = dimension)) +
+  geom_line(linewidth = 1.0) +
+  geom_point(size = 2) +
+  scale_color_manual(values = DIMENSION_COLORS, name = NULL) +
+  scale_x_continuous(breaks = 2015:2024) +
+  labs(
+    title    = "تباين الأبعاد بين دول المجلس",
+    subtitle = "الفرق بين الأعلى والأدنى في كل بُعد",
+    x = NULL, y = "نطاق الدرجة (أعلى – أدنى، بالنقاط)",
+    caption  = "المصدر: GCC-Stat GCCEII"
+  ) +
+  theme_minimal(base_size = 12, base_family = arabic_family) +
+  theme(plot.title       = element_text(face = "bold"),
+        panel.grid.minor  = element_blank(),
+        legend.position   = "right",
+        legend.text       = element_text(size = 9))
+```
+
+**البنية التحتية** لها أوسع نطاق تباين (50–65 نقطة)، مدفوعاً بدرجات عُمان الشاذة المنخفضة مقابل السعودية والإمارات. **التقارب** يحافظ على أضيق تباين، مؤكّداً أنه البُعد الأكثر تقارباً فعلياً. **العمل** نطاقه متوسط، يعكس فوارق سياسية متعمّدة في انفتاح سوق العمل.
+
+### 4.3 أكبر المحرّكين
+
+```{r movers}
+movers <- idx %>%
+  filter(country %in% countries_6) %>%
+  arrange(country, year) %>%
+  group_by(country) %>%
+  mutate(change = overall_index - lag(overall_index)) %>%
+  ungroup() %>%
+  filter(!is.na(change))
+
+ggplot(movers, aes(x = year, y = change, fill = country)) +
+  geom_col(position = "dodge", width = 0.8) +
+  geom_hline(yintercept = 0, color = "black") +
+  scale_fill_manual(values = COUNTRY_COLORS, name = NULL) +
+  scale_x_continuous(breaks = 2016:2024) +
+  labs(
+    title    = "التغيّر السنوي في المؤشر الإجمالي حسب الدولة",
+    subtitle = "2016–2024",
+    x = NULL, y = "التغيّر في الدرجة الإجمالية (نقطة)",
+    caption  = "المصدر: GCC-Stat GCCEII"
+  ) +
+  theme_minimal(base_size = 12, base_family = arabic_family) +
+  theme(plot.title       = element_text(face = "bold"),
+        panel.grid.minor  = element_blank(),
+        legend.position   = "bottom") +
+  guides(fill = guide_legend(nrow = 1))
+```
+
+- **2020: انخفاض شامل** — انخفضت كل دولة، بقيادة السعودية (−3.1) وقطر (−2.6) والإمارات (−1.6).
+- **2022: عام الارتداد** — سجّلت الكويت (+8.4) والسعودية (+7.9) أكبر مكاسب سنوية، خارجَتَين من منطقة الضعيف.
+- **تسلّق البحرين المستدام**: حركة صعودية ثابتة منذ 2020، متجاوزةً عتبة الجيد بمكسب +5.4 في 2023.
+- **مكسب قطر في 2024** (+2.9 نقطة): بنيوي لا دوري، مما يُشير إلى استدامة التعافي.
+- **ركود الإمارات**: لم يتحرّك مؤشرها إلا قليلاً (49–54 على مدى العقد).
+
+---
+
+## 5. توصيات لأولويات التكامل الخليجي المستقبلية
+
+### 5.1 تنويع التجارة: أولوية غير قابلة للتفاوض
+
+درجات بُعد التجارة هي الدليل الأوضح والأكثر استمراراً على إخفاق التكامل. مع درجات السعودية 19.8 والكويت 26.2 وقطر 24.6 في 2024، تظل التجارة البينية مُقيَّدة بنيوياً. **أولويات الإجراءات**: تعزيز سلاسل القيمة البينية في الصناعات التحويلية والخدمات غير النفطية؛ تفعيل أحكام السوق الخليجية المشتركة؛ وتقليل الحواجز التنظيمية.
+
+### 5.2 سدّ فجوة بيانات البنية التحتية في عُمان
+
+درجات عُمان القريبة من الصفر للبنية التحتية تمثّل مصدر قلق على مصداقية المؤشر. **الأولوية المنهجية**: مراجعة مؤشرات البنية التحتية لضمان اكتمال تغطية عُمان، والنظر في إضافة مؤشرات تلتقط جودة الخدمات اللوجستية والبنية الرقمية والربط بالموانئ.
+
+### 5.3 تكامل سوق العمل: الأزمة الصامتة
+
+لم يتجاوز بُعد العمل 35 مطلقاً على مستوى المجلس — أداء ضعيف لمنطقة تستضيف أكثر من 20 مليون عامل وافد. **أولويات السياسة**: توحيد التراخيص المهنية والاعتراف بالمؤهلات؛ بوابة خليجية موحّدة للمواءمة بين المواهب؛ وتوسيع إطار تصريح العمل الخليجي الموحّد.
+
+### 5.4 دعم عودة المملكة العربية السعودية إلى التكامل المتوسط
+
+تعافي المملكة من ست سنوات في تصنيف الضعيف أهم تطوّر بنيوي في البيانات الأخيرة. **الروافع الرئيسية**: تسريع المكوّن التنويعي التجاري لرؤية 2030؛ وتعميق التكامل بين أسواق رأس المال السعودية والإماراتية.
+
+### 5.5 اقتناص عائد المصالحة القطرية
+
+تعافي قطر من 40.9 (2019) إلى 51.7 (2024) أكبر تحسّن لدولة واحدة، لكنه يظل دون سقف المتوسط. الروابط المالية الثنائية المباشرة بين قطر والسعودية والإمارات والبحرين تُمثّل أكثر الفرص قريبة الأجل قابليةً للتحقيق.
+
+### 5.6 توظيف مكانة البحرين "الجيدة" كمختبر للسياسات
+
+إنجاز البحرين للمستوى "الجيد" ينبغي دراسته وتكراره. ينبغي لمركز الإحصاء الخليجي تكليف تشخيص محدّد لما تفعله البحرين بشكل مختلف، واستخدام المرصد لنشر هذه الدروس منهجياً.
+
+### 5.7 خارطة الطريق المنهجية للمؤشر
+
+مع نضوج GCCEII من مرحلة إثبات المفهوم إلى أداة بدرجة سياساتية، تبرز أولويات عدّة: التوسّع نحو الإطار الكامل (نحو 90 مؤشراً)؛ تنفيذ تحليل الحساسية لأوزان الأبعاد؛ دمج خطوط بيانات Fusion Registry الحيّة؛ وتأسيس فريق عمل فني متعدّد أصحاب المصلحة رسمي للتحقّق من ملاءمة المؤشرات.
+
+---
+
+*يُنتَج هذا التقرير من الملف الحيّ `output/gcceii_scores.csv` في مستودع karimanninen/GCCEII. تُمثّل النتائج مرحلة إثبات المفهوم لمؤشر GCCEII، وينبغي تفسيرها كمؤشرات اتجاهية لا تقييمات سياساتية نهائية.*
+
+*[العودة إلى لوحة المرصد](../index.html)*
