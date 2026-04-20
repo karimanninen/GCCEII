@@ -206,7 +206,7 @@ body.lang-ar #landing-about h3 {
   font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
 }
 
-body.lang-ar #landing-about h2 {
+body.lang-ar .landing-about h2 {
   direction: rtl;
   text-align: center;
   font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
