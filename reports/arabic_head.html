@@ -1,0 +1,94 @@
+<!-- =====================================================================
+     arabic_head.html
+     Single <head> injection for Arabic GCCEII reports.
+     Contains Google Fonts <link> tags AND all Arabic styling.
+     Injected via YAML: includes: in_header: arabic_head.html
+     ===================================================================== -->
+
+<!-- Google Fonts — Cairo & Tajawal (matches dashboard rtl.css) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<!-- Arabic report styling — inline so it's guaranteed to load -->
+<style>
+  body {
+    font-family: 'Cairo', 'Tajawal', Arial, sans-serif !important;
+    font-size: 16px;
+    max-width: 860px;
+    margin: auto;
+    direction: rtl;
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cairo', 'Tajawal', Arial, sans-serif !important;
+    color: #003366;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+  h1.title { font-size: 28px; font-weight: 700; }
+  h3.subtitle { color: #555; font-weight: 400; }
+  h2 {
+    border-bottom: 2px solid #DAA520;
+    padding-bottom: 4px;
+    margin-top: 30px;
+  }
+
+  p, li, span, td, th, label, div, a {
+    font-family: 'Cairo', 'Tajawal', Arial, sans-serif !important;
+  }
+
+  /* Callout boxes (executive summary) */
+  .callout {
+    background: #f0f4f8;
+    border-right: 5px solid #DAA520;
+    padding: 12px 18px;
+    margin: 16px 0;
+    border-radius: 3px;
+  }
+  .rec {
+    background: #eaf4ea;
+    border-right: 5px solid #008035;
+    padding: 12px 18px;
+    margin: 10px 0;
+    border-radius: 3px;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+    direction: rtl;
+  }
+  th {
+    background: #003366;
+    color: white;
+    padding: 8px 12px;
+    text-align: right;
+    font-weight: 600;
+  }
+  td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: right;
+  }
+  tr:nth-child(even) { background: #f9f9f9; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 28px 0; }
+
+  /* Code blocks stay LTR */
+  code, pre {
+    direction: ltr;
+    text-align: left;
+    font-family: 'Consolas', 'Menlo', monospace !important;
+  }
+
+  /* TOC for narrative report */
+  .tocify {
+    direction: rtl;
+    font-family: 'Cairo', 'Tajawal', Arial, sans-serif !important;
+  }
+</style>

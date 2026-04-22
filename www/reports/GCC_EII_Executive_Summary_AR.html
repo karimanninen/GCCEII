@@ -226,7 +226,14 @@ window.buildTabsets = function(tocID) {
 };
 
 </script>
-<!-- Arabic webfonts for GCCEII reports — must match dashboard rtl.css -->
+<!-- =====================================================================
+     arabic_head.html
+     Single <head> injection for Arabic GCCEII reports.
+     Contains Google Fonts <link> tags AND all Arabic styling.
+     Injected via YAML: includes: in_header: arabic_head.html
+     ===================================================================== -->
+
+<!-- Google Fonts — Cairo & Tajawal (matches dashboard rtl.css) -->
 <link href="data:text/html; charset=utf-8;charset=utf-8,%3Chtml%20lang%3D%22en%22%20dir%3Dltr%3E%3Cmeta%20charset%3Dutf%2D8%3E%3Cmeta%20name%3Dviewport%20content%3D%22initial%2Dscale%3D1%2C%20minimum%2Dscale%3D1%2C%20width%3Ddevice%2Dwidth%22%3E%3Ctitle%3EError%20404%20%28Not%20Found%29%21%211%3C%2Ftitle%3E%3Cstyle%3E%2A%7Bmargin%3A0%3Bpadding%3A0%7Dhtml%2Ccode%7Bfont%3A15px%2F22px%20arial%2Csans%2Dserif%7Dhtml%7Bbackground%3A%23fff%3Bcolor%3A%23222%3Bpadding%3A15px%7Dbody%7Bcolor%3A%23222%3Btext%2Dalign%3Aunset%3Bmargin%3A7%25%20auto%200%3Bmax%2Dwidth%3A390px%3Bmin%2Dheight%3A180px%3Bpadding%3A30px%200%2015px%3B%7D%2A%20%3E%20body%7Bbackground%3Aurl%28%2F%2Fwww%2Egoogle%2Ecom%2Fimages%2Ferrors%2Frobot%2Epng%29%20100%25%205px%20no%2Drepeat%3Bpadding%2Dright%3A205px%7Dp%7Bmargin%3A11px%200%2022px%3Boverflow%3Ahidden%7Dpre%7Bwhite%2Dspace%3Apre%2Dwrap%3B%7Dins%7Bcolor%3A%23777%3Btext%2Ddecoration%3Anone%7Da%20img%7Bborder%3A0%7D%40media%20screen%20and%20%28max%2Dwidth%3A772px%29%7Bbody%7Bbackground%3Anone%3Bmargin%2Dtop%3A0%3Bmax%2Dwidth%3Anone%3Bpadding%2Dright%3A0%7D%7D%23logo%7Bbackground%3Aurl%28%2F%2Fwww%2Egoogle%2Ecom%2Fimages%2Fbranding%2Fgooglelogo%2F1x%2Fgooglelogo%5Fcolor%5F150x54dp%2Epng%29%20no%2Drepeat%3Bmargin%2Dleft%3A%2D5px%7D%40media%20only%20screen%20and%20%28min%2Dresolution%3A192dpi%29%7B%23logo%7Bbackground%3Aurl%28%2F%2Fwww%2Egoogle%2Ecom%2Fimages%2Fbranding%2Fgooglelogo%2F2x%2Fgooglelogo%5Fcolor%5F150x54dp%2Epng%29%20no%2Drepeat%200%25%200%25%2F100%25%20100%25%3B%2Dmoz%2Dborder%2Dimage%3Aurl%28%2F%2Fwww%2Egoogle%2Ecom%2Fimages%2Fbranding%2Fgooglelogo%2F2x%2Fgooglelogo%5Fcolor%5F150x54dp%2Epng%29%200%7D%7D%40media%20only%20screen%20and%20%28%2Dwebkit%2Dmin%2Ddevice%2Dpixel%2Dratio%3A2%29%7B%23logo%7Bbackground%3Aurl%28%2F%2Fwww%2Egoogle%2Ecom%2Fimages%2Fbranding%2Fgooglelogo%2F2x%2Fgooglelogo%5Fcolor%5F150x54dp%2Epng%29%20no%2Drepeat%3B%2Dwebkit%2Dbackground%2Dsize%3A100%25%20100%25%7D%7D%23logo%7Bdisplay%3Ainline%2Dblock%3Bheight%3A54px%3Bwidth%3A150px%7D%3C%2Fstyle%3E%3Cmain%20id%3D%22af%2Derror%2Dcontainer%22%20role%3D%22main%22%3E%3Ca%20href%3D%2F%2Fwww%2Egoogle%2Ecom%3E%3Cspan%20id%3Dlogo%20aria%2Dlabel%3DGoogle%20role%3Dimg%3E%3C%2Fspan%3E%3C%2Fa%3E%3Cp%3E%3Cb%3E404%2E%3C%2Fb%3E%20%3Cins%3EThat%E2%80%99s%20an%20error%2E%3C%2Fins%3E%3Cp%3EThe%20requested%20URL%20was%20not%20found%20on%20this%20server%2E%20%3Cins%3EThat%E2%80%99s%20all%20we%20know%2E%3C%2Fins%3E%3C%2Fmain%3E" rel="preconnect">
 <link href="data:text/html; charset=UTF-8;charset=utf-8,%3C%21DOCTYPE%20html%3E%0A%3Chtml%20lang%3Den%3E%0A%20%20%3Cmeta%20charset%3Dutf%2D8%3E%0A%20%20%3Cmeta%20name%3Dviewport%20content%3D%22initial%2Dscale%3D1%2C%20minimum%2Dscale%3D1%2C%20width%3Ddevice%2Dwidth%22%3E%0A%20%20%3Ctitle%3EError%20404%20%28Not%20Found%29%21%211%3C%2Ftitle%3E%0A%20%20%3Cstyle%3E%0A%20%20%20%20%2A%7Bmargin%3A0%3Bpadding%3A0%7Dhtml%2Ccode%7Bfont%3A15px%2F22px%20arial%2Csans%2Dserif%7Dhtml%7Bbackground%3A%23fff%3Bcolor%3A%23222%3Bpadding%3A15px%7Dbody%7Bmargin%3A7%25%20auto%200%3Bmax%2Dwidth%3A390px%3Bmin%2Dheight%3A180px%3Bpadding%3A30px%200%2015px%7D%2A%20%3E%20body%7Bbackground%3Aurl%28%2F%2Fwww%2Egoogle%2Ecom%2Fimages%2Ferrors%2Frobot%2Epng%29%20100%25%205px%20no%2Drepeat%3Bpadding%2Dright%3A205px%7Dp%7Bmargin%3A11px%200%2022px%3Boverflow%3Ahidden%7Dins%7Bcolor%3A%23777%3Btext%2Ddecoration%3Anone%7Da%20img%7Bborder%3A0%7D%40media%20screen%20and%20%28max%2Dwidth%3A772px%29%7Bbody%7Bbackground%3Anone%3Bmargin%2Dtop%3A0%3Bmax%2Dwidth%3Anone%3Bpadding%2Dright%3A0%7D%7D%23logo%7Bbackground%3Aurl%28%2F%2Fwww%2Egoogle%2Ecom%2Fimages%2Fbranding%2Fgooglelogo%2F1x%2Fgooglelogo%5Fcolor%5F150x54dp%2Epng%29%20no%2Drepeat%3Bmargin%2Dleft%3A%2D5px%7D%40media%20only%20screen%20and%20%28min%2Dresolution%3A192dpi%29%7B%23logo%7Bbackground%3Aurl%28%2F%2Fwww%2Egoogle%2Ecom%2Fimages%2Fbranding%2Fgooglelogo%2F2x%2Fgooglelogo%5Fcolor%5F150x54dp%2Epng%29%20no%2Drepeat%200%25%200%25%2F100%25%20100%25%3B%2Dmoz%2Dborder%2Dimage%3Aurl%28%2F%2Fwww%2Egoogle%2Ecom%2Fimages%2Fbranding%2Fgooglelogo%2F2x%2Fgooglelogo%5Fcolor%5F150x54dp%2Epng%29%200%7D%7D%40media%20only%20screen%20and%20%28%2Dwebkit%2Dmin%2Ddevice%2Dpixel%2Dratio%3A2%29%7B%23logo%7Bbackground%3Aurl%28%2F%2Fwww%2Egoogle%2Ecom%2Fimages%2Fbranding%2Fgooglelogo%2F2x%2Fgooglelogo%5Fcolor%5F150x54dp%2Epng%29%20no%2Drepeat%3B%2Dwebkit%2Dbackground%2Dsize%3A100%25%20100%25%7D%7D%23logo%7Bdisplay%3Ainline%2Dblock%3Bheight%3A54px%3Bwidth%3A150px%7D%0A%20%20%3C%2Fstyle%3E%0A%20%20%3Ca%20href%3D%2F%2Fwww%2Egoogle%2Ecom%2F%3E%3Cspan%20id%3Dlogo%20aria%2Dlabel%3DGoogle%3E%3C%2Fspan%3E%3C%2Fa%3E%0A%20%20%3Cp%3E%3Cb%3E404%2E%3C%2Fb%3E%20%3Cins%3EThat%E2%80%99s%20an%20error%2E%3C%2Fins%3E%0A%20%20%3Cp%3EThe%20requested%20URL%20%3Ccode%3E%2F%3C%2Fcode%3E%20was%20not%20found%20on%20this%20server%2E%20%20%3Cins%3EThat%E2%80%99s%20all%20we%20know%2E%3C%2Fins%3E%0A" rel="preconnect" crossorigin>
 <style type="text/css">@font-face {
@@ -287,6 +294,83 @@ src: url(data:font/ttf;base64,AAEAAAAPAIAAAwBwR0RFRg9/D+oAAAGQAAAAWEdQT1Mb4O9SAA
 }
 </style>
 
+<!-- Arabic report styling — inline so it's guaranteed to load -->
+<style>
+body {
+font-family: 'Cairo', 'Tajawal', Arial, sans-serif !important;
+font-size: 16px;
+max-width: 860px;
+margin: auto;
+direction: rtl;
+text-align: right;
+line-height: 1.8;
+}
+h1, h2, h3, h4, h5, h6 {
+font-family: 'Cairo', 'Tajawal', Arial, sans-serif !important;
+color: #003366;
+font-weight: 600;
+letter-spacing: 0;
+}
+h1.title { font-size: 28px; font-weight: 700; }
+h3.subtitle { color: #555; font-weight: 400; }
+h2 {
+border-bottom: 2px solid #DAA520;
+padding-bottom: 4px;
+margin-top: 30px;
+}
+p, li, span, td, th, label, div, a {
+font-family: 'Cairo', 'Tajawal', Arial, sans-serif !important;
+}
+
+.callout {
+background: #f0f4f8;
+border-right: 5px solid #DAA520;
+padding: 12px 18px;
+margin: 16px 0;
+border-radius: 3px;
+}
+.rec {
+background: #eaf4ea;
+border-right: 5px solid #008035;
+padding: 12px 18px;
+margin: 10px 0;
+border-radius: 3px;
+}
+
+table {
+width: 100%;
+border-collapse: collapse;
+margin: 16px 0;
+font-size: 14px;
+direction: rtl;
+}
+th {
+background: #003366;
+color: white;
+padding: 8px 12px;
+text-align: right;
+font-weight: 600;
+}
+td {
+padding: 7px 12px;
+border-bottom: 1px solid #ddd;
+text-align: right;
+}
+tr:nth-child(even) { background: #f9f9f9; }
+hr { border: none; border-top: 1px solid #ddd; margin: 28px 0; }
+
+code, pre {
+direction: ltr;
+text-align: left;
+font-family: 'Consolas', 'Menlo', monospace !important;
+}
+
+.tocify {
+direction: rtl;
+font-family: 'Cairo', 'Tajawal', Arial, sans-serif !important;
+}
+</style>
+
 <style type="text/css">
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -302,23 +386,6 @@ ul.task-list{list-style: none;}
 
 
 
-<link rel="stylesheet" href="body { font-family: &#39;Cairo&#39;, &#39;Tajawal&#39;, Arial, sans-serif;
-       font-size: 16px; max-width: 860px; margin: auto;
-       direction: rtl; text-align: right; line-height: 1.8; }
-h1.title { font-size: 28px; color: #003366; font-weight: 700; }
-h3.subtitle { color: #555; font-weight: 400; }
-h2 { color: #003366; border-bottom: 2px solid #DAA520;
-     padding-bottom: 4px; margin-top: 30px; font-weight: 600; }
-h3, h4 { font-weight: 600; color: #003366; }
-p, li, td, th { font-family: &#39;Cairo&#39;, &#39;Tajawal&#39;, Arial, sans-serif; }
-.callout { background: #f0f4f8; border-right: 5px solid #DAA520;
-           padding: 12px 18px; margin: 16px 0; border-radius: 3px; }
-.rec { background: #eaf4ea; border-right: 5px solid #008035;
-       padding: 12px 18px; margin: 10px 0; border-radius: 3px; }
-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
-th { background: #003366; color: white; padding: 8px 12px; text-align: right;
-     font-family: &#39;Cairo&#39;, &#39;Tajawal&#39;, Arial, sans-serif; font-weight: 600; }
-td " type="text/css" />
 
 
 

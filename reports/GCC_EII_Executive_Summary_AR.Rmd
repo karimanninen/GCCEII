@@ -12,8 +12,7 @@ output:
     toc: false
     number_sections: false
     includes:
-      in_header: arabic_fonts_header.html
-    css: arabic_styles.css
+      in_header: arabic_head.html
   pdf_document:
     latex_engine: xelatex
     number_sections: false

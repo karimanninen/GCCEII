@@ -17,8 +17,7 @@ output:
     number_sections: true
     df_print: paged
     includes:
-      in_header: arabic_fonts_header.html
-    css: arabic_styles.css
+      in_header: arabic_head.html
   pdf_document:
     toc: true
     toc_depth: 3
