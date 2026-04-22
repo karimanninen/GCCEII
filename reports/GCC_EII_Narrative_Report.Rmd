@@ -14,17 +14,19 @@ output:
     highlight: tango
     number_sections: true
     df_print: paged
-    code_folding: show
   pdf_document:
     toc: true
     toc_depth: 3
     number_sections: true
     latex_engine: xelatex
+    fig_width: 7
+    fig_height: 4
+geometry: "a4paper, margin=2.5cm"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo       = TRUE,
+  echo       = FALSE,
   message    = FALSE,
   warning    = FALSE,
   fig.width  = 10,
@@ -40,6 +42,7 @@ library(ggplot2)
 library(scales)
 ```
 
+
 ## Objective
 
 The **GCC Economic Integration Indicators Framework** is a composite statistical tool developed by GCC-Stat to measure and monitor the depth of economic integration across the six Gulf Cooperation Council member states — Bahrain, Kuwait, Oman, Qatar, Saudi Arabia, and the UAE — covering the period 2015 to 2024.
@@ -50,7 +53,7 @@ The **Gulf Observatory for Economic Integration Paths** dashboard provides an in
 
 > *All scores in this report are derived from the live `output/gcceii_scores.csv` produced by the COINr pipeline (current `main` branch of karimanninen/GCCEII). Scores differ meaningfully from earlier prototype outputs. In particular, no dimension score exceeds 100, as normalisation bounds are applied within the observed sample range.*
 
-------------------------------------------------------------------------
+---
 
 ## 1. GCC-Level Integration: The Overall Trend
 
@@ -130,7 +133,7 @@ Three phases are visible. A **gradual erosion from 45.4 (2015) to a COVID-induce
 
 The GDP dominance of Saudi Arabia (42%) and the UAE (35%) means that the GCC aggregate is effectively anchored by these two economies. Saudi Arabia's extended *Weak* classification (2016–2021) was the primary drag on the weighted composite throughout this period.
 
-------------------------------------------------------------------------
+---
 
 ## 2. Dimensional Evolution: What Moves the Index?
 
@@ -173,7 +176,7 @@ All dimension scores are properly bounded within 0–100 — a key improvement o
 
 **Financial & Monetary Integration** shows a gradual upward drift from 45.4 (2015) to 53.5 (2024) — slow but consistent progress driven by banking system deepening and capital market linkages, without the extreme spikes that appeared in legacy prototype data.
 
-------------------------------------------------------------------------
+---
 
 ## 3. Country Profiles
 
@@ -274,7 +277,7 @@ This reflects min-max normalisation within the GCC sample. UAE leads clearly in 
 
 UAE's integration profile is best characterised as **deep but uneven** — genuine leadership in financial sophistication and macroeconomic synchronisation, but not outstanding on labor mobility and physical connectivity relative to its GCC peers in the sample.
 
-------------------------------------------------------------------------
+---
 
 ## 4. Analytical Deep Dive (GCC Analytics)
 
@@ -389,13 +392,13 @@ ggplot(movers, aes(x = year, y = change, fill = country)) +
   guides(fill = guide_legend(nrow = 1))
 ```
 
--   **2020: Universal decline** — Every country fell, led by Saudi Arabia (−3.1), Qatar (−2.6), and UAE (−1.6). COVID impacted all dimensions simultaneously.
--   **2022: The rebound year** — Kuwait (+8.4) and Saudi Arabia (+7.9) recorded their strongest single-year gains, exiting Weak territory. Qatar gained +4.9.
--   **Bahrain's sustained climb**: Consistent upward movement since 2020, breaking to *Good* status with a +5.4 gain in 2023. This consistency distinguishes Bahrain from more volatile peers.
--   **Qatar's 2024 gain** (+2.9 points to 51.7): Driven by Infrastructure and Convergence improvements — structural rather than cyclical, suggesting the recovery is durable.
--   **UAE stagnation**: Despite its economic dynamism, UAE's index has barely moved (49–54 across the decade), reflecting normalisation effects and uneven dimensional performance.
+- **2020: Universal decline** — Every country fell, led by Saudi Arabia (−3.1), Qatar (−2.6), and UAE (−1.6). COVID impacted all dimensions simultaneously.
+- **2022: The rebound year** — Kuwait (+8.4) and Saudi Arabia (+7.9) recorded their strongest single-year gains, exiting Weak territory. Qatar gained +4.9.
+- **Bahrain's sustained climb**: Consistent upward movement since 2020, breaking to *Good* status with a +5.4 gain in 2023. This consistency distinguishes Bahrain from more volatile peers.
+- **Qatar's 2024 gain** (+2.9 points to 51.7): Driven by Infrastructure and Convergence improvements — structural rather than cyclical, suggesting the recovery is durable.
+- **UAE stagnation**: Despite its economic dynamism, UAE's index has barely moved (49–54 across the decade), reflecting normalisation effects and uneven dimensional performance.
 
-------------------------------------------------------------------------
+---
 
 ## 5. Recommendations for Future GCC Integration Priorities
 
@@ -413,7 +416,7 @@ The GCC Labor dimension has never exceeded 35 at the aggregate level — a strik
 
 ### 5.4 Build on Saudi Arabia's Return to Moderate Status
 
-Saudi Arabia's exit from the Weak band in 2022 is the most important structural shift in the data. Given its 42% GDP weight, every 5-point improvement in Saudi Arabia's index adds \~2 points to the GCC composite. Deepening Vision 2030's trade diversification component and accelerating Saudi-UAE financial market integration are the highest-leverage available interventions.
+Saudi Arabia's exit from the Weak band in 2022 is the most important structural shift in the data. Given its 42% GDP weight, every 5-point improvement in Saudi Arabia's index adds ~2 points to the GCC composite. Deepening Vision 2030's trade diversification component and accelerating Saudi-UAE financial market integration are the highest-leverage available interventions.
 
 ### 5.5 Capture the Qatar Reconciliation Dividend
 
@@ -425,8 +428,8 @@ Bahrain is the only country to achieve *Good* status. Its combination of financi
 
 ### 5.7 Methodological Priorities for the Index
 
-Expand toward the full \~90-indicator framework; implement sensitivity analysis on dimension weights (the 20/20/20/20/10/10 structure deserves robustness testing against alternative schemes); integrate live MARSA/Fusion Registry data pipelines to reduce publication lags; and establish a formal multi-stakeholder technical working group to validate indicator relevance with member states and the GCC Secretariat.
+Expand toward the full ~90-indicator framework; implement sensitivity analysis on dimension weights (the 20/20/20/20/10/10 structure deserves robustness testing against alternative schemes); integrate live MARSA/Fusion Registry data pipelines to reduce publication lags; and establish a formal multi-stakeholder technical working group to validate indicator relevance with member states and the GCC Secretariat.
 
-------------------------------------------------------------------------
+---
 
 *This report is generated from the live `output/gcceii_scores.csv` on the `main` branch of [karimanninen/GCCEII](https://github.com/karimanninen/GCCEII). All R code chunks source from this file and must be run from the GCCEII project root. Dependencies: `tidyverse`, `ggplot2`, `scales`. Results represent the GCCEII proof-of-concept phase and should be interpreted as directional indicators, not definitive policy assessments.*

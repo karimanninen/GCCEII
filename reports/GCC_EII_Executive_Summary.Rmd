@@ -27,6 +27,9 @@ output:
     latex_engine: xelatex
     number_sections: false
     toc: false
+    fig_width: 6
+    fig_height: 3
+geometry: "a4paper, margin=2.5cm"
 ---
 
 ```{r setup, include=FALSE}
@@ -87,7 +90,7 @@ dim_weights <- c(Trade = 0.20, Financial = 0.20, Labor = 0.20,
                  Infrastructure = 0.20, Sustainability = 0.10, Convergence = 0.10)
 ```
 
-------------------------------------------------------------------------
+---
 
 ## What This Index Measures
 
@@ -95,7 +98,7 @@ GCC-Stat has developed the **GCC Economic Integration Index (GCCEII)** to track 
 
 The index covers **2015 to 2024** and is built using internationally recognised composite indicator methodology (COINr, developed by the EU Joint Research Centre). This summary presents the main findings for the GCC as a whole.
 
-------------------------------------------------------------------------
+---
 
 ## How Has GCC Integration Evolved?
 
@@ -121,13 +124,13 @@ ggplot(gcc_overall, aes(x = year, y = score)) +
         plot.caption = element_text(size = 8, color = "#888"))
 ```
 
-::: callout
+<div class="callout">
 The GCC integration score stood at **`r round(gcc_overall$score[gcc_overall$year==2015],1)` in 2015** and reached **`r round(gcc_overall$score[gcc_overall$year==2024],1)` in 2024** — a modest improvement of about 2 points over a decade. The score dipped to a low of **`r round(min(gcc_overall$score),1)` in 2020** before gradually recovering. Despite high-profile integration initiatives, the pace of progress has been slow.
-:::
+</div>
 
 The relatively flat trend reflects two structural realities. First, **Saudi Arabia and the UAE together account for over three-quarters of GCC output**, so the composite is heavily shaped by their performance — and both have structural features (large oil-export sectors, limited intra-GCC trade) that hold the aggregate back. Second, while individual policy areas have improved, no single dimension has advanced enough to shift the overall score decisively upward.
 
-------------------------------------------------------------------------
+---
 
 ## Which Areas Drive Integration — And Which Hold It Back?
 
@@ -159,9 +162,9 @@ ggplot(dim_2024_plot, aes(x = dimension, y = score)) +
         plot.caption = element_text(size = 8, color = "#888"))
 ```
 
-::: callout
+<div class="callout">
 In 2024, **Convergence** (macroeconomic alignment) is the highest-scoring dimension at `r round(dim_2024$score[dim_2024$dimension=="Convergence"],1)`, reflecting the GCC's shared currency peg and coordinated economic policies. **Trade Integration is the weakest area** at `r round(dim_2024$score[dim_2024$dimension=="Trade"],1)`, reflecting the fact that most GCC countries still export primarily to markets outside the region.
-:::
+</div>
 
 The table below summarises each dimension's performance and direction of travel over the decade:
 
@@ -178,7 +181,7 @@ dim_summary <- tibble::tribble(
 knitr::kable(dim_summary, align = c("l","c","c","l"))
 ```
 
-------------------------------------------------------------------------
+---
 
 ## Country Differences at a Glance
 
@@ -211,34 +214,34 @@ country_snap <- idx %>%
 knitr::kable(country_snap, align = c("l","c","l","l"))
 ```
 
-::: callout
+<div class="callout">
 **Bahrain** leads the GCC with the highest integration score (`r round(snap_2024$score[snap_2024$country=="Bahrain"],1)`), driven by its open financial sector and trade linkages. **Saudi Arabia** saw a significant decline from 2016 to 2021 before recovering — its trajectory matters most for the GCC aggregate given its economic size. **Qatar's** recovery since the 2021 Al-Ula reconciliation is the most notable improvement in recent years.
-:::
+</div>
 
-------------------------------------------------------------------------
+---
 
 ## Three Priority Recommendations
 
-::: rec
+<div class="rec">
 **1. Accelerate intra-GCC trade diversification**
 
 Trade is the weakest integration dimension and has barely moved in a decade. Most GCC exports still go to markets outside the region. Strengthening intra-GCC value chains in non-oil sectors — manufacturing, food, technology services — and removing the remaining regulatory barriers to cross-border trade would have the highest impact on the overall index. This requires both national-level economic diversification and GCC-wide facilitation frameworks.
-:::
+</div>
 
-::: rec
+<div class="rec">
 **2. Develop a unified GCC labour mobility framework**
 
 Despite the Gulf's reliance on tens of millions of cross-border workers, labour mobility between member states remains structurally limited by separate regulatory frameworks. A unified GCC work permit, mutual recognition of professional qualifications, and harmonised visa rules would directly improve one of the index's most stagnant dimensions — and deliver real economic benefits to workers, employers, and member state economies.
-:::
+</div>
 
-::: rec
+<div class="rec">
 **3. Support Saudi Arabia's integration deepening**
 
 Saudi Arabia accounts for 42% of GCC economic output, meaning its integration score is the single largest determinant of the GCC composite. Saudi Arabia saw a significant decline in its integration scores from 2016 to 2021 before recovering in recent years. Targeted bilateral initiatives — particularly deeper Saudi-UAE financial market linkages and expanded Saudi participation in intra-GCC trade — would have a proportionally large impact on the regional aggregate and signal real momentum in the integration agenda.
-:::
+</div>
 
-------------------------------------------------------------------------
+---
 
-*Prepared by GCC-Stat \| Gulf Observatory for Economic Integration Paths*\
-*Data source: GCCEII composite indicator pipeline, `output/gcceii_scores.csv`*\
+*Prepared by GCC-Stat | Gulf Observatory for Economic Integration Paths*  
+*Data source: GCCEII composite indicator pipeline, `output/gcceii_scores.csv`*  
 *For the full analytical report with methodology and country profiles, see the Gulf Observatory dashboard.*

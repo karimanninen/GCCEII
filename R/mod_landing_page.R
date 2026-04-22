@@ -359,7 +359,7 @@ exec_summary_modal <- function(lang = "en", data = NULL) {
                   tags$button(
                     class = "exec-report-btn exec-report-btn-narrative",
                     onclick = if (lang == "ar")
-                      "window.open('reports/GCC_EII_Narrative_AR.html','_blank')"
+                      "window.open('reports/GCC_EII_Narrative_Report_AR.html','_blank')"
                     else
                       "window.open('reports/GCC_EII_Narrative_Report.html','_blank')",
                     icon("book-open"),
