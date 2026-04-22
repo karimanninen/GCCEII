@@ -13,28 +13,7 @@ output:
     number_sections: false
     includes:
       in_header: arabic_fonts_header.html
-    css: |
-      body { font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
-             font-size: 16px; max-width: 860px; margin: auto;
-             direction: rtl; text-align: right; line-height: 1.8; }
-      h1.title { font-size: 28px; color: #003366; font-weight: 700; }
-      h3.subtitle { color: #555; font-weight: 400; }
-      h2 { color: #003366; border-bottom: 2px solid #DAA520;
-           padding-bottom: 4px; margin-top: 30px; font-weight: 600; }
-      h3, h4 { font-weight: 600; color: #003366; }
-      p, li, td, th { font-family: 'Cairo', 'Tajawal', Arial, sans-serif; }
-      .callout { background: #f0f4f8; border-right: 5px solid #DAA520;
-                 padding: 12px 18px; margin: 16px 0; border-radius: 3px; }
-      .rec { background: #eaf4ea; border-right: 5px solid #008035;
-             padding: 12px 18px; margin: 10px 0; border-radius: 3px; }
-      table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
-      th { background: #003366; color: white; padding: 8px 12px; text-align: right;
-           font-family: 'Cairo', 'Tajawal', Arial, sans-serif; font-weight: 600; }
-      td { padding: 7px 12px; border-bottom: 1px solid #ddd; text-align: right;
-           font-family: 'Cairo', 'Tajawal', Arial, sans-serif; }
-      tr:nth-child(even) { background: #f9f9f9; }
-      hr { border: none; border-top: 1px solid #ddd; margin: 28px 0; }
-      code { font-family: 'Consolas', monospace; direction: ltr; }
+    css: arabic_styles.css
   pdf_document:
     latex_engine: xelatex
     number_sections: false

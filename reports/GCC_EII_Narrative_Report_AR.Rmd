@@ -18,16 +18,7 @@ output:
     df_print: paged
     includes:
       in_header: arabic_fonts_header.html
-    css: |
-      body { font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
-             direction: rtl; text-align: right; line-height: 1.8; }
-      h1, h2, h3, h4 { color: #003366; font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
-                       font-weight: 600; letter-spacing: 0; }
-      p, li, td, th { font-family: 'Cairo', 'Tajawal', Arial, sans-serif; }
-      code, pre { direction: ltr; text-align: left; font-family: "Consolas", monospace; }
-      .tocify { direction: rtl; font-family: 'Cairo', 'Tajawal', Arial, sans-serif; }
-      table { direction: rtl; }
-      th, td { text-align: right; }
+    css: arabic_styles.css
   pdf_document:
     toc: true
     toc_depth: 3
