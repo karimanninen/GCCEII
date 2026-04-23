@@ -1,6 +1,6 @@
 /* =============================================================
    design-tokens.css
-   Generated from R/theme.R at 2026-04-23 14:55:29 +04
+   Generated from R/theme.R at 2026-04-23 18:05:00 +04
    DO NOT EDIT BY HAND — edit R/theme.R and regenerate via
        source('R/theme.R'); write_design_tokens_css()
    @portable: yes
@@ -66,13 +66,13 @@
   --gcc-typography-size_h2: 28px;
   --gcc-typography-size_h1: 34px;
   --gcc-typography-size_display: 48px;
-  --gcc-typography-weight_regular: 400px;
-  --gcc-typography-weight_medium: 500px;
-  --gcc-typography-weight_semibold: 600px;
-  --gcc-typography-weight_bold: 700px;
-  --gcc-typography-line_tight: 1.2px;
-  --gcc-typography-line_normal: 1.5px;
-  --gcc-typography-line_relaxed: 1.8px;
+  --gcc-typography-weight_regular: 400;
+  --gcc-typography-weight_medium: 500;
+  --gcc-typography-weight_semibold: 600;
+  --gcc-typography-weight_bold: 700;
+  --gcc-typography-line_tight: 1.2;
+  --gcc-typography-line_normal: 1.5;
+  --gcc-typography-line_relaxed: 1.8;
 
   /* --- Dimension base palette (index-agnostic slots) ------ */
   --gcc-dim-1: #1e88e5;
@@ -106,8 +106,7 @@
 .gcc-text-positive { color: var(--gcc-semantic-positive); }
 .gcc-text-negative { color: var(--gcc-semantic-negative); }
 .gcc-text-neutral  { color: var(--gcc-semantic-neutral); }
-.gcc-bg-positive-soft { background: var(--gcc-semantic-positive-soft); }
-.gcc-bg-negative-soft { background: var(--gcc-semantic-negative-soft); }
-.gcc-font-latin  { font-family: var(--gcc-typography-font-latin); font-variant-numeric: tabular-nums; }
-.gcc-font-arabic { font-family: var(--gcc-typography-font-arabic); font-variant-numeric: tabular-nums; }
-
+.gcc-bg-positive-soft { background: var(--gcc-semantic-positive_soft); }
+.gcc-bg-negative-soft { background: var(--gcc-semantic-negative_soft); }
+.gcc-font-latin  { font-family: var(--gcc-typography-font_latin); font-variant-numeric: tabular-nums; }
+.gcc-font-arabic { font-family: var(--gcc-typography-font_arabic); font-variant-numeric: tabular-nums; }
