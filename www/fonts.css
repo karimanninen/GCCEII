@@ -1,0 +1,66 @@
+/* =============================================================
+   fonts.css
+   Typography loading for the GCC dashboard design system.
+   Load ORDER matters — include this BEFORE design-tokens.css and
+   the existing styles.css / rtl.css so @font-face declarations are
+   registered before any CSS variable resolves to them.
+
+   @portable: yes
+   @phase: 1
+   ============================================================= */
+
+/* ── Latin: Inter (400 / 500 / 600 / 700) ────────────────────
+   Paired with Cairo/Tajawal (which are loaded in rtl.css for
+   Arabic runs). Inter has excellent tabular-figure support via
+   font-variant-numeric, which matters for KPI scorecards. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Apply the Latin stack to the whole app by default.
+   rtl.css then overrides to the Arabic stack when body.lang-ar
+   is active, so this rule is the safe baseline. */
+body {
+  font-family: var(--gcc-typography-font_latin);
+  font-size: var(--gcc-typography-size_body);
+  line-height: var(--gcc-typography-line_normal);
+  color: var(--gcc-ink-primary);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* KPI numerals and any class explicitly requesting tabular figures */
+.gcc-tnum,
+.gcc-kpi-value,
+.gcc-kpi-delta-pill,
+.gcc-kpi-unit {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* Typographic rhythm helpers (class-based, opt-in) */
+.gcc-display  { font-size: var(--gcc-typography-size_display); font-weight: 700;
+                line-height: var(--gcc-typography-line_tight); letter-spacing: -0.02em; }
+.gcc-h1       { font-size: var(--gcc-typography-size_h1);       font-weight: 700;
+                line-height: var(--gcc-typography-line_tight); }
+.gcc-h2       { font-size: var(--gcc-typography-size_h2);       font-weight: 600;
+                line-height: var(--gcc-typography-line_tight); }
+.gcc-h3       { font-size: var(--gcc-typography-size_h3);       font-weight: 600;
+                line-height: var(--gcc-typography-line_tight); }
+.gcc-h4       { font-size: var(--gcc-typography-size_h4);       font-weight: 600;
+                line-height: var(--gcc-typography-line_normal); }
+.gcc-lead     { font-size: var(--gcc-typography-size_lead);     font-weight: 400;
+                line-height: var(--gcc-typography-line_normal); color: var(--gcc-ink-secondary); }
+.gcc-body     { font-size: var(--gcc-typography-size_body);     font-weight: 400;
+                line-height: var(--gcc-typography-line_normal); }
+.gcc-small    { font-size: var(--gcc-typography-size_small);    font-weight: 400;
+                line-height: var(--gcc-typography-line_normal); color: var(--gcc-ink-muted); }
+.gcc-micro    { font-size: var(--gcc-typography-size_micro);    font-weight: 500;
+                line-height: var(--gcc-typography-line_normal); color: var(--gcc-ink-muted);
+                text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Arabic line-height adjustment — Arabic needs more vertical space */
+body.lang-ar .gcc-body,
+body.lang-ar .gcc-lead,
+body.lang-ar p {
+  line-height: var(--gcc-typography-line_relaxed);
+}

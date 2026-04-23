@@ -1,0 +1,123 @@
+/* =============================================================
+   design-tokens.css
+   Generated from R/theme.R — Phase 1 (2026-04-23)
+   DO NOT EDIT BY HAND — edit R/theme.R and regenerate via
+       source('R/theme.R'); write_design_tokens_css()
+   @portable: yes (usable by GCCEDI without modification)
+   ============================================================= */
+
+:root {
+  /* --- Brand / surface / ink / semantic / level ----------- */
+  --gcc-brand-primary: #003366;
+  --gcc-brand-primary_light: #005082;
+  --gcc-brand-primary_dark: #002244;
+  --gcc-brand-accent: #008035;
+  --gcc-brand-accent_light: #009940;
+  --gcc-brand-accent_dark: #006028;
+
+  --gcc-surface-background: #f4f6f9;
+  --gcc-surface-canvas: #ffffff;
+  --gcc-surface-subtle: #f8f9fa;
+  --gcc-surface-border: #e8edf4;
+  --gcc-surface-border_strong: #d0d7e0;
+
+  --gcc-ink-primary: #1a1a1a;
+  --gcc-ink-secondary: #444444;
+  --gcc-ink-muted: #666666;
+  --gcc-ink-inverse: #ffffff;
+  --gcc-ink-brand: #003366;
+
+  --gcc-semantic-positive: #2e7d32;
+  --gcc-semantic-positive_soft: #e8f5e9;
+  --gcc-semantic-negative: #c62828;
+  --gcc-semantic-negative_soft: #ffebee;
+  --gcc-semantic-neutral: #616161;
+  --gcc-semantic-neutral_soft: #f5f5f5;
+  --gcc-semantic-success: #2e7d32;
+  --gcc-semantic-warning: #b8860b;
+  --gcc-semantic-danger: #c62828;
+  --gcc-semantic-info: #005082;
+
+  --gcc-level-weak: #c14953;
+  --gcc-level-moderate: #d4a028;
+  --gcc-level-good: #5ba265;
+
+  --gcc-spacing-xxs: 2px;
+  --gcc-spacing-xs: 4px;
+  --gcc-spacing-sm: 8px;
+  --gcc-spacing-md: 12px;
+  --gcc-spacing-lg: 16px;
+  --gcc-spacing-xl: 24px;
+  --gcc-spacing-xxl: 32px;
+  --gcc-spacing-xxxl: 48px;
+
+  --gcc-radius-sm: 4px;
+  --gcc-radius-md: 8px;
+  --gcc-radius-lg: 12px;
+  --gcc-radius-xl: 16px;
+  --gcc-radius-pill: 999px;
+
+  --gcc-shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --gcc-shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --gcc-shadow-lg: 0 8px 24px rgba(0,0,0,0.14);
+  --gcc-shadow-xl: 0 16px 40px rgba(0,0,0,0.18);
+
+  --gcc-typography-font_latin: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --gcc-typography-font_arabic: 'Cairo', 'Tajawal', 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  --gcc-typography-font_mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  --gcc-typography-size_micro: 11px;
+  --gcc-typography-size_small: 12px;
+  --gcc-typography-size_body: 14px;
+  --gcc-typography-size_lead: 16px;
+  --gcc-typography-size_h4: 18px;
+  --gcc-typography-size_h3: 22px;
+  --gcc-typography-size_h2: 28px;
+  --gcc-typography-size_h1: 34px;
+  --gcc-typography-size_display: 48px;
+
+  --gcc-typography-weight_regular: 400;
+  --gcc-typography-weight_medium: 500;
+  --gcc-typography-weight_semibold: 600;
+  --gcc-typography-weight_bold: 700;
+
+  --gcc-typography-line_tight: 1.2;
+  --gcc-typography-line_normal: 1.5;
+  --gcc-typography-line_relaxed: 1.8;
+
+  /* --- Dimension base palette (index-agnostic slots) ------ */
+  --gcc-dim-1: #1e88e5;
+  --gcc-dim-2: #f9a825;
+  --gcc-dim-3: #43a047;
+  --gcc-dim-4: #e53935;
+  --gcc-dim-5: #8e24aa;
+  --gcc-dim-6: #00acc1;
+  --gcc-dim-7: #6d4c41;
+  --gcc-dim-8: #546e7a;
+
+  /* --- GCCEII dimension aliases (convenience) ------------- */
+  --gcc-eii-trade: #1e88e5;
+  --gcc-eii-financial: #f9a825;
+  --gcc-eii-labor: #43a047;
+  --gcc-eii-infrastructure: #e53935;
+  --gcc-eii-sustainability: #8e24aa;
+  --gcc-eii-convergence: #00acc1;
+
+  /* --- Country palette ------------------------------------ */
+  --gcc-country-uae: #000000;
+  --gcc-country-qatar: #99154c;
+  --gcc-country-saudi-arabia: #008035;
+  --gcc-country-bahrain: #e20000;
+  --gcc-country-oman: #7a7a7a;
+  --gcc-country-kuwait: #009cd8;
+  --gcc-country-gcc: #b8860b;
+}
+
+/* --- Utility classes consuming tokens ---------------------- */
+.gcc-text-positive { color: var(--gcc-semantic-positive); }
+.gcc-text-negative { color: var(--gcc-semantic-negative); }
+.gcc-text-neutral  { color: var(--gcc-semantic-neutral); }
+.gcc-bg-positive-soft { background: var(--gcc-semantic-positive_soft); }
+.gcc-bg-negative-soft { background: var(--gcc-semantic-negative_soft); }
+.gcc-font-latin  { font-family: var(--gcc-typography-font_latin);  font-variant-numeric: tabular-nums; }
+.gcc-font-arabic { font-family: var(--gcc-typography-font_arabic); font-variant-numeric: tabular-nums; }
