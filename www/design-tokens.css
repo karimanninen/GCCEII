@@ -1,9 +1,9 @@
 /* =============================================================
    design-tokens.css
-   Generated from R/theme.R — Phase 1 (2026-04-23)
+   Generated from R/theme.R at 2026-04-23 14:55:29 +04
    DO NOT EDIT BY HAND — edit R/theme.R and regenerate via
        source('R/theme.R'); write_design_tokens_css()
-   @portable: yes (usable by GCCEDI without modification)
+   @portable: yes
    ============================================================= */
 
 :root {
@@ -14,19 +14,16 @@
   --gcc-brand-accent: #008035;
   --gcc-brand-accent_light: #009940;
   --gcc-brand-accent_dark: #006028;
-
   --gcc-surface-background: #f4f6f9;
   --gcc-surface-canvas: #ffffff;
   --gcc-surface-subtle: #f8f9fa;
   --gcc-surface-border: #e8edf4;
   --gcc-surface-border_strong: #d0d7e0;
-
   --gcc-ink-primary: #1a1a1a;
   --gcc-ink-secondary: #444444;
   --gcc-ink-muted: #666666;
   --gcc-ink-inverse: #ffffff;
   --gcc-ink-brand: #003366;
-
   --gcc-semantic-positive: #2e7d32;
   --gcc-semantic-positive_soft: #e8f5e9;
   --gcc-semantic-negative: #c62828;
@@ -37,11 +34,9 @@
   --gcc-semantic-warning: #b8860b;
   --gcc-semantic-danger: #c62828;
   --gcc-semantic-info: #005082;
-
   --gcc-level-weak: #c14953;
   --gcc-level-moderate: #d4a028;
   --gcc-level-good: #5ba265;
-
   --gcc-spacing-xxs: 2px;
   --gcc-spacing-xs: 4px;
   --gcc-spacing-sm: 8px;
@@ -50,22 +45,18 @@
   --gcc-spacing-xl: 24px;
   --gcc-spacing-xxl: 32px;
   --gcc-spacing-xxxl: 48px;
-
   --gcc-radius-sm: 4px;
   --gcc-radius-md: 8px;
   --gcc-radius-lg: 12px;
   --gcc-radius-xl: 16px;
   --gcc-radius-pill: 999px;
-
   --gcc-shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
   --gcc-shadow-md: 0 4px 12px rgba(0,0,0,0.10);
   --gcc-shadow-lg: 0 8px 24px rgba(0,0,0,0.14);
   --gcc-shadow-xl: 0 16px 40px rgba(0,0,0,0.18);
-
   --gcc-typography-font_latin: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --gcc-typography-font_arabic: 'Cairo', 'Tajawal', 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
   --gcc-typography-font_mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
-
   --gcc-typography-size_micro: 11px;
   --gcc-typography-size_small: 12px;
   --gcc-typography-size_body: 14px;
@@ -75,15 +66,13 @@
   --gcc-typography-size_h2: 28px;
   --gcc-typography-size_h1: 34px;
   --gcc-typography-size_display: 48px;
-
-  --gcc-typography-weight_regular: 400;
-  --gcc-typography-weight_medium: 500;
-  --gcc-typography-weight_semibold: 600;
-  --gcc-typography-weight_bold: 700;
-
-  --gcc-typography-line_tight: 1.2;
-  --gcc-typography-line_normal: 1.5;
-  --gcc-typography-line_relaxed: 1.8;
+  --gcc-typography-weight_regular: 400px;
+  --gcc-typography-weight_medium: 500px;
+  --gcc-typography-weight_semibold: 600px;
+  --gcc-typography-weight_bold: 700px;
+  --gcc-typography-line_tight: 1.2px;
+  --gcc-typography-line_normal: 1.5px;
+  --gcc-typography-line_relaxed: 1.8px;
 
   /* --- Dimension base palette (index-agnostic slots) ------ */
   --gcc-dim-1: #1e88e5;
@@ -117,7 +106,8 @@
 .gcc-text-positive { color: var(--gcc-semantic-positive); }
 .gcc-text-negative { color: var(--gcc-semantic-negative); }
 .gcc-text-neutral  { color: var(--gcc-semantic-neutral); }
-.gcc-bg-positive-soft { background: var(--gcc-semantic-positive_soft); }
-.gcc-bg-negative-soft { background: var(--gcc-semantic-negative_soft); }
-.gcc-font-latin  { font-family: var(--gcc-typography-font_latin);  font-variant-numeric: tabular-nums; }
-.gcc-font-arabic { font-family: var(--gcc-typography-font_arabic); font-variant-numeric: tabular-nums; }
+.gcc-bg-positive-soft { background: var(--gcc-semantic-positive-soft); }
+.gcc-bg-negative-soft { background: var(--gcc-semantic-negative-soft); }
+.gcc-font-latin  { font-family: var(--gcc-typography-font-latin); font-variant-numeric: tabular-nums; }
+.gcc-font-arabic { font-family: var(--gcc-typography-font-arabic); font-variant-numeric: tabular-nums; }
+
