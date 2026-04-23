@@ -1,7 +1,10 @@
 # ==============================================================================
 # PHASE 1 SMOKE TEST
 # ==============================================================================
-# Run with: shiny::runApp("smoke_test_phase1.R")
+# Run with:
+#   app <- shiny::shinyAppFile("smoke_test_phase1.R")
+#   shiny::runApp(app)
+# (runApp("smoke_test_phase1.R") only works when the file is named app.R.)
 #
 # Verifies the foundation pieces work end-to-end:
 #   * R/theme.R tokens load without errors
@@ -54,9 +57,9 @@ ui <- fluidPage(
       class = "gcc-insight-strip",
       "The GCC integration score is ",
       tags$span(class = "highlight", "47.4"),
-      ", unchanged from 2023. The previous axis showed \u25B20 — the new ",
+      ", unchanged from 2023. The previous axis showed ▲0 — the new ",
       "format_delta() helper correctly reports ",
-      tags$span(class = "gcc-text-neutral", "\u201Cno change\u201D"),
+      tags$span(class = "gcc-text-neutral", "“no change”"),
       " instead."
     ),
 
@@ -73,9 +76,9 @@ ui <- fluidPage(
       class = "gcc-card",
       tags$div(class = "gcc-card-header",
                tags$h3(class = "gcc-card-title",
-                       "GCC overall score 2015\u20132024 (auto-scaled y-axis)"),
+                       "GCC overall score 2015–2024 (auto-scaled y-axis)"),
                tags$span(class = "gcc-card-action",
-                         "Observe the range \u2014 not 0\u2013100")),
+                         "Observe the range — not 0–100")),
       plotlyOutput("gcc_trend", height = "360px")
     ),
 
