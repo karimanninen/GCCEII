@@ -106,9 +106,6 @@
 
 /* =============================================================
    INTEGRATION-LEVEL BADGE
-   Replaces the bright red/yellow/green badges in the existing CSS
-   with muted versions. The old .ts-level-badge classes remain for
-   backward compatibility — use .gcc-level-badge in new views.
    ------------------------------------------------------------- */
 
 .gcc-level-badge {
@@ -129,8 +126,6 @@
 
 /* =============================================================
    SECTION HEADERS
-   Lightweight replacement for the heavy colored headers in the
-   existing styles.css. Cleaner for ministerial reading.
    ------------------------------------------------------------- */
 
 .gcc-section {
@@ -154,8 +149,6 @@
 
 /* =============================================================
    CARD CONTAINER
-   Generic replacement for shinydashboard::box() shells. Thinner
-   borders, softer shadows, consistent with the KPI cards.
    ------------------------------------------------------------- */
 
 .gcc-card {
@@ -191,8 +184,6 @@
 
 /* =============================================================
    INSIGHT STRIP
-   Auto-generated 1-3 sentence insights above the fold on the
-   Executive Pulse tab. Plain language, no chart.
    ------------------------------------------------------------- */
 
 .gcc-insight-strip {
@@ -211,4 +202,54 @@
 .gcc-insight-strip .highlight {
   color: var(--gcc-ink-brand);
   font-weight: var(--gcc-typography-weight_semibold);
+}
+
+
+/* =============================================================
+   TAB NARRATIVE SUBTITLE  (Phase 2)
+   One-line answer to "what question does this tab answer?"
+   Rendered by tab_subtitle() in mod_dashboard_ui.R.
+   ------------------------------------------------------------- */
+
+.gcc-tab-subtitle {
+  font-size: var(--gcc-typography-size_lead);
+  color: var(--gcc-ink-secondary);
+  margin: 0 0 var(--gcc-spacing-lg) 0;
+  padding: var(--gcc-spacing-sm) var(--gcc-spacing-lg);
+  border-left: 3px solid var(--gcc-brand-accent);
+  background: var(--gcc-surface-subtle);
+  border-radius: var(--gcc-radius-sm);
+  line-height: var(--gcc-typography-line_normal);
+}
+
+body.lang-ar .gcc-tab-subtitle {
+  border-left: none;
+  border-right: 3px solid var(--gcc-brand-accent);
+  text-align: right;
+}
+
+
+/* =============================================================
+   SIDEBAR GLOBAL CONTROLS  (Phase 2)
+   Country and year selectors that live in the sidebar so their
+   state persists across tab switches.
+   ------------------------------------------------------------- */
+
+.sidebar-global-control {
+  padding: 0 var(--gcc-spacing-md) var(--gcc-spacing-sm);
+}
+
+.sidebar-global-control label {
+  font-size: var(--gcc-typography-size_small);
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: var(--gcc-typography-weight_medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.sidebar-global-control .form-control {
+  font-size: var(--gcc-typography-size_small);
+  height: 32px;
+  padding: 4px 8px;
 }
